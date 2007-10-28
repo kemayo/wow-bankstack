@@ -1,5 +1,8 @@
 <Bindings>
 	<Binding name="BANKSTACK" description="Fill incomplete stacks in your bank from your bags" header="BANKSTACK">
-		BankStack.Stack()
+		BankStack.BankStack()
+	</Binding>
+	<Binding name="COMPRESS" description="Merge stacks in your bags" header="BANKSTACK">
+		BankStack.Compress()
 	</Binding>
 </Bindings>
