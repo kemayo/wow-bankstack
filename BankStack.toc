@@ -5,5 +5,7 @@
 ## Version: 1
 ## X-Category: Inventory
 ## LoadOnDemand: 0
+## OptionalDeps: LibRock-1.0, FuBar
 
 core.lua
+fu.lua

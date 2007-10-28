@@ -1,0 +1,5 @@
+<Bindings>
+	<Binding name="BANKSTACK" description="Fill incomplete stacks in your bank from your bags" header="BANKSTACK">
+		BankStack.Stack()
+	</Binding>
+</Bindings>

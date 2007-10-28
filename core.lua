@@ -60,7 +60,10 @@ frame:Hide() -- stops OnUpdate from running
 
 function core.Stack()
 	-- This function just creates a list of slots to move to other slots, and passes it off to a worker function to do the moving.
-	if not bank_open then return end
+	if not bank_open then
+		DEFAULT_CHAT_FRAME:AddMessage("BankStack: You must be at the bank.", 1, 0, 0)
+		return
+	end
 	for _,bag in pairs(bank_bags) do
 		local slots = GetContainerNumSlots(bag)
 		for slot=1, slots do
@@ -117,8 +120,13 @@ function core.Stack()
 	clear(bankitems)
 	clear(banklinks)
 	clear(banksinks)
-	--unhide the frame to get the moving started in OnUpdates
-	frame:Show()
+	if #moves > 0 then
+		--unhide the frame to get the moving started in OnUpdates
+		frame:Show()
+		DEFAULT_CHAT_FRAME:AddMessage(string.format("BankStack: %d to stack.", #moves), 1, 1, 1)
+	else
+		DEFAULT_CHAT_FRAME:AddMessage("BankStack: Nothing to stack.", 1, 1, 1)
+	end
 end
 --function core:Compress(bags)
 --end
@@ -159,8 +167,13 @@ function core.DoMoves()
 		end
 	end
 	frame:Hide()
+	DEFAULT_CHAT_FRAME:AddMessage("BankStack: Complete.", 1, 1, 1)
 end
 
 --Slashcommands:
 SlashCmdList["BANKSTACK"] = core.Stack
 SLASH_BANKSTACK1 = "/bankstack"
+
+--Bindings:
+BINDING_HEADER_BANKSTACK = "BankStack"
+BINDING_NAME_BANKSTACK = "Stack to bank"
