@@ -1,0 +1,9 @@
+## Interface: 20200
+## Title: BankStack
+## Author: Kemayo
+## Notes: From bags we came, to bank we return
+## Version: 1
+## X-Category: Inventory
+## LoadOnDemand: 0
+
+core.lua
