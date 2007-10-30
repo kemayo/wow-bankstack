@@ -1,15 +1,23 @@
 BankStack = {}
 local core = BankStack
+local db
 
 --Events:
 local frame = CreateFrame("Frame")
+frame:RegisterEvent("ADDON_LOADED")
+frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("BANKFRAME_OPENED")
 frame:RegisterEvent("BANKFRAME_CLOSED")
 frame:SetScript("OnEvent", function(this, event, ...)
-    core[event](...)
+    core[event](event, ...)
 end)
 
 --Inner workings:
+local function announce(level, message, r, g, b)
+	if level > db.verbosity then return end
+	DEFAULT_CHAT_FRAME:AddMessage(message, r, g, b)
+end
+
 -- http://wowwiki.com/API_TYPE_bagID
 local bank_bags = {BANK_CONTAINER}
 for i = NUM_BAG_SLOTS+1, NUM_BAG_SLOTS+NUM_BANKBAGSLOTS do
@@ -46,10 +54,25 @@ local function clear(t)
 	return t
 end
 
-function core:BANKFRAME_OPENED(...)
+function core:SetupDB()
+	if not BankStackDB then
+		BankStackDB = {
+			verbosity=1,
+		}
+	end
+	db = BankStackDB
+	frame:UnregisterEvent("ADDON_LOADED")
+	frame:UnregisterEvent("PLAYER_ENTERING_WORLD")
+end
+function core.ADDON_LOADED(addon)
+	if addon ~= "BankStack" then return end
+	core.SetupDB()
+end
+core.PLAYER_ENTERING_WORLD = core.SetupDB
+function core.BANKFRAME_OPENED()
 	core.bank_open = true
 end
-function core:BANKFRAME_CLOSED(...)
+function core.BANKFRAME_CLOSED()
 	core.bank_open = false
 end
 local t = 0
@@ -65,14 +88,12 @@ frame:SetScript("OnUpdate", function()
 end)
 frame:Hide() -- stops OnUpdate from running
 
-local current_link
+local current_id
 local current_target
 function core.BankStack(arg)
-	if arg=="help" then
-		return core.PrintHelp()
-	end
+	if arg=="help" then return core.PrintHelp() end
 	if not core.bank_open then
-		DEFAULT_CHAT_FRAME:AddMessage("BankStack: You must be at the bank.", 1, 0, 0)
+		announce(0, "BankStack: You must be at the bank.", 1, 0, 0)
 		return
 	end
 	core.bankrequired = true
@@ -86,13 +107,11 @@ do
 		return (select(8, GetItemInfo(itemid)) - select(2, GetContainerItemInfo(bag, slot))) > 0
 	end
 	function core.Compress(arg)
-		if arg=="help" then
-			return core.PrintHelp()
-		end
+		if arg=="help" then return core.PrintHelp() end
 		local bags
 		if arg=="bank" then
 			if not core.bank_open then
-				DEFAULT_CHAT_FRAME:AddMessage("BankStack: You must be at the bank to compress your bank bags.", 1, 0, 0)
+				announce(0, "BankStack: You must be at the bank to compress your bank bags.", 1, 0, 0)
 				return
 			else
 				bags = bank_bags
@@ -104,12 +123,22 @@ do
 		core.Stack(bags, bags, is_partial)
 	end
 end
+function core.Config(arg)
+	announce(0, arg)
+	if arg=="help" then return core.PrintHelp() end
+	if string.match(arg, "verbosity ([012])") then
+		db.verbosity = tonumber(string.match(arg, "verbosity ([012])"))
+		return announce(0, "Bankstack: verbosity set to "..db.verbosity, 1, 1, 1)
+	end
+	announce(0, "BankStack options:", 1, 1, 1)
+	announce(0, " - verbosity: "..db.verbosity.." (0-2)", 1, 1, 1)
+end
 function core.PrintHelp()
-	DEFAULT_CHAT_FRAME:AddMessage("BankStack: Stacks things.", 1, 1, 1)
-	DEFAULT_CHAT_FRAME:AddMessage("/bankstack -- fills stacks in your bank from your bags", 1, 1, 1)
-	DEFAULT_CHAT_FRAME:AddMessage("/bankstack reverse -- fills stacks in your bags from your bank", 1, 1, 1)
-	DEFAULT_CHAT_FRAME:AddMessage("/compress -- merges stacks in your bags", 1, 1, 1)
-	DEFAULT_CHAT_FRAME:AddMessage("/compress bank -- merges stacks in your bank", 1, 1, 1)
+	announce(0, "BankStack: Stacks things.", 1, 1, 1)
+	announce(0, "/bankstack -- fills stacks in your bank from your bags", 1, 1, 1)
+	announce(0, "/bankstack reverse -- fills stacks in your bags from your bank", 1, 1, 1)
+	announce(0, "/compress -- merges stacks in your bags", 1, 1, 1)
+	announce(0, "/compress bank -- merges stacks in your bank", 1, 1, 1)
 end
 
 local function default_can_move() return true end
@@ -122,8 +151,8 @@ function core.Stack(source_bags, target_bags, can_move)
 	--   could be moved to target.  If it returns false then ignore the slot.
 	-- Note: This function just creates a list of moves to make, then unhides
 	-- frame to get its OnUpdate going.
-	if current_link or current_target then
-		DEFAULT_CHAT_FRAME:AddMessage("BankStack: A stacker is already running.", 1, 0, 0)
+	if current_id or current_target then
+		announce(0, "BankStack: A stacker is already running.", 1, 0, 0)
 		return
 	end
 	if not can_move then can_move = default_can_move end
@@ -209,54 +238,58 @@ function core.Stack(source_bags, target_bags, can_move)
 	if #moves > 0 then
 		--unhide the frame to get the moving started in OnUpdates
 		frame:Show()
-		DEFAULT_CHAT_FRAME:AddMessage(string.format("BankStack: %d to stack.", #moves), 1, 1, 1)
+		announce(1, string.format("BankStack: %d to stack.", #moves), 1, 1, 1)
 	else
-		DEFAULT_CHAT_FRAME:AddMessage("BankStack: Nothing to stack.", 1, 1, 1)
+		announce(1, "BankStack: Nothing to stack.", 1, 1, 1)
 	end
 end
 function core.DoMoves()
 	if CursorHasItem() then
 		local _, _, itemlink = GetCursorInfo()
-		local itemlink = link_to_id(itemlink)
-		if (not current_target) or (current_link ~= itemlink) then
+		local itemid = link_to_id(itemlink)
+		if (not current_target) or (current_id ~= itemid) then
 			-- We didn't pick up whatever is on the cursor; things could get really screwed up if we carry on.  Abort!
 			return core.StopStacking("BankStack: Confusion. Stopping.")
 		end
 		-- Drop the item into the target slot
 		return PickupContainerItem(decode_bagslot(current_target))
 	end
-	current_link = nil
+	current_id = nil
 	current_target = nil
 	
 	if #moves > 0 then
 		local source, target = decode_move(table.remove(moves))
 		local source_bag, source_slot = decode_bagslot(source)
-		--local target_bag, target_slot = decode_bagslot(source)
-		local link = link_to_id(GetContainerItemLink(source_bag, source_slot))
+		local link = GetContainerItemLink(source_bag, source_slot)
+		local itemid = link_to_id(link)
 		local source_count = select(2, GetContainerItemInfo(source_bag, source_slot))
 		local target_count = select(2, GetContainerItemInfo(decode_bagslot(target)))
-		local stack_size = select(8, GetItemInfo(link))
+		local stack_size = select(8, GetItemInfo(itemid))
 		
-		current_link = link
-		current_target = target
-		if (target_count + source_count) > stack_size then
-			return SplitContainerItem(source_bag, source_slot, stack_size - target_count)
-		else
-			return PickupContainerItem(source_bag, source_slot)
+		if link and source_count and target_count then
+			announce(2, "BankStack: Moving "..link, 1,1,1)
+			
+			current_id = itemid
+			current_target = target
+			if (target_count + source_count) > stack_size then
+				return SplitContainerItem(source_bag, source_slot, stack_size - target_count)
+			else
+				return PickupContainerItem(source_bag, source_slot)
+			end
 		end
 	end
-	DEFAULT_CHAT_FRAME:AddMessage("BankStack: Complete.", 1, 1, 1)
+	announce(1, "BankStack: Complete.", 1, 1, 1)
 	core.StopStacking()
 end
 
 function core.StopStacking(message)
 	core.bankrequired = false
 	current_target = nil
-	current_link = nil
+	current_id = nil
 	clear(moves)
 	frame:Hide()
 	if message then
-		DEFAULT_CHAT_FRAME:AddMessage(message, 1, 0, 0)
+		announce(1, message, 1, 0, 0)
 	end
 end
 
@@ -266,6 +299,8 @@ SLASH_BANKSTACK1 = "/bankstack"
 SlashCmdList["COMPRESSBAGS"] = core.Compress
 SLASH_COMPRESSBAGS1 = "/compress"
 SLASH_COMPRESSBAGS2 = "/compressbags"
+SlashCmdList["BANKSTACKCONFIG"] = core.Config
+SLASH_BANKSTACKCONFIG1 = "/bankstackconfig"
 
 --Bindings:
 BINDING_HEADER_BANKSTACK = "BankStack"

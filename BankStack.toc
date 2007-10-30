@@ -6,6 +6,7 @@
 ## X-Category: Inventory
 ## LoadOnDemand: 0
 ## OptionalDeps: LibRock-1.0, FuBar
+## SavedVariables: BankStackDB
 
 core.lua
 fu.lua
