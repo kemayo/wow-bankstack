@@ -23,6 +23,7 @@ end
 local target_items = {--[[link = available_slots--]]}
 local target_links = {--[[encode_bagslot = link--]]}
 local target_sinks = {--[[encode_bagslot = room_in_slot--]]}
+local source_used = {}
 local moves = {--[[encode_move(encode_bagslot(),encode_bagslot(target)),. ..--]]}
 
 local function encode_bagslot(bag, slot) return (bag*100) + slot end
@@ -156,9 +157,11 @@ function core.Stack(source_bags, target_bags, can_move)
 				local count = select(2, GetContainerItemInfo(bag, slot))
 				for target_slot, target_link in pairs(target_links) do
 					if not target_items[link] then break end
-					if target_link == link and target_slot ~= source_slot then -- (can't stack to itself)
+					-- can't stack to itself, or to a slot that has already been used as a source:
+					if target_link == link and target_slot ~= source_slot and not source_used[target_slot] then
 						-- Schedule moving from this slot to the bank slot.
 						table.insert(moves, encode_move(source_slot, target_slot))
+						source_used[source_slot] = true
 						-- Deal with the bank slot:
 						local room = target_sinks[target_slot]
 						if room > count then
@@ -202,6 +205,7 @@ function core.Stack(source_bags, target_bags, can_move)
 	clear(target_items)
 	clear(target_links)
 	clear(target_sinks)
+	clear(source_used)
 	if #moves > 0 then
 		--unhide the frame to get the moving started in OnUpdates
 		frame:Show()
