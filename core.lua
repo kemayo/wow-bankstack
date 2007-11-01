@@ -187,7 +187,9 @@ do
 		if safe[bagid] then return false end
 		local invslot = ContainerIDToInventoryID(bagid)
 		if not invslot then return false end
-		local item_type, item_subtype = select(6, GetItemInfo(GetInventoryItemLink("player", invslot)))
+		local bag = GetInventoryItemLink("player", invslot)
+		if not bag then return false end
+		local item_type, item_subtype = select(6, GetItemInfo(bag))
 		return not (item_type == BI["Container"] or item_subtype == BI["Bag"])
 	end
 end
