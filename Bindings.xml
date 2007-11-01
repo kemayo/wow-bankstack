@@ -5,4 +5,7 @@
 	<Binding name="COMPRESS" description="Merge stacks in your bags" header="BANKSTACK">
 		BankStack.Compress()
 	</Binding>
+	<Binding name="BAGSORT" description="Sort your bags" header="BANKSTACK">
+		BankStack.SortBags()
+	</Binding>
 </Bindings>
