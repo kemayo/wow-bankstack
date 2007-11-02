@@ -8,6 +8,8 @@
 ## OptionalDeps: LibRock-1.0, FuBar
 ## SavedVariables: BankStackDB
 
+local.enUS.lua
+
 core.lua
 stack.lua
 sort.lua
