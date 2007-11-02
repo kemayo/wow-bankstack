@@ -27,3 +27,8 @@ BankStackLocale = {
 	TRADEGOODS = "Trade Goods",
 	WEAPON = "Weapon",
 }
+--Bindings:
+BINDING_HEADER_BANKSTACK = "BankStack"
+BINDING_NAME_BANKSTACK = "Stack to bank"
+BINDING_NAME_COMPRESS = "Compress bags"
+BINDING_NAME_BAGSORT = "Sorts bags"

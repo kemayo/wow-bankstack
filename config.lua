@@ -23,6 +23,16 @@ local config_settings = {
 		end,
 		desc = "0-2",
 	},
+	junk = {
+		get = function() return core.db.junk and "true" or "false" end,
+		set = function() core.db.junk = not core.db.junk end,
+		desc = "move junk to the end",
+	},
+	soul = {
+		get = function() return core.db.soul and "true" or "false" end,
+		set = function() core.db.soul = not core.db.soul end,
+		desc = "move soul shards to the end",
+	},
 }
 core.menu_options = {
 	help = function()

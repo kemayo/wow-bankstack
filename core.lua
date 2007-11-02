@@ -56,7 +56,7 @@ local function decode_move(move)
 	t = (t>9000) and (t-10000) or t
 	return s, t
 end
-local function link_to_id(link) return link and string.match(link, "item:(%d+)") end -- "item" because we only care about items, duh
+local function link_to_id(link) return link and tonumber(string.match(link, "item:(%d+)")) end -- "item" because we only care about items, duh
 local function clear(t)
 	for k in pairs(t) do
 		t[k] = nil
@@ -76,6 +76,8 @@ function core.PLAYER_ENTERING_WORLD()
 	if not BankStackDB then
 		BankStackDB = {
 			verbosity=1,
+			junk=true,
+			soul=true,
 		}
 	end
 	core.db = BankStackDB
@@ -177,10 +179,3 @@ do
 		return not (item_type == L.CONTAINER and item_subtype == L.BAG)
 	end
 end
-
---Bindings:
-BINDING_HEADER_BANKSTACK = "BankStack"
-BINDING_NAME_BANKSTACK = "Stack to bank"
-BINDING_NAME_COMPRESS = "Compress bags"
-BINDING_NAME_BAGSORT = "Sorts bags"
-

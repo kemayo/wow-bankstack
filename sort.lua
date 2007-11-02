@@ -46,32 +46,32 @@ local item_types = {
 	[L.PROJECTILE] = 13,
 }
 local inventory_slots = {
-	[INVTYPE_AMMO] = 0,
-	[INVTYPE_HEAD] = 1,
-	[INVTYPE_NECK] = 2,
-	[INVTYPE_SHOULDER] = 3,
-	[INVTYPE_BODY] = 4,
-	[INVTYPE_CHEST] = 5,
-	[INVTYPE_ROBE] = 5,
-	[INVTYPE_WAIST] = 6,
-	[INVTYPE_LEGS] = 7,
-	[INVTYPE_FEET] = 8,
-	[INVTYPE_WRIST] = 9,
-	[INVTYPE_HAND] = 10,
-	[INVTYPE_FINGER] = 11,
-	[INVTYPE_TRINKET] = 12,
-	[INVTYPE_CLOAK] = 13,
-	[INVTYPE_WEAPON] = 14,
-	[INVTYPE_SHIELD] = 15,
-	[INVTYPE_2HWEAPON] = 16,
-	[INVTYPE_WEAPONMAINHAND] = 18,
-	[INVTYPE_WEAPONOFFHAND] = 19,
-	[INVTYPE_HOLDABLE] = 20,
-	[INVTYPE_RANGED] = 21,
-	[INVTYPE_THROWN] = 22,
-	[INVTYPE_RANGEDRIGHT] = 23,
-	[INVTYPE_RELIC] = 24,
-	[INVTYPE_TABARD] = 25,
+	INVTYPE_AMMO = 0,
+	INVTYPE_HEAD = 1,
+	INVTYPE_NECK = 2,
+	INVTYPE_SHOULDER = 3,
+	INVTYPE_BODY = 4,
+	INVTYPE_CHEST = 5,
+	INVTYPE_ROBE = 5,
+	INVTYPE_WAIST = 6,
+	INVTYPE_LEGS = 7,
+	INVTYPE_FEET = 8,
+	INVTYPE_WRIST = 9,
+	INVTYPE_HAND = 10,
+	INVTYPE_FINGER = 11,
+	INVTYPE_TRINKET = 12,
+	INVTYPE_CLOAK = 13,
+	INVTYPE_WEAPON = 14,
+	INVTYPE_SHIELD = 15,
+	INVTYPE_2HWEAPON = 16,
+	INVTYPE_WEAPONMAINHAND = 18,
+	INVTYPE_WEAPONOFFHAND = 19,
+	INVTYPE_HOLDABLE = 20,
+	INVTYPE_RANGED = 21,
+	INVTYPE_THROWN = 22,
+	INVTYPE_RANGEDRIGHT = 23,
+	INVTYPE_RELIC = 24,
+	INVTYPE_TABARD = 25,
 }
 
 local bag_sorted = {}
@@ -86,8 +86,7 @@ local function default_sorter(a, b)
 	local b_id = bag_ids[b]
 	
 	-- is either slot empty?  If so, move it to the back.
-	if not a_id then return false end
-	if not b_id then return true end
+	if not (a_id or b_id) then return a_id end
 	
 	-- are they the same item?
 	if a_id == b_id then
@@ -105,11 +104,25 @@ local function default_sorter(a, b)
 	local a_name, _, a_rarity, a_level, a_minLevel, a_type, a_subType, a_stackCount, a_equipLoc, a_texture = GetItemInfo(a_id)
 	local b_name, _, b_rarity, b_level, b_minLevel, b_type, b_subType, b_stackCount, b_equipLoc, b_texture = GetItemInfo(b_id)
 	
+	-- junk to the back?
+	if core.db.junk then
+		if a_rarity == 0 then return false end
+		if b_rarity == 0 then return true end
+	end
+	-- Soul shards to the bank?
+	if core.db.soul then
+		if a_id == 6265 then return false end
+		if b_id == 6265 then return true end
+	end
+	
 	-- are they the same type?
 	if item_types[a_type] == item_types[b_type] then
 		if a_rarity == b_rarity then
 			if a_type == L.ARMOR or a_type == L.WEAPON then
-				if inventory_slots[a_equipLoc] == inventory_slots[b_equipLoc] then
+				-- "or -1" because some things are classified as armor/weapon without being equipable; note Everlasting Underspore Frond
+				local a_equipLoc = inventory_slots[a_equipLoc] or -1
+				local b_equipLoc = inventory_slots[b_equipLoc] or -1
+				if a_equipLoc == b_equipLoc then
 					-- sort by level, then name
 					if a_level == b_level then
 						return a_name < b_name
@@ -117,7 +130,7 @@ local function default_sorter(a, b)
 						return a_level > b_level
 					end
 				else
-					return inventory_slots[a_equipLoc] < inventory_slots[b_equipLoc]
+					return a_equipLoc < b_equipLoc
 				end
 			else
 				if a_subType == b_subType then
