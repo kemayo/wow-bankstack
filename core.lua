@@ -129,7 +129,7 @@ function core.DoMoves()
 		
 		current_target = target
 		current_id = source_itemid
-		if (source_itemid == target_itemid) and ((target_count + source_count) > stack_size) then
+		if (source_itemid == target_itemid) and (target_count ~= stack_size) and ((target_count + source_count) > stack_size) then
 			SplitContainerItem(source_bag, source_slot, stack_size - target_count)
 		else
 			PickupContainerItem(source_bag, source_slot)

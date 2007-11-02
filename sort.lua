@@ -185,7 +185,7 @@ function core.Sort(bags, sorter)
 				local source = bag_sorted[i]
 				
 				-- A move is required, and the source isn't empty, and the item's stacks are not the same same size if it's the same item.
-				if destination ~= source and bag_ids[source] and not (bag_ids[source] == bag_ids[destination] and bag_stacks[source] ~= bag_stacks[destination]) then
+				if destination ~= source and bag_ids[source] and not ((bag_ids[source] == bag_ids[destination]) and (bag_stacks[source] == bag_stacks[destination])) then
 					update_location(source, destination)
 					table.insert(moves, 1, encode_move(source, destination))
 				end
