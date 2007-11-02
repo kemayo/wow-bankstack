@@ -86,7 +86,7 @@ local function default_sorter(a, b)
 	local b_id = bag_ids[b]
 	
 	-- is either slot empty?  If so, move it to the back.
-	if not (a_id or b_id) then return a_id end
+	if (not a_id) or (not b_id) then return a_id end
 	
 	-- are they the same item?
 	if a_id == b_id then
