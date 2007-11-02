@@ -174,7 +174,7 @@ do
 		local bag = GetInventoryItemLink("player", invslot)
 		if not bag then return false end
 		local item_type, item_subtype = select(6, GetItemInfo(bag))
-		return not (item_type == L.CONTAINER or item_subtype == L.BAG)
+		return not (item_type == L.CONTAINER and item_subtype == L.BAG)
 	end
 end
 
