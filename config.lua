@@ -33,6 +33,11 @@ local config_settings = {
 		set = function() core.db.soul = not core.db.soul end,
 		desc = "move soul shards to the end",
 	},
+	optimize = {
+		get = function() return core.db.optimize and "true" or "false" end,
+		set = function() core.db.optimize = not core.db.optimize end,
+		desc = "try to optimize moves -- experimental",
+	},
 }
 core.menu_options = {
 	help = function()

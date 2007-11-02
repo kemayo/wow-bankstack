@@ -96,6 +96,25 @@ local current_target
 local moves = {--[[encode_move(encode_bagslot(),encode_bagslot(target)),. ..--]]}
 core.moves = moves
 
+local sort_movelist
+do
+	local dirty = {}
+	local indep = {}
+	sort_movelist = function()
+		for i=#moves, 1, -1 do
+			local source, destination = decode_move(moves[i])
+			if not (dirty[source] or dirty[destination]) then
+				table.insert(indep, table.remove(moves, i))
+			end
+			dirty[source] = true
+			dirty[destination] = true
+		end
+		for _,m in ipairs(indep) do table.insert(moves, m) end
+		clear(dirty)
+		clear(indep)
+	end
+end
+
 function core.DoMoves()
 	if CursorHasItem() then
 		local itemid = link_to_id(select(3, GetCursorInfo()))
@@ -112,7 +131,9 @@ function core.DoMoves()
 	current_id = nil
 	current_target = nil
 	
+	if core.db.optimize then sort_movelist() end
 	if #moves > 0 then for i=#moves, 1, -1 do
+		if CursorHasItem() then return end
 		local source, target = decode_move(moves[i])
 		local source_bag, source_slot = decode_bagslot(source)
 		local target_bag, target_slot = decode_bagslot(target)
@@ -125,6 +146,7 @@ function core.DoMoves()
 		local source_link = GetContainerItemLink(source_bag, source_slot)
 		local source_itemid = link_to_id(source_link)
 		local target_itemid = link_to_id(GetContainerItemLink(target_bag, target_slot))
+		if not source_itemid then return end
 		local stack_size = select(8, GetItemInfo(source_itemid))
 		
 		core.announce(2, string.format(L.moving, source_link), 1,1,1)

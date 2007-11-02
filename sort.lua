@@ -77,7 +77,6 @@ local inventory_slots = {
 local bag_sorted = {}
 local bag_ids = {}
 local bag_stacks = {}
-
 local function default_sorter(a, b)
 	-- a and b are from encode_bagslot
 	-- note that "return a < b" would maintain the bag's state
