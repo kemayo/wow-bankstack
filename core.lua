@@ -1,24 +1,8 @@
---localization:
-local L = {
-	already_running = "BankStack: A stacker is already running.",
-	at_bank = "BankStack: You must be at the bank.",
-	complete = "BankStack: Complete.",
-	confused = "BankStack: Confusion. Stopping.",
-	moving = "BankStack: Moving %s.",
-	opt_set = "BankStack: %s set to %s.",
-	options = "BankStack options:",
-	perfect = "BankStack: Perfection already exists.",
-	to_move = "BankStack: %d moves to make.",
-}
---if GetLocale() == 'koKR' then
---	L = {...}
---end
-
-local BI = LibStub("LibBabble-Inventory-3.0"):GetLookupTable()
+assert(BankStackLocale, "BankStack is not yet localized for "..GetLocale())
 
 BankStack = {}
 local core = BankStack
-
+local L = BankStackLocale
 core.L = L
 
 --Events:
@@ -190,7 +174,7 @@ do
 		local bag = GetInventoryItemLink("player", invslot)
 		if not bag then return false end
 		local item_type, item_subtype = select(6, GetItemInfo(bag))
-		return not (item_type == BI["Container"] or item_subtype == BI["Bag"])
+		return not (item_type == L.CONTAINER or item_subtype == L.BAG)
 	end
 end
 

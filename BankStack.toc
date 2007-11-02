@@ -4,12 +4,9 @@
 ## Notes: From bags we came, to bank we return
 ## Version: 1
 ## X-Category: Inventory
-## X-Embeds: LibBabble-Inventory-3.0
 ## LoadOnDemand: 0
-## OptionalDeps: LibBabble-Inventory-3.0, LibRock-1.0, FuBar
+## OptionalDeps: LibRock-1.0, FuBar
 ## SavedVariables: BankStackDB
-
-lib/LibBabble-Inventory-3.0/lib.xml
 
 core.lua
 stack.lua

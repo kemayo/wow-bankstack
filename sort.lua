@@ -1,6 +1,5 @@
 local core = BankStack
 local L = core.L
-local BI = LibStub("LibBabble-Inventory-3.0"):GetLookupTable()
 
 local link_to_id = core.link_to_id
 local encode_bagslot = core.encode_bagslot
@@ -32,19 +31,19 @@ end
 
 -- Sorting:
 local item_types = {
-	[BI["Armor"]] = 1,
-	[BI["Weapon"]] = 2,
-	[BI["Quest"]] = 3,
-	[BI["Key"]] = 4,
-	[BI["Recipe"]] = 5,
-	[BI["Reagent"]] = 6,
-	[BI["Trade Goods"]] = 7,
-	[BI["Gem"]] = 8,
-	[BI["Consumable"]] = 9,
-	[BI["Container"]] = 10,
-	[BI["Quiver"]] = 11,
-	[BI["Miscellaneous"]] = 12,
-	[BI["Projectile"]] = 13,
+	[L.ARMOR] = 1,
+	[L.WEAPON] = 2,
+	[L.QUEST] = 3,
+	[L.KEY] = 4,
+	[L.RECIPE] = 5,
+	[L.REAGENT] = 6,
+	[L.TRADEGOODS] = 7,
+	[L.GEM] = 8,
+	[L.CONSUMABLE] = 9,
+	[L.CONTAINER] = 10,
+	[L.QUIVER] = 11,
+	[L.MISC] = 12,
+	[L.PROJECTILE] = 13,
 }
 local inventory_slots = {
 	[INVTYPE_AMMO] = 0,
@@ -83,8 +82,8 @@ local function default_sorter(a, b)
 	-- a and b are from encode_bagslot
 	-- note that "return a < b" would maintain the bag's state
 	-- I'm certain this could be made to be more efficient
-	local a_id = link_to_id(GetContainerItemLink(decode_bagslot(a)))
-	local b_id = link_to_id(GetContainerItemLink(decode_bagslot(b)))
+	local a_id = bag_ids[a]
+	local b_id = bag_ids[b]
 	
 	-- is either slot empty?  If so, move it to the back.
 	if not a_id then return false end
@@ -92,8 +91,8 @@ local function default_sorter(a, b)
 	
 	-- are they the same item?
 	if a_id == b_id then
-		local a_count = select(2, GetContainerItemInfo(decode_bagslot(a)))
-		local b_count = select(2, GetContainerItemInfo(decode_bagslot(b)))
+		local a_count = bag_stacks[a]
+		local b_count = bag_stacks[b]
 		if a_count == b_count then
 			-- maintain the original ordering
 			return a < b
@@ -109,7 +108,7 @@ local function default_sorter(a, b)
 	-- are they the same type?
 	if item_types[a_type] == item_types[b_type] then
 		if a_rarity == b_rarity then
-			if a_type == BI["Armor"] or a_type == BI["Weapon"] then
+			if a_type == L.ARMOR or a_type == L.WEAPON then
 				if inventory_slots[a_equipLoc] == inventory_slots[b_equipLoc] then
 					-- sort by level, then name
 					if a_level == b_level then
@@ -165,7 +164,6 @@ function core.Sort(bags, sorter)
 			local slots = GetContainerNumSlots(bag)
 			for slot=1, slots do
 				local bagslot = encode_bagslot(bag, slot)
-				--bag_state[bagslot] = bagslot
 				table.insert(bag_sorted, bagslot)
 				bag_ids[bagslot] = link_to_id(GetContainerItemLink(bag, slot))
 				bag_stacks[bagslot] = select(2, GetContainerItemInfo(bag, slot))
@@ -186,10 +184,8 @@ function core.Sort(bags, sorter)
 				local destination = encode_bagslot(bag, slot) -- This is like i, increasing as we go on.
 				local source = bag_sorted[i]
 				
-				--AceLibrary("AceConsole-2.0"):Print(destination, source, bag_ids[source], bag_ids[destination], bag_stacks[source], bag_stacks[destination])
 				-- A move is required, and the source isn't empty, and the item's stacks are not the same same size if it's the same item.
 				if destination ~= source and bag_ids[source] and not (bag_ids[source] == bag_ids[destination] and bag_stacks[source] ~= bag_stacks[destination]) then
-					--AceLibrary("AceConsole-2.0"):Print('move', bag_ids[source] and GetItemInfo(bag_ids[source]), 'from', source, 'to', destination, 'replacing', bag_ids[destination] and GetItemInfo(bag_ids[destination]))
 					update_location(source, destination)
 					table.insert(moves, 1, encode_move(source, destination))
 				end
