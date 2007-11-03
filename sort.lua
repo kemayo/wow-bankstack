@@ -12,6 +12,7 @@ SlashCmdList["SORTBAGS"] = core.SortBags
 SLASH_SORTBAGS1 = "/sort"
 SLASH_SORTBAGS2 = "/sortbags"
 
+local bagcache = {}
 function core.SortBags(arg)
 	local bags
 	if arg=="bank" then
@@ -25,7 +26,18 @@ function core.SortBags(arg)
 	else
 		bags = core.player_bags
 	end
-	core.Sort(bags)
+	core.ScanBags()
+	for _,bag in ipairs(bags) do
+		local bagtype = core.IsSpecialtyBag(bag)
+		if not bagtype then bagtype = 'Normal' end
+		if not bagcache[bagtype] then bagcache[bagtype] = {} end
+		table.insert(bagcache[bagtype], bag)
+	end
+	for _, sorted_bags in pairs(bagcache) do
+		core.Stack(sorted_bags, sorted_bags, core.is_partial)
+		core.Sort(sorted_bags)
+		clear(sorted_bags)
+	end
 	core.StartStacking()
 end
 
@@ -119,8 +131,9 @@ local function get_trade_goods_order(id)
 end
 
 local bag_sorted = {}
-local bag_ids = {}
-local bag_stacks = {}
+local bag_ids = core.bag_ids
+local bag_stacks = core.bag_stacks
+local bag_maxstacks = core.bag_maxstacks
 local function prime_sort(a, b)
 	local a_name, _, a_rarity, a_level, a_minLevel, a_type, a_subType, a_stackCount, a_equipLoc, a_texture = GetItemInfo(bag_ids[a])
 	local b_name, _, b_rarity, b_level, b_minLevel, b_type, b_subType, b_stackCount, b_equipLoc, b_texture = GetItemInfo(bag_ids[b])
@@ -203,46 +216,32 @@ local function default_sorter(a, b)
 		return item_types[a_type] < item_types[b_type]
 	end
 end
-local function update_location(from, to)
-	local from_id, from_stack = bag_ids[from], bag_stacks[from]
-	bag_ids[from], bag_stacks[from] = bag_ids[to], bag_stacks[to]
-	bag_ids[to], bag_stacks[to] = from_id, from_stack
-	for i,bs in pairs(bag_sorted) do
-		if bs == from then
-			bag_sorted[i] = to
-		elseif bs == to then
-			bag_sorted[i] = from
-		end
-	end
-end
+
 function core.Sort(bags, sorter)
 	-- bags: table, e.g. {1,2,3,4}
 	-- sorter: function or nil.  Passed to table.sort.
 	-- TODO: quivers and profession bags need to be handled differently. (ContainerIDToInventoryID...)
-	if current_id then
+	if core.running then
 		core.announce(0, L.already_running, 1, 0, 0)
 		return
 	end
 	if not sorter then sorter = default_sorter end
-	for _, bag in pairs(bags) do
-		if not core.IsSpecialtyBag(bag) then
-			local slots = GetContainerNumSlots(bag)
-			for slot=1, slots do
-				local bagslot = encode_bagslot(bag, slot)
-				table.insert(bag_sorted, bagslot)
-				bag_ids[bagslot] = link_to_id(GetContainerItemLink(bag, slot))
-				bag_stacks[bagslot] = select(2, GetContainerItemInfo(bag, slot))
-			end
+	
+	for _,bag in ipairs(bags) do
+		local slots = GetContainerNumSlots(bag)
+		for slot=1, slots do
+			table.insert(bag_sorted, encode_bagslot(bag, slot))
 		end
 	end
+	
 	table.sort(bag_sorted, sorter)
-	--for i,s in pairs(bag_sorted) do AceLibrary("AceConsole-2.0"):Print(i, GetContainerItemLink(decode_bagslot(s))) end -- handy debug list
+	--for i,s in ipairs(bag_sorted) do AceLibrary("AceConsole-2.0"):Print(i, GetContainerItemLink(decode_bagslot(s))) end -- handy debug list
 	-- When I move something from (3,12) to (0,1), the contents of (0,1) are now in (3,12).
 	-- Therefore if I find later that I need to move something from (0,1), I actually need to move whatever wound up in (3,12).
 	-- Thus we use bag_state, a hash that maps original coordinates to new locations.  When I move something, I also do "bag_state[original] = new".
 	local i = 1
-	for _, bag in pairs(bags) do
-		if not core.IsSpecialtyBag(bag) then
+	for _, bag in ipairs(bags) do
+		--if not core.IsSpecialtyBag(bag) then
 			local slots = GetContainerNumSlots(bag)
 			for slot=1, slots do
 				-- Make sure the origin slot isn't empty; if so no move needs to be scheduled.
@@ -251,15 +250,18 @@ function core.Sort(bags, sorter)
 				
 				-- A move is required, and the source isn't empty, and the item's stacks are not the same same size if it's the same item.
 				if destination ~= source and bag_ids[source] and not ((bag_ids[source] == bag_ids[destination]) and (bag_stacks[source] == bag_stacks[destination])) then
-					update_location(source, destination)
-					table.insert(moves, 1, encode_move(source, destination))
+					core.AddMove(source, destination)
+					for i,bs in pairs(bag_sorted) do
+						if bs == source then
+							bag_sorted[i] = destination
+						elseif bs == destination then
+							bag_sorted[i] = source
+						end
+					end
 				end
 				i = i + 1
 			end
-		end
+		--end
 	end
 	clear(bag_sorted)
-	clear(bag_stacks)
-	clear(bag_ids)
 end
-

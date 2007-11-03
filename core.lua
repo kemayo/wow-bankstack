@@ -45,6 +45,11 @@ for i = 0, NUM_BAG_SLOTS do
 	table.insert(player_bags, i)
 end
 core.player_bags = player_bags
+local all_bags = {BANK_CONTAINER}
+for i = 0, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
+	table.insert(all_bags, i)
+end
+core.all_bags = all_bags
 
 local function encode_bagslot(bag, slot) return (bag*100) + slot end
 local function decode_bagslot(int) return math.floor(int/100), int % 100 end
@@ -115,6 +120,48 @@ do
 	end
 end
 
+local bag_ids = {}
+local bag_stacks = {}
+local bag_maxstacks = {}
+core.bag_ids, core.bag_stacks, core.bag_maxstacks = bag_ids, bag_stacks, bag_maxstacks
+local function update_location(from, to)
+	if (bag_ids[from] == bag_ids[to]) and (bag_stacks[to] < bag_maxstacks[to]) then
+		-- If they're the same type we might have to deal with stacking.
+		local stack_size = bag_maxstacks[to]
+		if (bag_stacks[to] + bag_stacks[from]) > stack_size then
+			bag_stacks[from] = bag_stacks[from] - (stack_size - bag_stacks[to])
+			bag_stacks[to] = stack_size
+		else
+			bag_stacks[to] = bag_stacks[to] + bag_stacks[from]
+			bag_stacks[from] = nil
+			bag_ids[from] = nil
+			bag_maxstacks[from] = nil
+		end
+	else
+		bag_ids[from], bag_ids[to] = bag_ids[to], bag_ids[from]
+		bag_stacks[from], bag_stacks[to] = bag_stacks[to], bag_stacks[from]
+		bag_maxstacks[from], bag_maxstacks[to] = bag_maxstacks[to], bag_maxstacks[from]
+	end
+end
+function core.ScanBags()
+	for _, bag in pairs(all_bags) do
+		local slots = GetContainerNumSlots(bag)
+		for slot=1, slots do
+			local bagslot = encode_bagslot(bag, slot)
+			local itemid = link_to_id(GetContainerItemLink(bag, slot))
+			if itemid then
+				bag_ids[bagslot] = itemid
+				bag_stacks[bagslot] = select(2, GetContainerItemInfo(bag, slot))
+				bag_maxstacks[bagslot] = select(8, GetItemInfo(itemid))
+			end
+		end
+	end
+end
+function core.AddMove(source, destination)
+	update_location(source, destination)
+	table.insert(moves, 1, encode_move(source, destination))
+end
+
 function core.DoMoves()
 	if CursorHasItem() then
 		local itemid = link_to_id(select(3, GetCursorInfo()))
@@ -167,7 +214,12 @@ function core.DoMoves()
 end
 
 function core.StartStacking()
+	clear(bag_maxstacks)
+	clear(bag_stacks)
+	clear(bag_ids)
+	
 	if #moves > 0 then
+		core.running = true
 		core.announce(1, string.format(L.to_move, #moves), 1, 1, 1)
 		frame:Show()
 	else
@@ -176,6 +228,7 @@ function core.StartStacking()
 end
 
 function core.StopStacking(message)
+	core.running = false
 	core.bankrequired = false
 	current_id = nil
 	current_target = nil
@@ -198,6 +251,9 @@ do
 		local bag = GetInventoryItemLink("player", invslot)
 		if not bag then return false end
 		local item_type, item_subtype = select(6, GetItemInfo(bag))
-		return not (item_type == L.CONTAINER and item_subtype == L.BAG)
+		if item_type == L.CONTAINER and item_subtype == L.BAG then
+			return false
+		end
+		return item_subtype
 	end
 end

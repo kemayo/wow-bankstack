@@ -8,6 +8,10 @@ local encode_move = core.encode_move
 local clear = core.clear
 local moves = core.moves
 
+local bag_ids = core.bag_ids
+local bag_stacks = core.bag_stacks
+local bag_maxstacks = core.bag_maxstacks
+
 SlashCmdList["BANKSTACK"] = core.BankStack
 SLASH_BANKSTACK1 = "/bankstack"
 SlashCmdList["COMPRESSBAGS"] = core.Compress
@@ -20,6 +24,7 @@ function core.BankStack(arg)
 		return
 	end
 	core.bankrequired = true
+	core.ScanBags()
 	core.Stack(
 		arg=="reverse" and core.bank_bags or core.player_bags,
 		arg=="reverse" and core.player_bags or core.bank_bags
@@ -31,8 +36,10 @@ do
 	-- while compressing bags.
 	local function is_partial(itemid, bag, slot)
 		-- (stacksize - count) > 0
-		return (select(8, GetItemInfo(itemid)) - select(2, GetContainerItemInfo(bag, slot))) > 0
+		local bagslot = encode_bagslot(bag, slot)
+		return (bag_maxstacks[bagslot] - bag_stacks[bagslot]) > 0
 	end
+	core.is_partial = is_partial
 	function core.Compress(arg)
 		local bags
 		if arg=="bank" then
@@ -46,6 +53,7 @@ do
 		else
 			bags = core.player_bags
 		end
+		core.ScanBags()
 		core.Stack(bags, bags, is_partial)
 		core.StartStacking()
 	end
@@ -54,8 +62,6 @@ end
 -- Stacking:
 
 local target_items = {--[[link = available_slots--]]}
-local target_links = {--[[encode_bagslot = link--]]}
-local target_sinks = {--[[encode_bagslot = room_in_slot--]]}
 local source_used = {}
 
 local function default_can_move() return true end
@@ -69,78 +75,56 @@ function core.Stack(source_bags, target_bags, can_move)
 	-- Note: This function just creates a list of moves to make, then unhides
 	-- frame to get its OnUpdate going.
 	-- TODO: Stack so remaining empty stacks are earlier in the bag, and get used up first?
-	if current_id then
+	if core.running then
 		core.announce(0, L.already_running, 1, 0, 0)
 		return
 	end
 	if not can_move then can_move = default_can_move end
 	-- Model the target bags.
-	for _,bag in pairs(target_bags) do
+	for _, bag in ipairs(target_bags) do
 		local slots = GetContainerNumSlots(bag)
 		for slot=1, slots do
-			local link = link_to_id(GetContainerItemLink(bag, slot))
-			if link then
-				local stack_size = select(8, GetItemInfo(link))
-				local count = select(2, GetContainerItemInfo(bag, slot))
-				-- If this stack is full we don't care about it
-				-- Sadly, making this more general means we can't filter on GetItemCount(link) here, too.
-				if count ~= stack_size then
-					local id = encode_bagslot(bag, slot)
-					target_items[link] = (target_items[link] and target_items[link] or 0) + 1
-					target_links[id] = link
-					target_sinks[id] = stack_size - count
-				end
+			local bagslot = encode_bagslot(bag, slot)
+			if bag_stacks[bagslot] ~= bag_maxstacks[bagslot] then
+				-- This is an item type that we'll want to bother moving.
+				local itemid = bag_ids[bagslot]
+				target_items[itemid] = (target_items[itemid] and target_items[itemid] or 0) + 1
 			end
 		end
 	end
 	-- Now go through the source bags...
-	for _,bag in pairs(source_bags) do
-		local slots = GetContainerNumSlots(bag)
-		for slot=1, slots do
-			local link = link_to_id(GetContainerItemLink(bag, slot))
-			if link and target_items[link] and can_move(link, bag, slot) then
+	--for _,bag in pairs(source_bags) do
+	for i=#source_bags, 1, -1 do
+		local bag = source_bags[i]
+		for slot=GetContainerNumSlots(bag), 1, -1 do
+			local source_slot = encode_bagslot(bag, slot)
+			local itemid = bag_ids[source_slot]
+			if itemid and target_items[itemid] and can_move(itemid, bag, slot) then
 				--there's an item in this slot *and* we have room for more of it in the bank somewhere
-				local source_slot = encode_bagslot(bag, slot)
-				local count = select(2, GetContainerItemInfo(bag, slot))
-				for target_slot, target_link in pairs(target_links) do
-					if not target_items[link] then break end
-					-- can't stack to itself, or to a slot that has already been used as a source:
-					if target_link == link and target_slot ~= source_slot and not source_used[target_slot] then
-						-- Schedule moving from this slot to the bank slot.
-						table.insert(moves, encode_move(source_slot, target_slot))
-						source_used[source_slot] = true
-						-- Deal with the bank slot:
-						local room = target_sinks[target_slot]
-						if room > count then
-							-- This bag slot is emptied, and there's still room in the bank slot for more
-							target_sinks[target_slot] = room - count
-							if target_sinks[source_slot] then
-								target_items[link] = (target_items[link] > 1) and (target_items[link] - 1) or nil
-								target_sinks[source_slot] = nil
-								target_links[source_slot] = nil
-							end
-							break
-						else
-							-- The bank slot will be filled; remove it from future consideration
-							target_items[link] = (target_items[link] > 1) and (target_items[link] - 1) or nil
-							target_sinks[target_slot] = nil
-							target_links[target_slot] = nil
-							if room == count then
-								-- This bag slot is emptied; stop searching the bank for this item
-								if target_sinks[source_slot] then
-									-- If this source slot is also in the targets, remove it.
-									target_sinks[source_slot] = nil
-									target_links[source_slot] = nil
-									target_items[link] = (target_items[link] > 1) and (target_items[link] - 1) or nil
+				--for target_slot, target_id in pairs(bag_ids) do
+				--for _,tbag in ipairs(target_bags) do
+				for ii=#target_bags, 1, -1 do
+					local tbag = target_bags[ii]
+					for tslot=GetContainerNumSlots(tbag), 1, -1 do
+						local target_slot = encode_bagslot(tbag, tslot)
+						local target_id = bag_ids[target_slot]
+						if target_id then
+							if not target_items[itemid] then break end
+							-- can't stack to itself, or to a full slot, or to a slot that has already been used as a source:
+							if target_id == itemid and target_slot ~= source_slot and not (bag_stacks[target_slot]==bag_maxstacks[target_slot]) and not source_used[target_slot] then
+								-- Schedule moving from this slot to the bank slot.
+								core.AddMove(source_slot, target_slot)
+								source_used[source_slot] = true
+								
+								--if (bag_maxstacks[target_slot] - bag_stacks[target_slot]) > bag_stacks[source_slot] then
+								if bag_stacks[target_slot] == bag_maxstacks[target_slot] then
+									target_items[itemid] = (target_items[itemid] > 1) and (target_items[itemid] - 1) or nil
 								end
-								break
-							else
-								-- Still items in this bag slot; update the count and keep looking in target.
-								if target_sinks[source_slot] then
-									-- If this source slot is also in the targets, update its counts.
-									target_sinks[source_slot] = target_sinks[source_slot] - room
+								if bag_stacks[source_slot] == 0 then
+									-- This bag slot is emptied, move on.
+									target_items[itemid] = (target_items[itemid] > 1) and (target_items[itemid] - 1) or nil
+									break
 								end
-								count = count - room
 							end
 						end
 					end
@@ -150,7 +134,5 @@ function core.Stack(source_bags, target_bags, can_move)
 	end
 	-- clean up the various cache tables
 	clear(target_items)
-	clear(target_links)
-	clear(target_sinks)
 	clear(source_used)
 end
