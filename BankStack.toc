@@ -5,7 +5,7 @@
 ## Version: 1
 ## X-Category: Inventory
 ## LoadOnDemand: 0
-## OptionalDeps: LibRock-1.0, FuBar
+## OptionalDeps: LibRock-1.0, FuBar, LibFuBarPlugin-3.0
 ## SavedVariables: BankStackDB
 
 local.enUS.lua
