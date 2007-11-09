@@ -13,7 +13,7 @@ local bag_stacks = core.bag_stacks
 local bag_maxstacks = core.bag_maxstacks
 
 SlashCmdList["BANKSTACK"] = core.BankStack
-SLASH_BANKSTACK1 = "/bankstack"
+SLASH_BANKSTACK1 = "/stack"
 SlashCmdList["COMPRESSBAGS"] = core.Compress
 SLASH_COMPRESSBAGS1 = "/compress"
 SLASH_COMPRESSBAGS2 = "/compressbags"
