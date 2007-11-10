@@ -13,9 +13,10 @@ local bag_stacks = core.bag_stacks
 local bag_maxstacks = core.bag_maxstacks
 
 function core.BankStack(arg)
-	if #arg > 2 then
+	local from, to
+	if arg and (#arg > 2) then
 		-- 2 because "x y" would be the minimal declaration of two groups.
-		local from, to = string.match(arg, "^([^%s]+)%s+([^%s]+)$")
+		from, to = string.match(arg, "^([^%s]+)%s+([^%s]+)$")
 		from = core.get_group(from)
 		to = core.get_group(to)
 	end
