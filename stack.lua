@@ -12,23 +12,26 @@ local bag_ids = core.bag_ids
 local bag_stacks = core.bag_stacks
 local bag_maxstacks = core.bag_maxstacks
 
-SlashCmdList["BANKSTACK"] = core.BankStack
-SLASH_BANKSTACK1 = "/stack"
-SlashCmdList["COMPRESSBAGS"] = core.Compress
-SLASH_COMPRESSBAGS1 = "/compress"
-SLASH_COMPRESSBAGS2 = "/compressbags"
-
 function core.BankStack(arg)
-	if not core.bank_open then
-		core.announce(0, L.at_bank, 1, 0, 0)
-		return
+	if #arg > 2 then
+		-- 2 because "x y" would be the minimal declaration of two groups.
+		local from, to = string.match(arg, "^([^%s]+)%s+([^%s]+)$")
+		from = core.get_group(from)
+		to = core.get_group(to)
 	end
-	core.bankrequired = true
+	if not (from and to) then
+		from = core.player_bags
+		to = core.bank_bags
+	end
+	if core.contains_bank_bag(from) or core.contains_bank_bag(to) then
+		if not core.bank_open then
+			core.announce(0, L.at_bank, 1, 0, 0)
+			return
+		end
+		core.bankrequired = true
+	end
 	core.ScanBags()
-	core.Stack(
-		arg=="reverse" and core.bank_bags or core.player_bags,
-		arg=="reverse" and core.player_bags or core.bank_bags
-	)
+	core.Stack(from, to)
 	core.StartStacking()
 end
 do
@@ -41,17 +44,16 @@ do
 	end
 	core.is_partial = is_partial
 	function core.Compress(arg)
-		local bags
-		if arg=="bank" then
+		local bags = core.get_group(arg)
+		if not bags then
+			bags = core.player_bags
+		end
+		if core.contains_bank_bag(bags) then
 			if not core.bank_open then
 				core.announce(0, L.at_bank, 1, 0, 0)
 				return
-			else
-				bags = core.bank_bags
-				core.bankrequired = true
 			end
-		else
-			bags = core.player_bags
+			core.bankrequired = true
 		end
 		core.ScanBags()
 		core.Stack(bags, bags, is_partial)
@@ -85,7 +87,7 @@ function core.Stack(source_bags, target_bags, can_move)
 		local slots = GetContainerNumSlots(bag)
 		for slot=1, slots do
 			local bagslot = encode_bagslot(bag, slot)
-			if bag_stacks[bagslot] ~= bag_maxstacks[bagslot] then
+			if (not core.db.ignore[bagslot]) and bag_stacks[bagslot] ~= bag_maxstacks[bagslot] then
 				-- This is an item type that we'll want to bother moving.
 				local itemid = bag_ids[bagslot]
 				target_items[itemid] = (target_items[itemid] and target_items[itemid] or 0) + 1
@@ -99,7 +101,7 @@ function core.Stack(source_bags, target_bags, can_move)
 		for slot=GetContainerNumSlots(bag), 1, -1 do
 			local source_slot = encode_bagslot(bag, slot)
 			local itemid = bag_ids[source_slot]
-			if itemid and target_items[itemid] and can_move(itemid, bag, slot) then
+			if (not core.db.ignore[source_slot]) and itemid and target_items[itemid] and can_move(itemid, bag, slot) then
 				--there's an item in this slot *and* we have room for more of it in the bank somewhere
 				--for target_slot, target_id in pairs(bag_ids) do
 				--for _,tbag in ipairs(target_bags) do
@@ -108,7 +110,7 @@ function core.Stack(source_bags, target_bags, can_move)
 					for tslot=GetContainerNumSlots(tbag), 1, -1 do
 						local target_slot = encode_bagslot(tbag, tslot)
 						local target_id = bag_ids[target_slot]
-						if target_id then
+						if (not core.db.ignore[target_slot]) and target_id then
 							if not target_items[itemid] then break end
 							-- can't stack to itself, or to a full slot, or to a slot that has already been used as a source:
 							if target_id == itemid and target_slot ~= source_slot and not (bag_stacks[target_slot]==bag_maxstacks[target_slot]) and not source_used[target_slot] then
@@ -136,3 +138,9 @@ function core.Stack(source_bags, target_bags, can_move)
 	clear(target_items)
 	clear(source_used)
 end
+
+SlashCmdList["BANKSTACK"] = core.BankStack
+SLASH_BANKSTACK1 = "/stack"
+SlashCmdList["COMPRESSBAGS"] = core.Compress
+SLASH_COMPRESSBAGS1 = "/compress"
+SLASH_COMPRESSBAGS2 = "/compressbags"

@@ -10,8 +10,10 @@ function fu:OnFuBarClick(button)
 		return core.StopStacking("BankStack: Aborted.")
 	elseif IsShiftKeyDown() then
 		if IsAltKeyDown() then
-			core.BankStack("reverse")
+			-- Stack from bank to bags
+			core.BankStack("bank bags")
 		else
+			-- Stack from bags to bank
 			core.BankStack()
 		end
 	elseif IsControlKeyDown() then

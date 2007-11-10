@@ -51,6 +51,30 @@ for i = 0, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
 end
 core.all_bags = all_bags
 
+local function is_valid_bag(bagid)
+	return (bagid == BANK_CONTAINER or ((bagid >= 0) and bagid <= NUM_BAG_SLOTS+NUM_BANKBAGSLOTS))
+end
+core.is_valid_bag = is_valid_bag
+local function is_bank_bag(bagid)
+	return (bagid == BANK_CONTAINER or (bagid > NUM_BAG_SLOTS and bagid <= NUM_BANKBAGSLOTS))
+end
+core.is_bank_bag = is_bank_bag
+
+local core_groups = {
+	bank = bank_bags,
+	bags = player_bags,
+	all = all_bags,
+}
+core.groups = core_groups
+function core.get_group(id)
+	return core_groups[id] or core.db.groups[id]
+end
+function core.contains_bank_bag(group)
+	for _,bag in ipairs(group) do
+		if is_bank_bag(bag) then return true end
+	end
+end
+
 local function encode_bagslot(bag, slot) return (bag*100) + slot end
 local function decode_bagslot(int) return math.floor(int/100), int % 100 end
 local function encode_move(source, target) return (source*10000)+target end
@@ -78,13 +102,22 @@ core.link_to_id = link_to_id
 core.clear = clear
 
 function core.PLAYER_ENTERING_WORLD()
+	local defaults = {
+		verbosity=1,
+		junk=true,
+		soul=true,
+		ignore={},
+		groups={},
+	}
 	if not BankStackDB then
-		BankStackDB = {
-			verbosity=1,
-			junk=true,
-			soul=true,
-		}
+		BankStackDB = {}
 	end
+	for k,v in pairs(defaults) do
+		if not BankStackDB[k] then
+			BankStackDB[k] = v
+		end
+	end
+	
 	core.db = BankStackDB
 	frame:UnregisterEvent("PLAYER_ENTERING_WORLD")
 end
@@ -178,7 +211,7 @@ function core.DoMoves()
 	current_id = nil
 	current_target = nil
 	
-	if core.db.optimize then sort_movelist() end
+	sort_movelist()
 	if #moves > 0 then for i=#moves, 1, -1 do
 		if CursorHasItem() then return end
 		local source, target = decode_move(moves[i])

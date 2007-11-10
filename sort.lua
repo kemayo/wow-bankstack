@@ -8,24 +8,20 @@ local encode_move = core.encode_move
 local clear = core.clear
 local moves = core.moves
 
-SlashCmdList["SORTBAGS"] = core.SortBags
-SLASH_SORTBAGS1 = "/sort"
-SLASH_SORTBAGS2 = "/sortbags"
-
 local bagcache = {}
 function core.SortBags(arg)
-	local bags
-	if arg=="bank" then
+	local bags = core.get_group(arg)
+	if not bags then
+		bags = core.player_bags
+	end
+	if core.contains_bank_bag(bags) then
 		if not core.bank_open then
 			core.announce(0, L.at_bank, 1, 0, 0)
 			return
-		else
-			bags = core.bank_bags
-			core.bankrequired = true
 		end
-	else
-		bags = core.player_bags
+		core.bankrequired = true
 	end
+
 	core.ScanBags()
 	for _,bag in ipairs(bags) do
 		local bagtype = core.IsSpecialtyBag(bag)
@@ -230,7 +226,10 @@ function core.Sort(bags, sorter)
 	for _,bag in ipairs(bags) do
 		local slots = GetContainerNumSlots(bag)
 		for slot=1, slots do
-			table.insert(bag_sorted, encode_bagslot(bag, slot))
+			local bagslot = encode_bagslot(bag, slot)
+			if (not core.db.ignore[bagslot]) then
+				table.insert(bag_sorted, bagslot)
+			end
 		end
 	end
 	
@@ -248,20 +247,28 @@ function core.Sort(bags, sorter)
 				local destination = encode_bagslot(bag, slot) -- This is like i, increasing as we go on.
 				local source = bag_sorted[i]
 				
-				-- A move is required, and the source isn't empty, and the item's stacks are not the same same size if it's the same item.
-				if destination ~= source and bag_ids[source] and not ((bag_ids[source] == bag_ids[destination]) and (bag_stacks[source] == bag_stacks[destination])) then
-					core.AddMove(source, destination)
-					for i,bs in pairs(bag_sorted) do
-						if bs == source then
-							bag_sorted[i] = destination
-						elseif bs == destination then
-							bag_sorted[i] = source
+				-- If destination is ignored we skip everything here
+				-- Notably, i does not get incremented.
+				if not core.db.ignore[destination] then
+					-- A move is required, and the source isn't empty, and the item's stacks are not the same same size if it's the same item.
+					if destination ~= source and bag_ids[source] and not ((bag_ids[source] == bag_ids[destination]) and (bag_stacks[source] == bag_stacks[destination])) then
+						core.AddMove(source, destination)
+						for i,bs in pairs(bag_sorted) do
+							if bs == source then
+								bag_sorted[i] = destination
+							elseif bs == destination then
+								bag_sorted[i] = source
+							end
 						end
 					end
+					i = i + 1
 				end
-				i = i + 1
 			end
 		--end
 	end
 	clear(bag_sorted)
 end
+
+SlashCmdList["SORT"] = core.SortBags
+SLASH_SORT1 = "/sort"
+SLASH_SORT2 = "/sortbags"
