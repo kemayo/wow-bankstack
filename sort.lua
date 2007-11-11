@@ -270,7 +270,6 @@ function core.Sort(bags, sorter)
 							bag_locked[source] = true
 							bag_locked[destination] = true
 						else
-							AceLibrary("AceConsole-2.0"):Print("Skipping", source, destination)
 							another_pass_needed = true
 						end
 					end
