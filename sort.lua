@@ -81,7 +81,8 @@ local inventory_slots = {
 	INVTYPE_RELIC = 24,
 	INVTYPE_TABARD = 25,
 }
--- Trade goods have crappy subtypes.  They are "trade goods", "devices", "parts", and "explosives".  Yes, three for Engineering, one for the rest.
+-- Trade goods have crappy subtypes.  They are "trade goods", "devices", "parts", and "explosives".
+--  Yes, three for Engineering, one for the rest.
 local trade_goods = {
 	--primals and motes
 	primal = {23571, 22451, 22452, 21884, 21886, 22457, 22456, 21885, 22572, 22573, 22574, 22575, 22576, 22577, 22578,},
@@ -126,7 +127,6 @@ local function get_trade_goods_order(id)
 	return trade_goods_order[cat]
 end
 
-local bag_sorted = {}
 local bag_ids = core.bag_ids
 local bag_stacks = core.bag_stacks
 local bag_maxstacks = core.bag_maxstacks
@@ -213,6 +213,17 @@ local function default_sorter(a, b)
 	end
 end
 
+local bag_sorted = {}
+local bag_locked = {}
+local function update_sorted(source, destination)
+	for i,bs in pairs(bag_sorted) do
+		if bs == source then
+			bag_sorted[i] = destination
+		elseif bs == destination then
+			bag_sorted[i] = source
+		end
+	end
+end
 function core.Sort(bags, sorter)
 	-- bags: table, e.g. {1,2,3,4}
 	-- sorter: function or nil.  Passed to table.sort.
@@ -235,12 +246,12 @@ function core.Sort(bags, sorter)
 	
 	table.sort(bag_sorted, sorter)
 	--for i,s in ipairs(bag_sorted) do AceLibrary("AceConsole-2.0"):Print(i, GetContainerItemLink(decode_bagslot(s))) end -- handy debug list
-	-- When I move something from (3,12) to (0,1), the contents of (0,1) are now in (3,12).
-	-- Therefore if I find later that I need to move something from (0,1), I actually need to move whatever wound up in (3,12).
-	-- Thus we use bag_state, a hash that maps original coordinates to new locations.  When I move something, I also do "bag_state[original] = new".
-	local i = 1
-	for _, bag in ipairs(bags) do
-		--if not core.IsSpecialtyBag(bag) then
+	
+	local another_pass_needed = true
+	while another_pass_needed do
+		another_pass_needed = false
+		local i = 1
+		for _, bag in ipairs(bags) do
 			local slots = GetContainerNumSlots(bag)
 			for slot=1, slots do
 				-- Make sure the origin slot isn't empty; if so no move needs to be scheduled.
@@ -252,19 +263,22 @@ function core.Sort(bags, sorter)
 				if not core.db.ignore[destination] then
 					-- A move is required, and the source isn't empty, and the item's stacks are not the same same size if it's the same item.
 					if destination ~= source and bag_ids[source] and not ((bag_ids[source] == bag_ids[destination]) and (bag_stacks[source] == bag_stacks[destination])) then
-						core.AddMove(source, destination)
-						for i,bs in pairs(bag_sorted) do
-							if bs == source then
-								bag_sorted[i] = destination
-							elseif bs == destination then
-								bag_sorted[i] = source
-							end
+						if not (bag_locked[source] or bag_locked[destination]) then
+							-- If we've moved to the destination or source slots before in this run then we pass and request another run.
+							core.AddMove(source, destination)
+							update_sorted(source, destination)
+							bag_locked[source] = true
+							bag_locked[destination] = true
+						else
+							AceLibrary("AceConsole-2.0"):Print("Skipping", source, destination)
+							another_pass_needed = true
 						end
 					end
 					i = i + 1
 				end
 			end
-		--end
+		end
+		clear(bag_locked)
 	end
 	clear(bag_sorted)
 end

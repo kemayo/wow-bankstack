@@ -134,30 +134,14 @@ local current_target
 local moves = {--[[encode_move(encode_bagslot(),encode_bagslot(target)),. ..--]]}
 core.moves = moves
 
-local sort_movelist
-do
-	local dirty = {}
-	local indep = {}
-	sort_movelist = function()
-		for i=#moves, 1, -1 do
-			local source, destination = decode_move(moves[i])
-			if not (dirty[source] or dirty[destination]) then
-				table.insert(indep, table.remove(moves, i))
-			end
-			dirty[source] = true
-			dirty[destination] = true
-		end
-		for _,m in ipairs(indep) do table.insert(moves, m) end
-		clear(dirty)
-		clear(indep)
-	end
-end
-
 local bag_ids = {}
 local bag_stacks = {}
 local bag_maxstacks = {}
 core.bag_ids, core.bag_stacks, core.bag_maxstacks = bag_ids, bag_stacks, bag_maxstacks
 local function update_location(from, to)
+	-- When I move something from (3,12) to (0,1), the contents of (0,1) are now in (3,12).
+	-- Therefore if I find later that I need to move something from (0,1), I actually need to move whatever wound up in (3,12).
+	-- This function updates the various cache tables to reflect current locations.
 	if (bag_ids[from] == bag_ids[to]) and (bag_stacks[to] < bag_maxstacks[to]) then
 		-- If they're the same type we might have to deal with stacking.
 		local stack_size = bag_maxstacks[to]
@@ -211,7 +195,6 @@ function core.DoMoves()
 	current_id = nil
 	current_target = nil
 	
-	sort_movelist()
 	if #moves > 0 then for i=#moves, 1, -1 do
 		if CursorHasItem() then return end
 		local source, target = decode_move(moves[i])
