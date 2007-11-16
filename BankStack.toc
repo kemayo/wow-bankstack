@@ -13,6 +13,7 @@ local.enUS.lua
 core.lua
 stack.lua
 sort.lua
+fill.lua
 config.lua
 
 fu.lua

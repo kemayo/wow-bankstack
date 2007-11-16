@@ -14,13 +14,7 @@ function core.SortBags(arg)
 	if not bags then
 		bags = core.player_bags
 	end
-	if core.contains_bank_bag(bags) then
-		if not core.bank_open then
-			core.announce(0, L.at_bank, 1, 0, 0)
-			return
-		end
-		core.bankrequired = true
-	end
+	if core.check_for_banks(bags) then return end
 
 	core.ScanBags()
 	for _,bag in ipairs(bags) do
@@ -170,10 +164,17 @@ local function default_sorter(a, b)
 		if a_rarity == 0 then return false end
 		if b_rarity == 0 then return true end
 	end
-	-- Soul shards to the bank?
+	-- Soul shards to the back?
 	if core.db.soul then
 		if a_id == 6265 then return false end
 		if b_id == 6265 then return true end
+	end
+	-- Conjured items to the back?
+	if core.db.conjured then
+		local a_bag, a_slot = decode_bagslot(a)
+		if core.CheckTooltipFor(a_bag, a_slot, ITEM_CONJURED) then return false end
+		local b_bag, b_slot = decode_bagslot(b)
+		if core.CheckTooltipFor(b_bag, b_slot, ITEM_CONJURED) then return true end
 	end
 	
 	-- are they the same type?
@@ -227,54 +228,47 @@ end
 function core.Sort(bags, sorter)
 	-- bags: table, e.g. {1,2,3,4}
 	-- sorter: function or nil.  Passed to table.sort.
-	-- TODO: quivers and profession bags need to be handled differently. (ContainerIDToInventoryID...)
 	if core.running then
 		core.announce(0, L.already_running, 1, 0, 0)
 		return
 	end
 	if not sorter then sorter = default_sorter end
 	
-	for _,bag in ipairs(bags) do
-		local slots = GetContainerNumSlots(bag)
-		for slot=1, slots do
-			local bagslot = encode_bagslot(bag, slot)
-			if (not core.db.ignore[bagslot]) then
-				table.insert(bag_sorted, bagslot)
-			end
+	for _, bag, slot in core.IterateBags(bags) do
+		local bagslot = encode_bagslot(bag, slot)
+		if (not core.db.ignore[bagslot]) then
+			table.insert(bag_sorted, bagslot)
 		end
 	end
 	
 	table.sort(bag_sorted, sorter)
-	--for i,s in ipairs(bag_sorted) do AceLibrary("AceConsole-2.0"):Print(i, GetContainerItemLink(decode_bagslot(s))) end -- handy debug list
+	--for i,s in ipairs(bag_sorted) do AceLibrary("AceConsole-2.0"):Print(i, core.GetItemLink(decode_bagslot(s))) end -- handy debug list
 	
 	local another_pass_needed = true
 	while another_pass_needed do
 		another_pass_needed = false
 		local i = 1
-		for _, bag in ipairs(bags) do
-			local slots = GetContainerNumSlots(bag)
-			for slot=1, slots do
-				-- Make sure the origin slot isn't empty; if so no move needs to be scheduled.
-				local destination = encode_bagslot(bag, slot) -- This is like i, increasing as we go on.
-				local source = bag_sorted[i]
-				
-				-- If destination is ignored we skip everything here
-				-- Notably, i does not get incremented.
-				if not core.db.ignore[destination] then
-					-- A move is required, and the source isn't empty, and the item's stacks are not the same same size if it's the same item.
-					if destination ~= source and bag_ids[source] and not ((bag_ids[source] == bag_ids[destination]) and (bag_stacks[source] == bag_stacks[destination])) then
-						if not (bag_locked[source] or bag_locked[destination]) then
-							-- If we've moved to the destination or source slots before in this run then we pass and request another run.
-							core.AddMove(source, destination)
-							update_sorted(source, destination)
-							bag_locked[source] = true
-							bag_locked[destination] = true
-						else
-							another_pass_needed = true
-						end
+		for _, bag, slot in core.IterateBags(bags) do
+			-- Make sure the origin slot isn't empty; if so no move needs to be scheduled.
+			local destination = encode_bagslot(bag, slot) -- This is like i, increasing as we go on.
+			local source = bag_sorted[i]
+			
+			-- If destination is ignored we skip everything here
+			-- Notably, i does not get incremented.
+			if not core.db.ignore[destination] then
+				-- A move is required, and the source isn't empty, and the item's stacks are not the same same size if it's the same item.
+				if destination ~= source and bag_ids[source] and not ((bag_ids[source] == bag_ids[destination]) and (bag_stacks[source] == bag_stacks[destination])) then
+					if not (bag_locked[source] or bag_locked[destination]) then
+						-- If we've moved to the destination or source slots before in this run then we pass and request another run.
+						core.AddMove(source, destination)
+						update_sorted(source, destination)
+						bag_locked[source] = true
+						bag_locked[destination] = true
+					else
+						another_pass_needed = true
 					end
-					i = i + 1
 				end
+				i = i + 1
 			end
 		end
 		clear(bag_locked)

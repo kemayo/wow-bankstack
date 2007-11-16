@@ -33,6 +33,11 @@ local config_settings = {
 		set = function() core.db.soul = not core.db.soul end,
 		desc = "move soul shards to the end",
 	},
+	conjured = {
+		get = function() return core.db.conjured and "true" or "false" end,
+		set = function() core.db.conjured = not core.db.conjured end,
+		desc = "move conjured items to the end",
+	},
 }
 core.menu_options = {
 	help = function()
@@ -44,6 +49,7 @@ core.menu_options = {
 		core.announce(0, "/stack bank bags -- fills stacks in your bags from your bank", 1, 1, 1)
 		core.announce(0, "/compress -- merges stacks in your bags", 1, 1, 1)
 		core.announce(0, "/compress bank -- merges stacks in your bank", 1, 1, 1)
+		core.announce(0, "/fill -- fills empty slots in your bank from your bags", 1, 1, 1)
 	end,
 	config = function(arg)
 		local command, arguments = string.match(arg, "^(%a+) ?(.*)$")

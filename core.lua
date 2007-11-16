@@ -10,12 +10,14 @@ local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("BANKFRAME_OPENED")
 frame:RegisterEvent("BANKFRAME_CLOSED")
+frame:RegisterEvent("GUILDBANKFRAME_OPENED")
+frame:RegisterEvent("GUILDBANKFRAME_CLOSED")
 frame:SetScript("OnEvent", function(this, event, ...)
     core[event](...)
 end)
 local t = 0
 frame:SetScript("OnUpdate", function()
-	if core.bankrequired and not core.bank_open then
+	if (core.bankrequired and not core.bank_open) or (core.guildbankrequired and not core.guild_bank_open) then
 		core.StopStacking(L.at_bank)
 	end
 	t = t + arg1
@@ -50,6 +52,12 @@ for i = 0, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
 	table.insert(all_bags, i)
 end
 core.all_bags = all_bags
+local guild = {51,52,53,54,55,56}
+core.guild = guild
+local all_bags_with_guild = {}
+for _,bag in ipairs(all_bags) do table.insert(all_bags_with_guild, bag) end
+for _,bag in ipairs(guild) do table.insert(all_bags_with_guild, bag) end
+core.all_bags_with_guild = all_bags_with_guild
 
 local function is_valid_bag(bagid)
 	return (bagid == BANK_CONTAINER or ((bagid >= 0) and bagid <= NUM_BAG_SLOTS+NUM_BANKBAGSLOTS))
@@ -59,11 +67,19 @@ local function is_bank_bag(bagid)
 	return (bagid == BANK_CONTAINER or (bagid > NUM_BAG_SLOTS and bagid <= NUM_BANKBAGSLOTS))
 end
 core.is_bank_bag = is_bank_bag
+local function is_guild_bank_bag(bagid)
+	-- Note that this is an artificial slot id, which we're using internally to trigger usage of guild bank functions.
+	-- Guild bank slots are: 51, 52, 53, 54, 55, 56.
+	-- I couldn't find a constant for the maximum number of guild bank tabs; it's currently 6.
+	return (bagid > 50 and bagid <= 56)
+end
+core.is_guild_bank_bag = is_guild_bank_bag
 
 local core_groups = {
 	bank = bank_bags,
 	bags = player_bags,
 	all = all_bags,
+	guild = guild,
 }
 core.groups = core_groups
 function core.get_group(id)
@@ -72,6 +88,52 @@ end
 function core.contains_bank_bag(group)
 	for _,bag in ipairs(group) do
 		if is_bank_bag(bag) then return true end
+	end
+end
+function core.contains_guild_bank_bag(group)
+	for _,bag in ipairs(group) do
+		if is_guild_bank_bag(bag) then return true end
+	end
+end
+
+function core.check_for_banks(bags)
+	--Check {bags} to see if any of them are in the bank / guild bank.  Print a warning if they are.
+	if core.contains_bank_bag(bags) then
+		if not core.bank_open then
+			core.announce(0, L.at_bank, 1, 0, 0)
+			return true
+		end
+		core.bankrequired = true
+	end
+	if core.contains_guild_bank_bag(bags) then
+		if not core.guild_bank_open then
+			core.announce(0, L.at_bank, 1, 0, 0)
+			return true
+		end
+		core.guildbankrequired = true
+	end
+end
+
+do
+	local tooltip
+	function core.CheckTooltipFor(bag, slot, text)
+		if not tooltip then
+			tooltip = CreateFrame("GameTooltip", "BankStackTooltip", nil, "GameTooltipTemplate")
+			tooltip:SetOwner(UIParent, "ANCHOR_NONE")
+			--core.tooltip = tooltip
+		end
+		if is_guild_bank_bag(bag) then
+			tooltip:SetGuildBankItem(bag-50, slot)
+		else
+			tooltip:SetBagItem(bag, slot)
+		end
+		for i=2, tooltip:NumLines() do
+			local left = _G["BankStackTooltipTextLeft"..i]
+			--local right = _G["BankStackTooltipTextRight"..i]
+			if left and left:IsShown() and string.match(left:GetText(), text) then return true end
+			--if right and right:IsShown() and string.match(right:GetText(), text) then return true end
+		end
+		--tooltip:ClearLines()
 	end
 end
 
@@ -101,11 +163,104 @@ core.decode_move = decode_move
 core.link_to_id = link_to_id
 core.clear = clear
 
+do
+	function bagiter_forwards(baglist, i)
+		i = i + 1
+		local step = 1
+		for _,bag in ipairs(baglist) do
+			for slot=1, core.GetNumSlots(bag) do
+				if step == i then
+					return i, bag, slot
+				end
+				step = step + 1
+			end
+		end
+	end
+	function bagiter_backwards(baglist, i)
+		i = i + 1
+		local step = 1
+		for ii=#baglist, 1, -1 do
+			local bag = baglist[ii]
+			for slot=core.GetNumSlots(bag), 1, -1 do
+				if step == i then
+					return i, bag, slot
+				end
+				step = step + 1
+			end
+		end
+	end
+
+	-- Iterate over bags and slots
+	-- e.g. for _, bag, slot in core.IterateBags({1,2,3}) do ... end
+	function core.IterateBags(baglist, reverse)
+		return (reverse and bagiter_backwards or bagiter_forwards), baglist, 0
+	end
+end
+
+-- Wrapper functions to allow for pretending that the guild bank and bags are the same.
+function core.GetNumSlots(bag)
+	-- The main complication here is the guild bank.
+	if is_guild_bank_bag(bag) then
+		local tab = bag - 50
+		local name, _, canView, canDeposit, numWithdrawals = GetGuildBankTabInfo(tab)
+		--numWithdrawals is negative if you have unlimited withdrawals available.
+		if name and canView and canDeposit and numWithdrawals < 0 then
+			-- IMPORTANT: This means that guild bank slots will be ignored unless
+			-- you have unlimited access to the tab in question.
+			-- I plan to change this to be more discriminating, though that will
+			-- probably require the caller to state their intentions for the slot.
+			-- Also, this returns 0 if you haven't visited a guild bank yet.
+			return MAX_GUILDBANK_SLOTS_PER_TAB or 0
+		end
+	else
+		return GetContainerNumSlots(bag)
+	end
+	return 0
+end
+
+function core.GetItemInfo(bag, slot)
+	if is_guild_bank_bag(bag) then
+		local tab = bag - 50
+		return GetGuildBankItemInfo(tab, slot)
+	else
+		return GetContainerItemInfo(bag, slot)
+	end
+end
+
+function core.GetItemLink(bag, slot)
+	if is_guild_bank_bag(bag) then
+		local tab = bag - 50
+		return GetGuildBankItemLink(tab, slot)
+	else
+		return GetContainerItemLink(bag, slot)
+	end
+end
+
+function core.PickupItem(bag, slot)
+	if is_guild_bank_bag(bag) then
+		local tab = bag - 50
+		return PickupGuildBankItem(tab, slot)
+	else
+		return PickupContainerItem(bag, slot)
+	end
+end
+
+function core.SplitItem(bag, slot, amount)
+	if is_guild_bank_bag(bag) then
+		local tab = bag - 50
+		return SplitGuildBankItem(tab, slot, amount)
+	else
+		return SplitContainerItem(bag, slot, amount)
+	end
+end
+
+--Respond to events:
 function core.PLAYER_ENTERING_WORLD()
 	local defaults = {
 		verbosity=1,
 		junk=true,
 		soul=true,
+		conjured=false,
 		ignore={},
 		groups={},
 	}
@@ -126,6 +281,12 @@ function core.BANKFRAME_OPENED()
 end
 function core.BANKFRAME_CLOSED()
 	core.bank_open = false
+end
+function core.GUILDBANKFRAME_OPENED()
+	core.guild_bank_open = true
+end
+function core.GUILDBANKFRAME_CLOSED()
+	core.guild_bank_open = false
 end
 
 local current_id
@@ -161,16 +322,13 @@ local function update_location(from, to)
 	end
 end
 function core.ScanBags()
-	for _, bag in pairs(all_bags) do
-		local slots = GetContainerNumSlots(bag)
-		for slot=1, slots do
-			local bagslot = encode_bagslot(bag, slot)
-			local itemid = link_to_id(GetContainerItemLink(bag, slot))
-			if itemid then
-				bag_ids[bagslot] = itemid
-				bag_stacks[bagslot] = select(2, GetContainerItemInfo(bag, slot))
-				bag_maxstacks[bagslot] = select(8, GetItemInfo(itemid))
-			end
+	for _, bag, slot in core.IterateBags(all_bags_with_guild) do
+		local bagslot = encode_bagslot(bag, slot)
+		local itemid = link_to_id(core.GetItemLink(bag, slot))
+		if itemid then
+			bag_ids[bagslot] = itemid
+			bag_stacks[bagslot] = select(2, core.GetItemInfo(bag, slot))
+			bag_maxstacks[bagslot] = select(8, GetItemInfo(itemid))
 		end
 	end
 end
@@ -188,7 +346,7 @@ function core.DoMoves()
 		end
 	end
 	
-	if current_target and (link_to_id(GetContainerItemLink(decode_bagslot(current_target))) ~= current_id) then
+	if current_target and (link_to_id(core.GetItemLink(decode_bagslot(current_target))) ~= current_id) then
 		return --give processing time to happen
 	end
 	
@@ -200,15 +358,15 @@ function core.DoMoves()
 		local source, target = decode_move(moves[i])
 		local source_bag, source_slot = decode_bagslot(source)
 		local target_bag, target_slot = decode_bagslot(target)
-		local _, source_count, source_locked = GetContainerItemInfo(source_bag, source_slot)
-		local _, target_count, target_locked = GetContainerItemInfo(target_bag, target_slot)
+		local _, source_count, source_locked = core.GetItemInfo(source_bag, source_slot)
+		local _, target_count, target_locked = core.GetItemInfo(target_bag, target_slot)
 		
 		if source_locked or target_locked then return end
 		
 		table.remove(moves, i)
-		local source_link = GetContainerItemLink(source_bag, source_slot)
+		local source_link = core.GetItemLink(source_bag, source_slot)
 		local source_itemid = link_to_id(source_link)
-		local target_itemid = link_to_id(GetContainerItemLink(target_bag, target_slot))
+		local target_itemid = link_to_id(core.GetItemLink(target_bag, target_slot))
 		if not source_itemid then return end
 		local stack_size = select(8, GetItemInfo(source_itemid))
 		
@@ -217,13 +375,16 @@ function core.DoMoves()
 		current_target = target
 		current_id = source_itemid
 		if (source_itemid == target_itemid) and (target_count ~= stack_size) and ((target_count + source_count) > stack_size) then
-			SplitContainerItem(source_bag, source_slot, stack_size - target_count)
+			core.SplitItem(source_bag, source_slot, stack_size - target_count)
 		else
-			PickupContainerItem(source_bag, source_slot)
+			core.PickupItem(source_bag, source_slot)
 		end
-		if CursorHasItem() then
-			PickupContainerItem(target_bag, target_slot)
+		local guildbank = is_guild_bank_bag(source_bag)
+		if CursorHasItem() or guildbank then
+			core.PickupItem(target_bag, target_slot)
 		end
+		-- Guild bank CursorHasItem/CursorItemInfo isn't working, so slow down for it.
+		if guildbank then return end
 	end end
 	core.announce(1, L.complete, 1, 1, 1)
 	core.StopStacking()
@@ -246,6 +407,7 @@ end
 function core.StopStacking(message)
 	core.running = false
 	core.bankrequired = false
+	core.guildbankrequired = false
 	current_id = nil
 	current_target = nil
 	clear(moves)
@@ -261,7 +423,7 @@ do
 		[0]=true,
 	}
 	function core.IsSpecialtyBag(bagid)
-		if safe[bagid] then return false end
+		if safe[bagid] or is_guild_bank_bag(bagid) then return false end
 		local invslot = ContainerIDToInventoryID(bagid)
 		if not invslot then return false end
 		local bag = GetInventoryItemLink("player", invslot)

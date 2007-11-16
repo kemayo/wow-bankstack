@@ -24,13 +24,8 @@ function core.BankStack(arg)
 		from = core.player_bags
 		to = core.bank_bags
 	end
-	if core.contains_bank_bag(from) or core.contains_bank_bag(to) then
-		if not core.bank_open then
-			core.announce(0, L.at_bank, 1, 0, 0)
-			return
-		end
-		core.bankrequired = true
-	end
+	if core.check_for_banks(from) or core.check_for_banks(to) then return end
+	
 	core.ScanBags()
 	core.Stack(from, to)
 	core.StartStacking()
@@ -75,60 +70,44 @@ function core.Stack(source_bags, target_bags, can_move)
 	-- can_move: function or nil.  Called as can_move(itemid, bag, slot)
 	--   for any slot in source that is not empty and contains an item that
 	--   could be moved to target.  If it returns false then ignore the slot.
-	-- Note: This function just creates a list of moves to make, then unhides
-	-- frame to get its OnUpdate going.
-	-- TODO: Stack so remaining empty stacks are earlier in the bag, and get used up first?
 	if core.running then
 		core.announce(0, L.already_running, 1, 0, 0)
 		return
 	end
 	if not can_move then can_move = default_can_move end
 	-- Model the target bags.
-	for _, bag in ipairs(target_bags) do
-		local slots = GetContainerNumSlots(bag)
-		for slot=1, slots do
-			local bagslot = encode_bagslot(bag, slot)
-			if (not core.db.ignore[bagslot]) and bag_stacks[bagslot] ~= bag_maxstacks[bagslot] then
-				-- This is an item type that we'll want to bother moving.
-				local itemid = bag_ids[bagslot]
-				target_items[itemid] = (target_items[itemid] and target_items[itemid] or 0) + 1
-			end
+	for _, bag, slot in core.IterateBags(target_bags) do
+		local bagslot = encode_bagslot(bag, slot)
+		if (not core.db.ignore[bagslot]) and bag_stacks[bagslot] ~= bag_maxstacks[bagslot] then
+			-- This is an item type that we'll want to bother moving.
+			local itemid = bag_ids[bagslot]
+			target_items[itemid] = (target_items[itemid] and target_items[itemid] or 0) + 1
 		end
 	end
-	-- Now go through the source bags...
-	--for _,bag in pairs(source_bags) do
-	for i=#source_bags, 1, -1 do
-		local bag = source_bags[i]
-		for slot=GetContainerNumSlots(bag), 1, -1 do
-			local source_slot = encode_bagslot(bag, slot)
-			local itemid = bag_ids[source_slot]
-			if (not core.db.ignore[source_slot]) and itemid and target_items[itemid] and can_move(itemid, bag, slot) then
-				--there's an item in this slot *and* we have room for more of it in the bank somewhere
-				--for target_slot, target_id in pairs(bag_ids) do
-				--for _,tbag in ipairs(target_bags) do
-				for ii=#target_bags, 1, -1 do
-					local tbag = target_bags[ii]
-					for tslot=GetContainerNumSlots(tbag), 1, -1 do
-						local target_slot = encode_bagslot(tbag, tslot)
-						local target_id = bag_ids[target_slot]
-						if (not core.db.ignore[target_slot]) and target_id then
-							if not target_items[itemid] then break end
-							-- can't stack to itself, or to a full slot, or to a slot that has already been used as a source:
-							if target_id == itemid and target_slot ~= source_slot and not (bag_stacks[target_slot]==bag_maxstacks[target_slot]) and not source_used[target_slot] then
-								-- Schedule moving from this slot to the bank slot.
-								core.AddMove(source_slot, target_slot)
-								source_used[source_slot] = true
-								
-								--if (bag_maxstacks[target_slot] - bag_stacks[target_slot]) > bag_stacks[source_slot] then
-								if bag_stacks[target_slot] == bag_maxstacks[target_slot] then
-									target_items[itemid] = (target_items[itemid] > 1) and (target_items[itemid] - 1) or nil
-								end
-								if bag_stacks[source_slot] == 0 then
-									-- This bag slot is emptied, move on.
-									target_items[itemid] = (target_items[itemid] > 1) and (target_items[itemid] - 1) or nil
-									break
-								end
-							end
+	-- Now go through the source bags... in reverse.
+	for _, bag, slot in core.IterateBags(source_bags, true) do
+		local source_slot = encode_bagslot(bag, slot)
+		local itemid = bag_ids[source_slot]
+		if (not core.db.ignore[source_slot]) and itemid and target_items[itemid] and can_move(itemid, bag, slot) then
+			--there's an item in this slot *and* we have room for more of it in the bank somewhere
+			for _, tbag, tslot in core.IterateBags(target_bags, true) do
+				local target_slot = encode_bagslot(tbag, tslot)
+				local target_id = bag_ids[target_slot]
+				if (not core.db.ignore[target_slot]) and target_id then
+					if not target_items[itemid] then break end
+					-- can't stack to itself, or to a full slot, or to a slot that has already been used as a source:
+					if target_id == itemid and target_slot ~= source_slot and not (bag_stacks[target_slot]==bag_maxstacks[target_slot]) and not source_used[target_slot] then
+						-- Schedule moving from this slot to the bank slot.
+						core.AddMove(source_slot, target_slot)
+						source_used[source_slot] = true
+						
+						if bag_stacks[target_slot] == bag_maxstacks[target_slot] then
+							target_items[itemid] = (target_items[itemid] > 1) and (target_items[itemid] - 1) or nil
+						end
+						if bag_stacks[source_slot] == 0 then
+							-- This bag slot is emptied, move on.
+							target_items[itemid] = (target_items[itemid] > 1) and (target_items[itemid] - 1) or nil
+							break
 						end
 					end
 				end
