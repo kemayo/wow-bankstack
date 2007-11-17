@@ -76,7 +76,7 @@ function core.Stack(source_bags, target_bags, can_move)
 	end
 	if not can_move then can_move = default_can_move end
 	-- Model the target bags.
-	for _, bag, slot in core.IterateBags(target_bags) do
+	for _, bag, slot in core.IterateBags(target_bags, nil, "deposit") do
 		local bagslot = encode_bagslot(bag, slot)
 		if (not core.db.ignore[bagslot]) and bag_stacks[bagslot] ~= bag_maxstacks[bagslot] then
 			-- This is an item type that we'll want to bother moving.
@@ -85,7 +85,7 @@ function core.Stack(source_bags, target_bags, can_move)
 		end
 	end
 	-- Now go through the source bags... in reverse.
-	for _, bag, slot in core.IterateBags(source_bags, true) do
+	for _, bag, slot in core.IterateBags(source_bags, true, "withdraw") do
 		local source_slot = encode_bagslot(bag, slot)
 		local itemid = bag_ids[source_slot]
 		if (not core.db.ignore[source_slot]) and itemid and target_items[itemid] and can_move(itemid, bag, slot) then

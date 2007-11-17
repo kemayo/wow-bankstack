@@ -195,7 +195,8 @@ function core.Sort(bags, sorter)
 	if not sorter then sorter = default_sorter end
 	if not item_types then build_sort_order() end
 	
-	for _, bag, slot in core.IterateBags(bags) do
+	for _, bag, slot in core.IterateBags(bags, nil, "both") do
+		--(you need withdraw *and* deposit permissions in the guild bank to move items within it)
 		local bagslot = encode_bagslot(bag, slot)
 		if (not core.db.ignore[bagslot]) then
 			table.insert(bag_sorted, bagslot)
@@ -209,7 +210,7 @@ function core.Sort(bags, sorter)
 	while another_pass_needed do
 		another_pass_needed = false
 		local i = 1
-		for _, bag, slot in core.IterateBags(bags) do
+		for _, bag, slot in core.IterateBags(bags, nil, "both") do
 			-- Make sure the origin slot isn't empty; if so no move needs to be scheduled.
 			local destination = encode_bagslot(bag, slot) -- This is like i, increasing as we go on.
 			local source = bag_sorted[i]

@@ -164,52 +164,54 @@ core.link_to_id = link_to_id
 core.clear = clear
 
 do
+	local bag_role
 	function bagiter_forwards(baglist, i)
 		i = i + 1
 		local step = 1
 		for _,bag in ipairs(baglist) do
-			for slot=1, core.GetNumSlots(bag) do
+			for slot=1, core.GetNumSlots(bag, bag_role) do
 				if step == i then
 					return i, bag, slot
 				end
 				step = step + 1
 			end
 		end
+		bag_role = nil
 	end
 	function bagiter_backwards(baglist, i)
 		i = i + 1
 		local step = 1
 		for ii=#baglist, 1, -1 do
 			local bag = baglist[ii]
-			for slot=core.GetNumSlots(bag), 1, -1 do
+			for slot=core.GetNumSlots(bag, bag_role), 1, -1 do
 				if step == i then
 					return i, bag, slot
 				end
 				step = step + 1
 			end
 		end
+		bag_role = nil
 	end
 
 	-- Iterate over bags and slots
 	-- e.g. for _, bag, slot in core.IterateBags({1,2,3}) do ... end
-	function core.IterateBags(baglist, reverse)
+	function core.IterateBags(baglist, reverse, role)
+		bag_role = role
 		return (reverse and bagiter_backwards or bagiter_forwards), baglist, 0
 	end
 end
 
 -- Wrapper functions to allow for pretending that the guild bank and bags are the same.
-function core.GetNumSlots(bag)
+function core.GetNumSlots(bag, role)
+	-- role: "withdraw", "deposit", "both"; defaults to "both", as that is the most restrictive
+	-- (Whether you intend to put things into or take things out of this bag.  Only affects guild bank slots.)
 	-- The main complication here is the guild bank.
 	if is_guild_bank_bag(bag) then
+		if not role then role = "deposit" end
 		local tab = bag - 50
 		local name, _, canView, canDeposit, numWithdrawals = GetGuildBankTabInfo(tab)
-		--numWithdrawals is negative if you have unlimited withdrawals available.
-		if name and canView and canDeposit and numWithdrawals < 0 then
-			-- IMPORTANT: This means that guild bank slots will be ignored unless
-			-- you have unlimited access to the tab in question.
-			-- I plan to change this to be more discriminating, though that will
-			-- probably require the caller to state their intentions for the slot.
-			-- Also, this returns 0 if you haven't visited a guild bank yet.
+		--(numWithdrawals is negative if you have unlimited withdrawals available.)
+		if name and canView and ((role == "withdraw" and numWithdrawals ~= 0) or (role == "deposit" and canDeposit) or (role == "both" and numWithdrawals ~= 0 and canDeposit)) then
 			return MAX_GUILDBANK_SLOTS_PER_TAB or 0
 		end
 	else
