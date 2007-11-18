@@ -133,7 +133,7 @@ do
 			if left and left:IsShown() and string.match(left:GetText(), text) then return true end
 			--if right and right:IsShown() and string.match(right:GetText(), text) then return true end
 		end
-		--tooltip:ClearLines()
+		return false
 	end
 end
 

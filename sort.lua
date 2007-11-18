@@ -93,6 +93,22 @@ end
 local bag_ids = core.bag_ids
 local bag_stacks = core.bag_stacks
 local bag_maxstacks = core.bag_maxstacks
+--[[
+local bag_soulbound = {}
+setmetatable(bag_soulbound, {__index = function(self, bagslot)
+	local bag, slot = decode_bagslot(bag, slot)
+	local is_soulbound = core.CheckTooltipFor(bag, slot, ITEM_SOULBOUND)
+	self[bagslot] = is_soulbound
+	return is_soulbound
+end,})
+--]]
+local bag_conjured = {}
+setmetatable(bag_conjured, {__index = function(self, bagslot)
+	local bag, slot = decode_bagslot(bagslot)
+	local is_conjured = core.CheckTooltipFor(bag, slot, ITEM_CONJURED)
+	self[bagslot] = is_conjured
+	return is_conjured
+end,})
 local function prime_sort(a, b)
 	local a_name, _, a_rarity, a_level, a_minLevel, a_type, a_subType, a_stackCount, a_equipLoc, a_texture = GetItemInfo(bag_ids[a])
 	local b_name, _, b_rarity, b_level, b_minLevel, b_type, b_subType, b_stackCount, b_equipLoc, b_texture = GetItemInfo(bag_ids[b])
@@ -140,10 +156,8 @@ local function default_sorter(a, b)
 	end
 	-- Conjured items to the back?
 	if core.db.conjured then
-		local a_bag, a_slot = decode_bagslot(a)
-		if core.CheckTooltipFor(a_bag, a_slot, ITEM_CONJURED) then return false end
-		local b_bag, b_slot = decode_bagslot(b)
-		if core.CheckTooltipFor(b_bag, b_slot, ITEM_CONJURED) then return true end
+		if bag_conjured[a] then return false end
+		if bag_conjured[b] then return true end
 	end
 	
 	-- are they the same type?
@@ -235,6 +249,8 @@ function core.Sort(bags, sorter)
 		end
 		clear(bag_locked)
 	end
+	--clear(bag_soulbound)
+	clear(bag_conjured)
 	clear(bag_sorted)
 end
 
