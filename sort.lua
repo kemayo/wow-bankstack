@@ -184,7 +184,7 @@ local function default_sorter(a, b)
 			return a_rarity > b_rarity
 		end
 	else
-		return item_types[a_type] < item_types[b_type]
+		return (item_types[a_type] or 99) < (item_types[b_type] or 99)
 	end
 end
 
