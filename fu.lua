@@ -2,6 +2,11 @@ if not (Rock and Rock:HasLibrary("LibFuBarPlugin-3.0")) or not (AceLibrary and A
 
 local core = BankStack
 
+local menu = {
+	type = "group",
+	args = core.aceoptions,
+}
+
 local fu
 if AceLibrary and AceLibrary("FuBarPlugin-2.0") then
 	fu = AceLibrary("AceAddon-2.0"):new("FuBarPlugin-2.0")
@@ -9,6 +14,7 @@ if AceLibrary and AceLibrary("FuBarPlugin-2.0") then
 	fu.title = "BankStackFu"
 	fu.hasIcon = [[Interface\Icons\INV_Misc_Shovel_01]]
 	fu.blizzardTooltip = true
+	fu.OnMenuRequest = menu
 	
 	function fu:OnTextUpdate()
 		self:SetText("BankStack")
@@ -17,6 +23,8 @@ else
 	fu = Rock:NewAddon("BankStackFu", "LibFuBarPlugin-3.0")
 	fu:SetFuBarOption('tooltipType', "GameTooltip")
 	--fu:SetFuBarOption('iconPath', [[Interface\Icons\INV_Misc_Shovel_01]])
+	fu:SetConfigTable(menu)
+	fu.OnMenuRequest = menu
 	
 	function fu:OnUpdateFuBarText()
 		self:SetFuBarText("BankStack")

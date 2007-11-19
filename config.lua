@@ -15,30 +15,31 @@ end
 
 local config_settings = {
 	verbosity = {
+		name = "verbosity", desc = "0-2", type = "range", min = 0, max = 2,
 		get = function() return core.db.verbosity end,
 		set = function(v)
 			if string.match(v, "^[0-2]$") then
 				core.db.verbosity = tonumber(v)
 			end
 		end,
-		desc = "0-2",
 	},
 	junk = {
+		name = "junk", desc = "move junk to the end", type = "toggle",
 		get = function() return core.db.junk and "true" or "false" end,
 		set = function() core.db.junk = not core.db.junk end,
-		desc = "move junk to the end",
 	},
 	soul = {
+		name = "soul", desc = "move soul shards to the end", type = "toggle",
 		get = function() return core.db.soul and "true" or "false" end,
 		set = function() core.db.soul = not core.db.soul end,
-		desc = "move soul shards to the end",
 	},
 	conjured = {
+		name = "conjured", desc = "move conjured items to the end", type = "toggle",
 		get = function() return core.db.conjured and "true" or "false" end,
 		set = function() core.db.conjured = not core.db.conjured end,
-		desc = "move conjured items to the end",
 	},
 }
+core.aceoptions = config_settings
 core.menu_options = {
 	help = function()
 		core.announce(0, "BankStack: Stacks things.", 1, 1, 1)
