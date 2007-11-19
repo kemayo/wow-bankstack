@@ -1,10 +1,28 @@
-if not (Rock and Rock:HasLibrary("LibFuBarPlugin-3.0")) then return end
+if not (Rock and Rock:HasLibrary("LibFuBarPlugin-3.0")) or not (AceLibrary and AceLibrary("FuBarPlugin-2.0")) then return end
 
 local core = BankStack
 
-local fu = Rock:NewAddon("coreFu", "LibFuBarPlugin-3.0")
-fu:SetFuBarOption('tooltipType', "GameTooltip")
---fu:SetFuBarOption('iconPath', [[Interface\Icons\INV_Misc_Shovel_01]])
+local fu
+if AceLibrary and AceLibrary("FuBarPlugin-2.0") then
+	fu = AceLibrary("AceAddon-2.0"):new("FuBarPlugin-2.0")
+	fu.name = "BankStackFu"
+	fu.title = "BankStackFu"
+	fu.hasIcon = [[Interface\Icons\INV_Misc_Shovel_01]]
+	fu.blizzardTooltip = true
+	
+	function fu:OnTextUpdate()
+		self:SetText("BankStack")
+	end
+else
+	fu = Rock:NewAddon("BankStackFu", "LibFuBarPlugin-3.0")
+	fu:SetFuBarOption('tooltipType', "GameTooltip")
+	--fu:SetFuBarOption('iconPath', [[Interface\Icons\INV_Misc_Shovel_01]])
+	
+	function fu:OnUpdateFuBarText()
+		self:SetFuBarText("BankStack")
+	end
+end
+
 function fu:OnFuBarClick(button)
 	if #(core.moves) > 0 then 
 		return core.StopStacking("BankStack: Aborted.")
@@ -30,9 +48,8 @@ function fu:OnFuBarClick(button)
 		end
 	end
 end
-function fu:OnUpdateFuBarText()
-	self:SetFuBarText("BankStack")
-end
+fu.OnClick = fu.OnFuBarClick
+
 function fu:OnUpdateFuBarTooltip()
 	GameTooltip:AddLine("BankStack")
 	GameTooltip:AddDoubleLine("Click", "Sort bags", 0, 1, 0, 1, 1, 1)
@@ -43,3 +60,4 @@ function fu:OnUpdateFuBarTooltip()
 	GameTooltip:AddDoubleLine("Shift-Alt-Click", "Stack to bags", 0, 1, 0, 1, 1, 1)
 	GameTooltip:AddDoubleLine("Click while stacking", "Abort", 1, 0, 0, 1, 0, 0)
 end
+fu.OnTooltipUpdate = fu.OnUpdateFuBarTooltip
