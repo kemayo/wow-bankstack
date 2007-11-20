@@ -80,6 +80,12 @@ local core_groups = {
 	bags = player_bags,
 	all = all_bags,
 	guild = guild,
+	guild1 = {51,},
+	guild2 = {52,},
+	guild3 = {53,},
+	guild4 = {54,},
+	guild5 = {55,},
+	guild6 = {56,},
 }
 core.groups = core_groups
 function core.get_group(id)
