@@ -175,11 +175,16 @@ do
 		i = i + 1
 		local step = 1
 		for _,bag in ipairs(baglist) do
-			for slot=1, core.GetNumSlots(bag, bag_role) do
-				if step == i then
-					return i, bag, slot
+			local slots = core.GetNumSlots(bag, bag_role)
+			if i > slots + step then
+				step = step + slots
+			else
+				for slot=1, slots do
+					if step == i then
+						return i, bag, slot
+					end
+					step = step + 1
 				end
-				step = step + 1
 			end
 		end
 		bag_role = nil
@@ -189,11 +194,16 @@ do
 		local step = 1
 		for ii=#baglist, 1, -1 do
 			local bag = baglist[ii]
-			for slot=core.GetNumSlots(bag, bag_role), 1, -1 do
-				if step == i then
-					return i, bag, slot
+			local slots = core.GetNumSlots(bag, bag_role)
+			if i > slots + step then
+				step = step + slots
+			else
+				for slot=slots, 1, -1 do
+					if step == i then
+						return i, bag, slot
+					end
+					step = step + 1
 				end
-				step = step + 1
 			end
 		end
 		bag_role = nil

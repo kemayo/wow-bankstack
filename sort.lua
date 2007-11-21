@@ -24,6 +24,7 @@ function core.SortBags(arg)
 		table.insert(bagcache[bagtype], bag)
 	end
 	for _, sorted_bags in pairs(bagcache) do
+		--core.Stack(bagcache['Normal'], sorted_bags, core.is_partial)
 		core.Stack(sorted_bags, sorted_bags, core.is_partial)
 		core.Sort(sorted_bags)
 		clear(sorted_bags)
