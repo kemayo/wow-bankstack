@@ -187,6 +187,7 @@ local function default_sorter(a, b)
 		return (item_types[a_type] or 99) < (item_types[b_type] or 99)
 	end
 end
+local function reverse_sort(a, b) return default_sorter(b, a) end
 
 local bag_sorted = {}
 local bag_locked = {}
@@ -206,7 +207,7 @@ function core.Sort(bags, sorter)
 		core.announce(0, L.already_running, 1, 0, 0)
 		return
 	end
-	if not sorter then sorter = default_sorter end
+	if not sorter then sorter = core.db.reverse and reverse_sort or default_sorter end
 	if not item_types then build_sort_order() end
 	
 	for _, bag, slot in core.IterateBags(bags, nil, "both") do

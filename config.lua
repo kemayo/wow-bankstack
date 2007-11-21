@@ -131,6 +131,11 @@ core.aceoptions = {
 					get = function() return core.db.conjured end,
 					set = function(v) core.db.conjured = v end,
 				},
+				reverse = {
+					name = "reverse", desc = "reverse the sort", type = "toggle",
+					get = function() return core.db.reverse end,
+					set = function(v) core.db.reverse = v end,
+				},
 			},
 		},
 		ignore = {
