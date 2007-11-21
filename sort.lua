@@ -144,6 +144,11 @@ local function default_sorter(a, b)
 	local a_name, _, a_rarity, a_level, a_minLevel, a_type, a_subType, a_stackCount, a_equipLoc, a_texture = GetItemInfo(a_id)
 	local b_name, _, b_rarity, b_level, b_minLevel, b_type, b_subType, b_stackCount, b_equipLoc, b_texture = GetItemInfo(b_id)
 	
+	-- Conjured items to the back?
+	if core.db.conjured then
+		if bag_conjured[a] then return false end
+		if bag_conjured[b] then return true end
+	end
 	-- junk to the back?
 	if core.db.junk then
 		if a_rarity == 0 then return false end
@@ -153,11 +158,6 @@ local function default_sorter(a, b)
 	if core.db.soul then
 		if a_id == 6265 then return false end
 		if b_id == 6265 then return true end
-	end
-	-- Conjured items to the back?
-	if core.db.conjured then
-		if bag_conjured[a] then return false end
-		if bag_conjured[b] then return true end
 	end
 	
 	-- are they the same type?
