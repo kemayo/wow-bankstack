@@ -150,16 +150,16 @@ local function default_sorter(a, b)
 	local b_name, _, b_rarity, b_level, b_minLevel, b_type, b_subType, b_stackCount, b_equipLoc, b_texture = GetItemInfo(b_id)
 	
 	-- Conjured items to the back?
-	if core.db.conjured then
+	if core.db.conjured and not bag_conjured[a] == bag_conjured[b] then
 		if bag_conjured[a] then return false end
 		if bag_conjured[b] then return true end
 	end
 	-- junk to the back?
-	if core.db.junk then
+	if core.db.junk and not a_rarity == b_rarity then
 		if a_rarity == 0 then return false end
 		if b_rarity == 0 then return true end
 	end
-	-- Soul shards to the back?
+	-- Soul shards to the back? (doesn't need equivalence testing, as that's covered above)
 	if core.db.soul then
 		if a_id == 6265 then return false end
 		if b_id == 6265 then return true end
