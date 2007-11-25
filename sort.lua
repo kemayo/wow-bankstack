@@ -37,21 +37,6 @@ function core.SortBags(arg)
 end
 
 -- Sorting:
-local item_types = {
-	[L.ARMOR] = 1,
-	[L.WEAPON] = 2,
-	[L.QUEST] = 3,
-	[L.KEY] = 4,
-	[L.RECIPE] = 5,
-	[L.REAGENT] = 6,
-	[L.TRADEGOODS] = 7,
-	[L.GEM] = 8,
-	[L.CONSUMABLE] = 9,
-	[L.CONTAINER] = 10,
-	[L.QUIVER] = 11,
-	[L.MISC] = 12,
-	[L.PROJECTILE] = 13,
-}
 local inventory_slots = {
 	INVTYPE_AMMO = 0,
 	INVTYPE_HEAD = 1,
@@ -155,7 +140,7 @@ local function default_sorter(a, b)
 		if bag_conjured[b] then return true end
 	end
 	-- junk to the back?
-	if core.db.junk and not a_rarity == b_rarity then
+	if core.db.junk and not (a_rarity == b_rarity) then
 		if a_rarity == 0 then return false end
 		if b_rarity == 0 then return true end
 	end
