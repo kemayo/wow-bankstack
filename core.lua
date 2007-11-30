@@ -281,6 +281,16 @@ function core.PLAYER_ENTERING_WORLD()
 		conjured=false,
 		ignore={},
 		groups={},
+		fubar_keybinds={
+			['BUTTON1'] = 'sortbags',
+			['ALT-BUTTON1'] = 'sortbank',
+			['CTRL-BUTTON1'] = 'compressbags',
+			['ALT-CTRL-BUTTON1'] = 'compressbank',
+			['SHIFT-BUTTON1'] = 'stackbags',
+			['ALT-SHIFT-BUTTON1'] = 'stackbank',
+			['CTRL-SHIFT-BUTTON1'] = false,
+			['ALT-CTRL-SHIFT-BUTTON1'] = false,
+		},
 	}
 	if not BankStackDB then
 		BankStackDB = {}
