@@ -13,12 +13,13 @@ end
 
 local fu
 if AceLibrary and AceLibrary("FuBarPlugin-2.0") then
-	fu = AceLibrary("AceAddon-2.0"):new("FuBarPlugin-2.0")
+	fu = AceLibrary("AceAddon-2.0"):new("FuBarPlugin-2.0", "AceDB-2.0")
 	fu.name = "BankStackFu"
 	fu.title = "BankStackFu"
 	fu.hasIcon = [[Interface\Icons\INV_Misc_Shovel_01]]
 	fu.blizzardTooltip = true
 	fu.OnMenuRequest = menu
+	fu:RegisterDB("BankStackFuDB")
 	
 	function fu:OnTextUpdate()
 		self:SetText("BankStack")
