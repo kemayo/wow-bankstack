@@ -203,7 +203,7 @@ core.aceoptions = {
 						-- Populate with the new group:
 						for v in string.gmatch(action, "[^%s,]+") do
 							local bag = tonumber(v)
-							if core.is_valid_bag(bag) then
+							if core.is_valid_bag(bag) or core.is_guild_bank_bag(bag) then
 								table.insert(bags, bag)
 							else
 								announce(0, v.." was not a valid bag id.", 1, 0, 0)
