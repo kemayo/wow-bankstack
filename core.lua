@@ -170,7 +170,7 @@ core.link_to_id = link_to_id
 core.clear = clear
 
 do
-	local bag_role
+	local bag_role, bagiter_forwards, bagiter_backwards
 	function bagiter_forwards(baglist, i)
 		i = i + 1
 		local step = 1

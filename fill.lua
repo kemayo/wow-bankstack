@@ -15,6 +15,7 @@ local bag_maxstacks = core.bag_maxstacks
 local bagcache_from = {}
 local bagcache_to = {}
 function core.FillBags(arg)
+	local to, from
 	if arg and #arg > 2 then
 		from, to = string.match(arg, "^([^%s]+)%s+([^%s]+)$")
 		from = core.get_group(from)

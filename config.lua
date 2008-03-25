@@ -94,7 +94,7 @@ function simple_aceoptions(k, t, cmd)
 end
 
 local sorted_bag_groups = {}
-function print_groups(groups)
+local function print_groups(groups)
 	for group in pairs(groups) do
 		table.insert(sorted_bag_groups, group)
 	end
