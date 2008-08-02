@@ -167,7 +167,7 @@ local function default_sorter(a, b)
 				if a_subType == b_subType then
 					return prime_sort(a, b)
 				else
-					return (item_subtypes[a_type][a_subType] or 99) < (item_subtypes[b_type][b_subType] or 99)
+					return ((item_subtypes[a_type] or {})[a_subType] or 99) < ((item_subtypes[b_type] or {})[b_subType] or 99)
 				end
 			end
 		else
