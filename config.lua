@@ -131,6 +131,11 @@ core.aceoptions = {
 					get = function() return core.db.conjured end,
 					set = function(v) core.db.conjured = v end,
 				},
+				soulbound = {
+					name = "soulbound", desc = "move soulbound items to the front", type = "toggle",
+					get = function() return core.db.soulbound end,
+					set = function(v) core.db.soulbound = v end,
+				},
 				reverse = {
 					name = "reverse", desc = "reverse the sort", type = "toggle",
 					get = function() return core.db.reverse end,

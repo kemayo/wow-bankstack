@@ -274,34 +274,51 @@ end
 
 --Respond to events:
 function core.PLAYER_ENTERING_WORLD()
-	local defaults = {
-		verbosity=1,
-		junk=true,
-		soul=true,
-		conjured=false,
-		ignore={},
-		groups={},
-		fubar_keybinds={
-			['BUTTON1'] = 'sortbags',
-			['ALT-BUTTON1'] = 'sortbank',
-			['CTRL-BUTTON1'] = 'compressbags',
-			['ALT-CTRL-BUTTON1'] = 'compressbank',
-			['SHIFT-BUTTON1'] = 'stackbags',
-			['ALT-SHIFT-BUTTON1'] = 'stackbank',
-			['CTRL-SHIFT-BUTTON1'] = false,
-			['ALT-CTRL-SHIFT-BUTTON1'] = false,
-		},
-	}
-	if not BankStackDB then
-		BankStackDB = {}
-	end
-	for k,v in pairs(defaults) do
-		if not BankStackDB[k] then
-			BankStackDB[k] = v
-		end
+	local oldDB
+	if BankStackDB and not BankStackDB.profileKeys then
+		-- upgrade the database!
+		oldDB = BankStackDB
+		BankStackDB = nil
 	end
 	
-	core.db = BankStackDB
+	core.db_object = LibStub("AceDB-3.0"):New("BankStackDB", {
+		profile = {
+			verbosity = 1,
+			junk = true,
+			soul = true,
+			conjured = false,
+			soulbound = true,
+			ignore = {},
+			groups = {},
+			fubar_keybinds={
+				['BUTTON1'] = 'sortbags',
+				['ALT-BUTTON1'] = 'sortbank',
+				['CTRL-BUTTON1'] = 'compressbags',
+				['ALT-CTRL-BUTTON1'] = 'compressbank',
+				['SHIFT-BUTTON1'] = 'stackbank',
+				['ALT-SHIFT-BUTTON1'] = 'stackbags',
+				['CTRL-SHIFT-BUTTON1'] = false,
+				['ALT-CTRL-SHIFT-BUTTON1'] = false,
+			},
+		},
+	})
+	core.db = core.db_object.profile
+
+	if oldDB then
+		local copy
+		copy = function(from, to)
+			for k,v in pairs(from) do
+				if type(v) == 'table' then
+					to[k] = copy(v, type(to[k]) == 'table' and to[k] or {})
+				else
+					to[k] = v
+				end
+			end
+			return to
+		end
+		copy(oldDB, core.db)
+	end
+
 	frame:UnregisterEvent("PLAYER_ENTERING_WORLD")
 end
 function core.BANKFRAME_OPENED()

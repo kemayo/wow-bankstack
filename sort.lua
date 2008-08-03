@@ -83,17 +83,13 @@ end
 local bag_ids = core.bag_ids
 local bag_stacks = core.bag_stacks
 local bag_maxstacks = core.bag_maxstacks
---[[
-local bag_soulbound = {}
-setmetatable(bag_soulbound, {__index = function(self, bagslot)
-	local bag, slot = decode_bagslot(bag, slot)
+local bag_soulbound = setmetatable({}, {__index = function(self, bagslot)
+	local bag, slot = decode_bagslot(bagslot)
 	local is_soulbound = core.CheckTooltipFor(bag, slot, ITEM_SOULBOUND)
 	self[bagslot] = is_soulbound
 	return is_soulbound
 end,})
---]]
-local bag_conjured = {}
-setmetatable(bag_conjured, {__index = function(self, bagslot)
+local bag_conjured = setmetatable({}, {__index = function(self, bagslot)
 	local bag, slot = decode_bagslot(bagslot)
 	local is_conjured = core.CheckTooltipFor(bag, slot, ITEM_CONJURED)
 	self[bagslot] = is_conjured
@@ -148,6 +144,11 @@ local function default_sorter(a, b)
 	if core.db.soul then
 		if a_id == 6265 then return false end
 		if b_id == 6265 then return true end
+	end
+	-- Soulbound items to the front?
+	if core.db.soulbound and not bag_soulbound[a] == bag_soulbound[b] then
+		if bag_soulbound[a] then return true end
+		if bag_soulbound[b] then return false end
 	end
 	
 	-- are they the same type?
@@ -240,7 +241,7 @@ function core.Sort(bags, sorter)
 		end
 		clear(bag_locked)
 	end
-	--clear(bag_soulbound)
+	clear(bag_soulbound)
 	clear(bag_conjured)
 	clear(bag_sorted)
 end
