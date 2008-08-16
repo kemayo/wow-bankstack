@@ -10,7 +10,7 @@
 
 embeds.xml
 
-libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
 
 local.enUS.lua
 
