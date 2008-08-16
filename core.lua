@@ -305,8 +305,7 @@ function core.PLAYER_ENTERING_WORLD()
 	core.db = core.db_object.profile
 
 	if oldDB then
-		local copy
-		copy = function(from, to)
+		local copy = function(from, to)
 			for k,v in pairs(from) do
 				if type(v) == 'table' then
 					to[k] = copy(v, type(to[k]) == 'table' and to[k] or {})
@@ -318,6 +317,8 @@ function core.PLAYER_ENTERING_WORLD()
 		end
 		copy(oldDB, core.db)
 	end
+
+	core.setup_config()
 
 	frame:UnregisterEvent("PLAYER_ENTERING_WORLD")
 end

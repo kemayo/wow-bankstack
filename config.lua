@@ -1,97 +1,7 @@
 local core = BankStack
-local L = core.L
 
 local announce = core.announce
 local clear = core.clear
-
-local simple_aceoptions
-local pass_group
-local passthrough_keys = {get = true, set = true, func = true,}
-local meta_cache = {}
-local ao_meta = {__index = function(k)
-	if passthrough_keys[k] and pass_group and pass_group[k] then
-		if not meta_cache[pass_group[k]] then
-			meta_cache[pass_group[k]] = function(...) pass_group[k](k, ...) end
-		end
-		return meta_cache[pass_group[k]]
-	end
-end,}
-local aceoptions_formats = {
-	DEFAULT = function(k, t) return ' - ' .. t.desc end,
-	toggle = function(k, t) return ' - ' .. t.desc .. ' (' .. (t.get() and 'true' or 'false') .. ')' end,
-	range = function(k, t) return ' - ' .. t.desc .. ' (' .. t.get() .. ') [' .. t.min .. '-' .. t.max .. ']' end,
-	header = function(k, t) return '' end,
-}
-local function format_aceoptions_description(k, t)
-	assert(type(k) == 'string')
-	assert(type(t) == 'table')
-	return ' ' .. k .. (aceoptions_formats[t.type] and aceoptions_formats[t.type](k, t) or aceoptions_formats.DEFAULT(k, t))
-end
-local sort_by_order
-do
-	local key_table
-	local ordersort = function(a, b)
-		return (key_table[a].order or 100) < (key_table[b].order or 100)
-	end
-	sort_by_order = function(to_sort, into)
-		key_table = to_sort
-		for k in pairs(to_sort) do table.insert(into, k) end
-		table.sort(into, ordersort)
-		return into
-	end
-end
-local sorted_group = {}
-local aceoptions_handlers = {
-	group = function(k, t, cmd)
-		if t.pass then
-			pass_group = t
-			for k,v in pairs(t.args) do
-				setmetatable(v, ao_meta)
-			end
-		end
-		if cmd then
-			local cmd, args = string.match(cmd, "^(%a+) ?(.*)")
-			if t.args[cmd] then
-				return simple_aceoptions(cmd, t.args[cmd], args)
-			end
-		end
-		announce(0, t.name .. ' - ' .. t.desc, 1, 1, 1)
-		for _,k in ipairs(sort_by_order(t.args, sorted_group)) do
-			announce(0, format_aceoptions_description(k, t.args[k]), 1, 1, 1)
-		end
-		clear(sorted_group)
-		pass_group = nil
-	end,
-	toggle = function(k, t, cmd)
-		t.set(not t.get())
-		announce(0, string.format(L.opt_set, t.name, (t.get() and 'true' or 'false')), 1, 1, 1)
-	end,
-	range = function(k, t, cmd)
-		local value = tonumber(cmd)
-		if value and value >= t.min and value <= t.max then
-			t.set(value)
-			announce(0, string.format(L.opt_set, t.name, t.get()), 1, 1, 1)
-		else
-			announce(0, 'Value was out of bounds', 1, 0, 0)
-		end
-	end,
-	text = function(k, t, cmd)
-		if (not t.validate) or t.validate(cmd) then
-			t.set(cmd)
-			if t.get then announce(0, string.format(L.opt_set, t.name, t.get()), 1, 1, 1) end
-		end
-	end,
-	execute = function(k, t, cmd)
-		t.func()
-	end,
-}
-function simple_aceoptions(k, t, cmd)
-	-- Aceoptions support but only for what is used below.
-	assert(type(t) == 'table')
-	assert(t.type)
-	assert(aceoptions_handlers[t.type])
-	aceoptions_handlers[t.type](k, t, cmd)
-end
 
 local sorted_bag_groups = {}
 local function print_groups(groups)
@@ -105,150 +15,210 @@ local function print_groups(groups)
 	clear(sorted_bag_groups)
 end
 
-core.aceoptions = {
-	name = "BankStack", desc = "Stacks things", type = "group",
+local options = {
+	name = "Config", desc = "Basic settings", type = "group", order = 10,
+	get = function(info) return core.db[info[#info]] end,
+	set = function(info, value) core.db[info[#info]] = value end,
 	args = {
-		config = {
-			name = "config", desc = "basic settings", type = "group", order = 1,
-			args = {
-				verbosity = {
-					name = "verbosity", desc = "talkativitinessism", type = "range", min = 0, max = 2, step = 1,
-					get = function() return core.db.verbosity end,
-					set = function(v) core.db.verbosity = tonumber(v) end,
-				},
-				junk = {
-					name = "junk", desc = "move junk to the end", type = "toggle",
-					get = function() return core.db.junk end,
-					set = function(v) core.db.junk = v end,
-				},
-				soul = {
-					name = "soul", desc = "move soul shards to the end", type = "toggle",
-					get = function() return core.db.soul end,
-					set = function(v) core.db.soul = v end,
-				},
-				conjured = {
-					name = "conjured", desc = "move conjured items to the end", type = "toggle",
-					get = function() return core.db.conjured end,
-					set = function(v) core.db.conjured = v end,
-				},
-				soulbound = {
-					name = "soulbound", desc = "move soulbound items to the front", type = "toggle",
-					get = function() return core.db.soulbound end,
-					set = function(v) core.db.soulbound = v end,
-				},
-				reverse = {
-					name = "reverse", desc = "reverse the sort", type = "toggle",
-					get = function() return core.db.reverse end,
-					set = function(v) core.db.reverse = v end,
-				},
-			},
+		verbosity = {
+			name = "Verbosity", desc = "Talkativitinessism", type = "range", min = 0, max = 2, step = 1,
 		},
-		ignore = {
-			name = "ignore", desc = "ignore slots", type = "group", order = 2,
-			args = {
-				list = {
-					name = "list", desc = "list all ignored slots", type = "execute", order = 1,
-					func = function()
-						for ignored,_ in pairs(core.db.ignore) do
-							local bag, slot = core.decode_bagslot(ignored)
-							core.announce(0, "Ignoring: "..bag.." "..slot, 1, 1, 1)
-						end
-					end,
-				},
-				add = {
-					name = "add", desc = "add an ignore", type = "text", order = 2,
-					get = false,
-					set = function(v)
-						local bag, slot = string.match(v, "^([-%d]+) (%d+)$")
-						if bag and slot then
-							local bagslot = core.encode_bagslot(tonumber(bag), tonumber(slot))
-							core.db.ignore[bagslot] = true
-							core.announce(0, bag.." "..slot.." ignored.", 1, 1, 1)
-						end
-					end,
-					usage = "[bag] [slot] (see http://wowwiki.com/BagID)",
-					validate = function(v) return string.match(v, "^%d+ %d+$") end,
-				},
-				remove = {
-					name = "remove", desc = "remove an ignore", type = "text", order = 3,
-					get = false,
-					set = function(v)
-						local bag, slot = string.match(v, "^([-%d]+) (%d+)$")
-						if bag and slot then
-							local bagslot = core.encode_bagslot(tonumber(bag), tonumber(slot))
-							core.db.ignore[bagslot] = nil
-							announce(0, bag.." "..slot.." no longer ignored.", 1, 1, 1)
-						end
-					end,
-					usage = "[bag] [slot] (see http://wowwiki.com/BagID)",
-				},
-			},
+		junk = {
+			name = "Junk", desc = "move junk to the end", type = "toggle",
 		},
-		group = {
-			name = "group", desc = "bag groups", type = "group", order = 3,
-			args = {
-				list = {
-					name = "list", desc = "list all groups", type = "execute", order = 1,
-					func = function()
-						announce(0, "Built in groups:", 1, 1, 1)
-						print_groups(core.groups)
-						announce(0, "Custom groups:", 1, 1, 1)
-						print_groups(core.db.groups)
-					end,
-				},
-				add = {
-					name = "add", desc = "add a group (see http://wowwiki.com/BagID)", type = "text", order = 2,
-					get = false,
-					set = function(v)
-						local group, action = string.match(v, "^(%a+) (.*)$")
-						if not core.db.groups[group] then
-							core.db.groups[group] = {}
-						end
-						local bags = clear(core.db.groups[group])
-						-- Populate with the new group:
-						for v in string.gmatch(action, "[^%s,]+") do
-							local bag = tonumber(v)
-							if core.is_valid_bag(bag) or core.is_guild_bank_bag(bag) then
-								table.insert(bags, bag)
-							else
-								announce(0, v.." was not a valid bag id.", 1, 0, 0)
-							end
-						end
-						announce(0, "Added group: "..group.." ("..string.join(", ", unpack(bags))..")", 1, 1, 1)
-					end,
-					usage = "[name] [bagid],[bagid],[bagid]",
-					validate = function(v) return string.match(v, "^%a+ [%d%s,]+$") end,
-				},
-				remove = {
-					name = "remove", desc = "remove a group", type = "text", order = 3,
-					get = false,
-					set = function(v)
-						core.db.groups[v] = nil
-						announce(0, group .. " removed.", 1, 1, 1)
-					end,
-					usage = "[name]",
-				}
-			},
+		soul = {
+			name = "Soul", desc = "move soul shards to the end", type = "toggle",
 		},
-		help = {
-			name = "help", desc = "slashcommand reference", type = "execute", order = 101,
-			func = function()
-				announce(0, "BankStack: Stacks things.", 1, 1, 1)
-				announce(0, "/bankstack -- this menu.", 1, 1, 1)
-				announce(0, "/sort -- rearrange your bags", 1, 1, 1)
-				announce(0, "/sort bank -- rearrange your bank", 1, 1, 1)
-				announce(0, "/stack -- fills stacks in your bank from your bags", 1, 1, 1)
-				announce(0, "/stack bank bags -- fills stacks in your bags from your bank", 1, 1, 1)
-				announce(0, "/compress -- merges stacks in your bags", 1, 1, 1)
-				announce(0, "/compress bank -- merges stacks in your bank", 1, 1, 1)
-				announce(0, "/fill -- fills empty slots in your bank from your bags", 1, 1, 1)
-			end,
+		conjured = {
+			name = "Conjured", desc = "move conjured items to the end", type = "toggle",
+		},
+		soulbound = {
+			name = "Soulbound", desc = "move soulbound items to the front", type = "toggle",
+		},
+		reverse = {
+			name = "Reverse", desc = "reverse the sort", type = "toggle",
 		},
 	},
 }
 
+local ignore_options = {
+	name = "Ignore", desc = "Slots to ignore", type = "group", order = 20,
+	args = {
+		list = {
+			name = "List", desc = "List all ignored slots", type = "execute", order = 1,
+			func = function()
+				for ignored,_ in pairs(core.db.ignore) do
+					local bag, slot = core.decode_bagslot(ignored)
+					core.announce(0, "Ignoring: "..bag.." "..slot, 1, 1, 1)
+				end
+			end,
+		},
+		add = {
+			name = "Add", desc = "Add an ignore", type = "input", order = 2,
+			get = false,
+			set = function(info, v)
+				local bag, slot = string.match(v, "^([-%d]+) (%d+)$")
+				if bag and slot then
+					local bagslot = core.encode_bagslot(tonumber(bag), tonumber(slot))
+					core.db.ignore[bagslot] = true
+					core.announce(0, bag.." "..slot.." ignored.", 1, 1, 1)
+				end
+			end,
+			usage = "[bag] [slot] (see http://wowwiki.com/BagID)",
+			validate = function(_, v) return string.match(v, "^%d+ %d+$") end,
+		},
+		remove = {
+			name = "Remove", desc = "Remove an ignore", type = "input", order = 3,
+			get = false,
+			set = function(info, v)
+				local bag, slot = string.match(v, "^([-%d]+) (%d+)$")
+				if bag and slot then
+					local bagslot = core.encode_bagslot(tonumber(bag), tonumber(slot))
+					core.db.ignore[bagslot] = nil
+					announce(0, bag.." "..slot.." no longer ignored.", 1, 1, 1)
+				end
+			end,
+			usage = "[bag] [slot] (see http://wowwiki.com/BagID)",
+		},
+	},
+}
+local group_options = {
+	name = "Groups", desc = "Bag groups", type = "group", order = 30,
+	args = {
+		list = {
+			name = "List", desc = "List all groups", type = "execute", order = 1,
+			func = function()
+				announce(0, "Built in groups:", 1, 1, 1)
+				print_groups(core.groups)
+				announce(0, "Custom groups:", 1, 1, 1)
+				print_groups(core.db.groups)
+			end,
+		},
+		add = {
+			name = "Add", desc = "Add a group (see http://wowwiki.com/BagID)", type = "input", order = 2,
+			get = false,
+			set = function(info, v)
+				local group, action = string.match(v, "^(%a+) (.*)$")
+				if not core.db.groups[group] then
+					core.db.groups[group] = {}
+				end
+				local bags = clear(core.db.groups[group])
+				-- Populate with the new group:
+				for v in string.gmatch(action, "[^%s,]+") do
+					local bag = tonumber(v)
+					if core.is_valid_bag(bag) or core.is_guild_bank_bag(bag) then
+						table.insert(bags, bag)
+					else
+						announce(0, v.." was not a valid bag id.", 1, 0, 0)
+					end
+				end
+				announce(0, "Added group: "..group.." ("..string.join(", ", unpack(bags))..")", 1, 1, 1)
+			end,
+			usage = "[name] [bagid],[bagid],[bagid]",
+			validate = function(_, v) return string.match(v, "^%a+ [%d%s,]+$") end,
+		},
+		remove = {
+			name = "Remove", desc = "Remove a group", type = "input", order = 3,
+			get = false,
+			set = function(info, v)
+				core.db.groups[v] = nil
+				announce(0, group .. " removed.", 1, 1, 1)
+			end,
+			usage = "[name]",
+		}
+	},
+}
+
+local help_options = {
+	name = "BankStack Help", type="group",
+	args = {
+		header = { name = "BankStack: Things in your bags, they move", type = "header", order = 10, },
+		commands = {
+			type = "description", order = 20,
+			name = "/bankstack -- this menu.\n"..
+				"/sort -- rearrange your bags\n"..
+				"/sort bank -- rearrange your bank\n"..
+				"/stack -- fills stacks in your bank from your bags\n"..
+				"/stack bank bags -- fills stacks in your bags from your bank\n"..
+				"/compress -- merges stacks in your bags\n"..
+				"/compress bank -- merges stacks in your bank\n"..
+				"/fill -- fills empty slots in your bank from your bags",
+		},
+	},
+}
+
+local keybindings = {
+	['BUTTON1'] = "Left Click",
+	['ALT-BUTTON1'] = "Alt Left Click",
+	['CTRL-BUTTON1'] = "Ctrl Left Click",
+	['ALT-CTRL-BUTTON1'] = "Ctrl Alt Left Click",
+	['SHIFT-BUTTON1'] = "Shift Left Click",
+	['ALT-SHIFT-BUTTON1'] = "Alt Shift Left Click",
+	['CTRL-SHIFT-BUTTON1'] = "Ctrl Shift Left Click",
+	['ALT-CTRL-SHIFT-BUTTON1'] = "Ctrl Alt Shift Left Click",
+}
+
+local launcher_options = {
+	name = "Click assignments", desc = "Modified left-clicks only",
+	type = "group",
+	get = function(info)
+		local k = info[#info]
+		for b, a in pairs(core.db.fubar_keybinds) do
+			if a == k then
+				return b
+			end
+		end
+	end,
+	set = function(info, v)
+		-- clear current binding
+		local k = info[#info]
+		for b, a in pairs(core.db.fubar_keybinds) do
+			if a == k then
+				core.db.fubar_keybinds[b] = false
+			end
+		end
+		-- set new binding
+		if keybindings[v] then
+			core.db.fubar_keybinds[v] = k
+		end
+	end,
+	args = {
+		help = {
+			type = "description", order = 1,
+			name = "BankStack contains a LibDataBroker-1.1 launcher, which can be shown by display addons such as "..
+				"StatBlockCore, Fortress, ButtonBin, Broker2FuBar, and others, which can be used as a quick way to "..
+				"sort your bags.",
+		},
+		
+		sortbags = {name = "Sort Bags", desc = "Modified left-clicks only", type = "select", values = keybindings, order = 10,},
+		sortbank = {name = "Sort Bank", desc = "Modified left-clicks only", type = "select", values = keybindings, order = 20,},
+		stackbank = {name = "Stack to Bank", desc = "Modified left-clicks only", type = "select", values = keybindings, order = 30,},
+		stackbags = {name = "Stack to Bags", desc = "Modified left-clicks only", type = "select", values = keybindings, order = 40,},
+		compressbags = {name = "Compress Bags", desc = "Modified left-clicks only", type = "select", values = keybindings, order = 50,},
+		compressbank = {name = "Compress Bank", desc = "Modified left-clicks only", type = "select", values = keybindings, order = 60,},
+	},
+}
+
+core.setup_config = function()
+	local acreg = LibStub("AceConfigRegistry-3.0")
+	acreg:RegisterOptionsTable("BankStack", options)
+	acreg:RegisterOptionsTable("BankStack Profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(core.db_object))
+	acreg:RegisterOptionsTable("BankStack Help", help_options)
+	acreg:RegisterOptionsTable("BankStack Launcher", launcher_options)
+	acreg:RegisterOptionsTable("BankStack Groups", group_options)
+	acreg:RegisterOptionsTable("BankStack Ignore", ignore_options)
+
+	local acdia = LibStub("AceConfigDialog-3.0")
+	acdia:AddToBlizOptions("BankStack", "BankStack")
+	acdia:AddToBlizOptions("BankStack Ignore", "Ignore", "BankStack")
+	acdia:AddToBlizOptions("BankStack Groups", "Groups", "BankStack")
+	acdia:AddToBlizOptions("BankStack Launcher", "Launcher", "BankStack")
+	acdia:AddToBlizOptions("BankStack Profiles", "Profiles", "BankStack")
+	acdia:AddToBlizOptions("BankStack Help", "Help", "BankStack")
+end
+
 SLASH_BANKSTACKCONFIG1 = "/bankstack"
 SlashCmdList["BANKSTACKCONFIG"] = function(arg)
-	simple_aceoptions(nil, core.aceoptions, arg)
+	InterfaceOptionsFrame_OpenToFrame(acdia.BlizOptions["BankStack"].frame)
 end
 

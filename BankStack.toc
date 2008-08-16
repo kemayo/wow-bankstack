@@ -6,9 +6,11 @@
 ## X-Category: Inventory
 ## LoadOnDemand: 0
 ## OptionalDeps: Ace3
-## SavedVariables: BankStackDB, BankStackFuDB
+## SavedVariables: BankStackDB
 
 embeds.xml
+
+libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 
 local.enUS.lua
 
@@ -18,4 +20,4 @@ sort.lua
 fill.lua
 config.lua
 
-fu.lua
+ldb.lua
