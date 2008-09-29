@@ -1,0 +1,9 @@
+package-as: BankStack
+
+externals:
+    /lib/LibStub: http://svn.wowace.com/wowace/tags/LibStub/1.0/
+    /lib/AceGUI-3.0: http://svn.wowace.com/wowace/trunk/Ace3/AceGUI-3.0
+    /lib/AceDB-3.0: http://svn.wowace.com/wowace/trunk/Ace3/AceDB-3.0
+    /lib/AceDBOptions-3.0: http://svn.wowace.com/wowace/trunk/Ace3/AceDBOptions-3.0
+    /lib/AceConfig-3.0: http://svn.wowace.com/wowace/trunk/Ace3/AceConfig-3.0
+    /lib/CallbackHandler-1.0: http://svn.wowace.com/wowace/trunk/Ace3/CallbackHandler-1.0/
