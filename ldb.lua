@@ -51,7 +51,7 @@ LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("BankStack", {
 	OnClick = function(frame, button)
 		if button == "RightButton" then
 			-- open up the config
-			return InterfaceOptionsFrame_OpenToFrame(LibStub("AceConfigDialog-3.0").BlizOptions["BankStack"].frame)
+			return InterfaceOptionsFrame_OpenToCategory(LibStub("AceConfigDialog-3.0").BlizOptions["BankStack"].frame)
 		end
 		if #(core.moves) > 0 then 
 			return core.StopStacking("BankStack: Aborted.")
