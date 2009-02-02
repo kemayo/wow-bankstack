@@ -2,13 +2,18 @@
 ## Title: BankStack
 ## Author: Kemayo
 ## Notes: From bags we came, to bank we return
-## Version: 1
+## Version: 3.0b1
 ## X-Category: Inventory
 ## LoadOnDemand: 0
 ## OptionalDeps: Ace3
 ## SavedVariables: BankStackDB
 
+## LoadManagers: AddonLoader
+## X-LoadOn-Always: true
+
+#@no-lib-strip@
 embeds.xml
+#@end-no-lib-strip@
 
 lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
 
