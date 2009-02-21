@@ -125,7 +125,7 @@ local group_options = {
 			get = false,
 			set = function(info, v)
 				core.db.groups[v] = nil
-				announce(0, group .. " removed.", 1, 1, 1)
+				announce(0, v .. " removed.", 1, 1, 1)
 			end,
 			usage = "[name]",
 		}
