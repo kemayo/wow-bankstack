@@ -47,6 +47,7 @@ end
 
 LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("BankStack", {
 	type = "launcher",
+	label = "BankStack",
 	icon = [[Interface\Icons\INV_Misc_Shovel_01]],
 	OnClick = function(frame, button)
 		if button == "RightButton" then
