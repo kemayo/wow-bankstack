@@ -65,7 +65,10 @@ local ignore_options = {
 				end
 			end,
 			usage = "[bag] [slot] (see http://wowwiki.com/BagID)",
-			validate = function(_, v) return string.match(v, "^%d+ %d+$") end,
+			validate = function(info, v)
+				-- "and true or false" because returning a string counts as false
+				return string.match(v, "^%d+ %d+$") and true or false
+			end,
 		},
 		remove = {
 			name = "Remove", desc = "Remove an ignore", type = "input", order = 3,
@@ -115,7 +118,7 @@ local group_options = {
 				announce(0, "Added group: "..group.." ("..string.join(", ", unpack(bags))..")", 1, 1, 1)
 			end,
 			usage = "[name] [bagid],[bagid],[bagid]",
-			validate = function(_, v) return string.match(v, "^%a+ [%d%s,]+$") end,
+			validate = function(_, v) return string.match(v, "^%a+ [%d%s,]+$") and true or false end,
 		},
 		remove = {
 			name = "Remove", desc = "Remove a group", type = "input", order = 3,
