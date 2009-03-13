@@ -18,7 +18,7 @@ embeds.xml
 lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
 
 local.enUS.lua
-local.ruRU.lua
+# local.ruRU.lua --If using a ruRU client, delete the "#" to have the translation load. Don't load this on USEng clients until it works properly.
 
 core.lua
 stack.lua
