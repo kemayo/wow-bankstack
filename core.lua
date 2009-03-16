@@ -301,7 +301,7 @@ function core.PLAYER_ENTERING_WORLD()
 				['ALT-CTRL-SHIFT-BUTTON1'] = false,
 			},
 		},
-	})
+	}, "Default")
 	core.db = core.db_object.profile
 
 	if oldDB then
