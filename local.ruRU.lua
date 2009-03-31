@@ -29,7 +29,7 @@ BankStackLocale = {
 	WEAPON = "Оружие",
 }
 --Bindings:
-BINDING_HEADER_BANKSTACK = "BankStack"
+BINDING_HEADER_BANKSTACK_HEAD = "BankStack"
 BINDING_NAME_BANKSTACK = "Stack to bank"
 BINDING_NAME_COMPRESS = "Сжать сумки"
 BINDING_NAME_BAGSORT = "Отсортировать сумки"

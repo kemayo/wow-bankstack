@@ -28,7 +28,7 @@ BankStackLocale = {
 	WEAPON = "Weapon",
 }
 --Bindings:
-BINDING_HEADER_BANKSTACK = "BankStack"
+BINDING_HEADER_BANKSTACK_HEAD = "BankStack"
 BINDING_NAME_BANKSTACK = "Stack to bank"
 BINDING_NAME_COMPRESS = "Compress bags"
 BINDING_NAME_BAGSORT = "Sorts bags"
