@@ -1,35 +1,39 @@
-﻿--http://forums.playhard.ru/index.php?s=&showtopic=27938&view=findpost&p=535884
-if not GetLocale()=='ruRU' then return end
-BankStackLocale = {
-	-- Messages:
-	already_running = "BankStack: A stacker is already running.",
-	at_bank = "BankStack: вы должны быть в банке.",
-	complete = "BankStack: завершено.",
-	confused = "BankStack: Confusion. Stopping.",
-	moving = "BankStack: перемещение %s.",
-	opt_set = "BankStack: %s установлено в %s.",
-	options = "BankStack опции:",
-	perfect = "BankStack: Perfection already exists.",
-	to_move = "BankStack: %d moves to make.",
-	
-	-- Item types and subtypes:
-	ARMOR = "Доспехи",
-	BAG = "Сумка",
-	CONSUMABLE = "Потребляемые",
-	CONTAINER = "Сумки",
-	GEM = "Самоцветы",
-	KEY = "Ключ",
-	MISC = "Разное",
-	PROJECTILE = "Боеприпасы",
-	REAGENT = "Реагент",
-	RECIPE = "Рецепты",
-	QUEST = "Задания",
-	QUIVER = "Амуниция",
-	TRADEGOODS = "Ремесла",
-	WEAPON = "Оружие",
-}
+﻿-- BankStack Locale
+-- Please use the Localization App on WoWAce to Update this
+-- http://www.wowace.com/projects/bank-stack/localization/
+
+local L = LibStub("AceLocale-3.0"):NewLocale("BankStack", "ruRU")
+if not L then return end
+
+-- Messages:
+L['already_running'] = "BankStack: A stacker is already running."
+L['at_bank'] = "BankStack: вы должны быть в банке."
+L['complete'] = "BankStack: завершено."
+L['confused'] = "BankStack: Confusion. Stopping."
+L['moving'] = "BankStack: перемещение %s."
+L['opt_set'] = "BankStack: %s установлено в %s."
+L['options'] = "BankStack опции:"
+L['perfect'] = "BankStack: Perfection already exists."
+L['to_move'] = "BankStack: %d moves to make."
+
+-- Item types and subtypes:
+L['ARMOR'] = "Доспехи"
+L['BAG'] = "Сумка"
+L['CONSUMABLE'] = "Потребляемые"
+L['CONTAINER'] = "Сумки"
+L['GEM'] = "Самоцветы"
+L['KEY'] = "Ключ"
+L['MISC'] = "Разное"
+L['PROJECTILE'] = "Боеприпасы"
+L['REAGENT'] = "Реагент"
+L['RECIPE'] = "Рецепты"
+L['QUEST'] = "Задания"
+L['QUIVER'] = "Амуниция"
+L['TRADEGOODS'] = "Ремесла"
+L['WEAPON'] = "Оружие"
+
 --Bindings:
-BINDING_HEADER_BANKSTACK_HEAD = "BankStack"
-BINDING_NAME_BANKSTACK = "Stack to bank"
-BINDING_NAME_COMPRESS = "Сжать сумки"
-BINDING_NAME_BAGSORT = "Отсортировать сумки"
+L['BINDING_HEADER_BANKSTACK_HEAD'] = "BankStack"
+L['BINDING_NAME_BANKSTACK'] = "Stack to bank"
+L['BINDING_NAME_COMPRESS'] = "Сжать сумки"
+L['BINDING_NAME_BAGSORT'] = "Отсортировать сумки"

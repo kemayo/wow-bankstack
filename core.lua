@@ -1,9 +1,13 @@
-assert(BankStackLocale, "BankStack is not yet localized for "..GetLocale())
-
 BankStack = {}
 local core = BankStack
-local L = BankStackLocale
+local L = LibStub("AceLocale-3.0"):GetLocale("BankStack")
 core.L = L
+
+--Bindings locales:
+BINDING_HEADER_BANKSTACK_HEAD = L['BINDING_HEADER_BANKSTACK_HEAD']
+BINDING_NAME_BANKSTACK = L['BINDING_NAME_BANKSTACK']
+BINDING_NAME_COMPRESS = L['BINDING_NAME_COMPRESS']
+BINDING_NAME_BAGSORT = L['BINDING_NAME_BAGSORT']
 
 --Events:
 local frame = CreateFrame("Frame")
