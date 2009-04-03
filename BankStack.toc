@@ -19,6 +19,9 @@ lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
 
 local.enUS.lua
 local.ruRU.lua
+local.deDE.lua
+local.koKR.lua
+local.zhCN.lua
 
 core.lua
 stack.lua
