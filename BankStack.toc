@@ -1,8 +1,8 @@
-## Interface: 30000
+## Interface: 30100
 ## Title: BankStack
 ## Author: Kemayo
 ## Notes: From bags we came, to bank we return
-## Version: 3.0b1
+## Version: @project-version@
 ## X-Category: Inventory
 ## LoadOnDemand: 0
 ## OptionalDeps: Ace3
@@ -12,7 +12,13 @@
 ## X-LoadOn-Always: true
 
 #@no-lib-strip@
-embeds.xml
+lib\LibStub\LibStub.lua
+lib\CallbackHandler-1.0\CallbackHandler-1.0.xml
+lib\AceDB-3.0\AceDB-3.0.xml
+lib\AceDBOptions-3.0\AceDBOptions-3.0.xml
+lib\AceGUI-3.0\AceGUI-3.0.xml
+lib\AceConfig-3.0\AceConfig-3.0.xml
+lib\AceLocale-3.0\AceLocale-3.0.xml
 #@end-no-lib-strip@
 
 lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
