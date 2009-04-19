@@ -1,4 +1,4 @@
-BankStack = {}
+BankStack = LibStub("AceAddon-3.0"):NewAddon("BankStack", "AceEvent-3.0")
 local core = BankStack
 local L = LibStub("AceLocale-3.0"):GetLocale("BankStack")
 core.L = L
@@ -9,16 +9,60 @@ BINDING_NAME_BANKSTACK = L['BINDING_NAME_BANKSTACK']
 BINDING_NAME_COMPRESS = L['BINDING_NAME_COMPRESS']
 BINDING_NAME_BAGSORT = L['BINDING_NAME_BAGSORT']
 
---Events:
+function core:OnInitialize()
+	local oldDB
+	if BankStackDB and not BankStackDB.profileKeys then
+		-- upgrade the database!
+		oldDB = BankStackDB
+		BankStackDB = nil
+	end
+	
+	self.db_object = LibStub("AceDB-3.0"):New("BankStackDB", {
+		profile = {
+			verbosity = 1,
+			junk = true,
+			soul = true,
+			conjured = false,
+			soulbound = true,
+			ignore = {},
+			groups = {},
+			fubar_keybinds={
+				['BUTTON1'] = 'sortbags',
+				['ALT-BUTTON1'] = 'sortbank',
+				['CTRL-BUTTON1'] = 'compressbags',
+				['ALT-CTRL-BUTTON1'] = 'compressbank',
+				['SHIFT-BUTTON1'] = 'stackbank',
+				['ALT-SHIFT-BUTTON1'] = 'stackbags',
+				['CTRL-SHIFT-BUTTON1'] = false,
+				['ALT-CTRL-SHIFT-BUTTON1'] = false,
+			},
+		},
+	}, "Default")
+	self.db = self.db_object.profile
+
+	if oldDB then
+		local copy = function(from, to)
+			for k,v in pairs(from) do
+				if type(v) == 'table' then
+					to[k] = copy(v, type(to[k]) == 'table' and to[k] or {})
+				else
+					to[k] = v
+				end
+			end
+			return to
+		end
+		copy(oldDB, self.db)
+	end
+
+	self.setup_config()
+
+	self:RegisterEvent("BANKFRAME_OPENED")
+	self:RegisterEvent("BANKFRAME_CLOSED")
+	self:RegisterEvent("GUILDBANKFRAME_OPENED")
+	self:RegisterEvent("GUILDBANKFRAME_CLOSED")
+end
+
 local frame = CreateFrame("Frame")
-frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-frame:RegisterEvent("BANKFRAME_OPENED")
-frame:RegisterEvent("BANKFRAME_CLOSED")
-frame:RegisterEvent("GUILDBANKFRAME_OPENED")
-frame:RegisterEvent("GUILDBANKFRAME_CLOSED")
-frame:SetScript("OnEvent", function(this, event, ...)
-    core[event](...)
-end)
 local t = 0
 frame:SetScript("OnUpdate", function()
 	if (core.bankrequired and not core.bank_open) or (core.guildbankrequired and not core.guild_bank_open) then
@@ -277,65 +321,16 @@ function core.SplitItem(bag, slot, amount)
 end
 
 --Respond to events:
-function core.PLAYER_ENTERING_WORLD()
-	local oldDB
-	if BankStackDB and not BankStackDB.profileKeys then
-		-- upgrade the database!
-		oldDB = BankStackDB
-		BankStackDB = nil
-	end
-	
-	core.db_object = LibStub("AceDB-3.0"):New("BankStackDB", {
-		profile = {
-			verbosity = 1,
-			junk = true,
-			soul = true,
-			conjured = false,
-			soulbound = true,
-			ignore = {},
-			groups = {},
-			fubar_keybinds={
-				['BUTTON1'] = 'sortbags',
-				['ALT-BUTTON1'] = 'sortbank',
-				['CTRL-BUTTON1'] = 'compressbags',
-				['ALT-CTRL-BUTTON1'] = 'compressbank',
-				['SHIFT-BUTTON1'] = 'stackbank',
-				['ALT-SHIFT-BUTTON1'] = 'stackbags',
-				['CTRL-SHIFT-BUTTON1'] = false,
-				['ALT-CTRL-SHIFT-BUTTON1'] = false,
-			},
-		},
-	}, "Default")
-	core.db = core.db_object.profile
-
-	if oldDB then
-		local copy = function(from, to)
-			for k,v in pairs(from) do
-				if type(v) == 'table' then
-					to[k] = copy(v, type(to[k]) == 'table' and to[k] or {})
-				else
-					to[k] = v
-				end
-			end
-			return to
-		end
-		copy(oldDB, core.db)
-	end
-
-	core.setup_config()
-
-	frame:UnregisterEvent("PLAYER_ENTERING_WORLD")
-end
-function core.BANKFRAME_OPENED()
+function core:BANKFRAME_OPENED()
 	core.bank_open = true
 end
-function core.BANKFRAME_CLOSED()
+function core:BANKFRAME_CLOSED()
 	core.bank_open = false
 end
-function core.GUILDBANKFRAME_OPENED()
+function core:GUILDBANKFRAME_OPENED()
 	core.guild_bank_open = true
 end
-function core.GUILDBANKFRAME_CLOSED()
+function core:GUILDBANKFRAME_CLOSED()
 	core.guild_bank_open = false
 end
 
@@ -485,3 +480,4 @@ do
 		return item_subtype
 	end
 end
+

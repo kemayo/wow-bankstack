@@ -1,4 +1,6 @@
 local core = BankStack
+local module = core:NewModule("LDB")
+local icon = LibStub("LibDBIcon-1.0", true)
 
 local click_actions = {
 	sortbags = core.SortBags,
@@ -45,7 +47,7 @@ local function pretty_keybind(keybind)
 		"Click") or 'None'
 end
 
-LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("BankStack", {
+local dataobject = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("BankStack", {
 	type = "launcher",
 	label = "BankStack",
 	icon = [[Interface\Icons\INV_Misc_Shovel_01]],
@@ -72,4 +74,39 @@ LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("BankStack", {
 		tooltip:AddDoubleLine("Click while stacking", "Abort", 1, 0, 0, 1, 0, 0)
 	end,
 })
+
+function module:OnInitialize()
+	self.db = core.db_object:RegisterNamespace("LDB", {
+		profile = {
+			minimap = {},
+		},
+	})
+	db = self.db
+	if icon then
+		icon:Register("BankStack", dataobject, self.db.profile.minimap)
+	end
+	if core.options then
+		core.options.plugins.ldb = {
+			minimap = {
+				type = "toggle",
+				name = "Show minimap icon",
+				desc = "Toggle showing or hiding the minimap icon.",
+				get = function() return not db.profile.minimap.hide end,
+				set = function(info, v)
+					local hide = not v
+					db.profile.minimap.hide = hide
+					if hide then
+						icon:Hide("BankStack")
+					else
+						icon:Show("BankStack")
+					end
+				end,
+				order = 30,
+				width = "full",
+				hidden = function() return not icon or not dataobject or not icon:IsRegistered("BankStack") end,
+			},
+		}
+
+	end
+end
 

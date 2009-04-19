@@ -39,7 +39,9 @@ local options = {
 			name = "Reverse", desc = "reverse the sort", type = "toggle",
 		},
 	},
+	plugins = {},
 }
+core.options = options
 
 local ignore_options = {
 	name = "Ignore", desc = "Slots to ignore", type = "group", order = 20,
