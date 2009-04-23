@@ -17,6 +17,7 @@ lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
 lib\LibStub\LibStub.lua
 lib\CallbackHandler-1.0\CallbackHandler-1.0.xml
 lib\AceAddon-3.0\AceAddon-3.0.xml
+lib\AceEvent-3.0\AceEvent-3.0.xml
 lib\AceDB-3.0\AceDB-3.0.xml
 lib\AceDBOptions-3.0\AceDBOptions-3.0.xml
 lib\AceGUI-3.0\AceGUI-3.0.xml
