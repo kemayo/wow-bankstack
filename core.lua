@@ -39,6 +39,9 @@ function core:OnInitialize()
 		},
 	}, "Default")
 	self.db = self.db_object.profile
+	self.db_object.RegisterCallback(self, "OnProfileChanged", function()
+		self.db = self.db_object.profile
+	end)
 
 	if oldDB then
 		local copy = function(from, to)
