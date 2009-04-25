@@ -11,11 +11,14 @@
 ## LoadManagers: AddonLoader
 ## X-LoadOn-Always: true
 
-lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
-
 #@no-lib-strip@
 lib\LibStub\LibStub.lua
 lib\CallbackHandler-1.0\CallbackHandler-1.0.xml
+#@end-no-lib-strip@
+
+lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
+
+#@no-lib-strip@
 lib\AceAddon-3.0\AceAddon-3.0.xml
 lib\AceEvent-3.0\AceEvent-3.0.xml
 lib\AceDB-3.0\AceDB-3.0.xml
