@@ -75,6 +75,7 @@ local dataobject = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("BankSt
 	end,
 })
 
+local db
 function module:OnInitialize()
 	self.db = core.db_object:RegisterNamespace("LDB", {
 		profile = {
