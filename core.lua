@@ -415,7 +415,9 @@ function core.DoMoves()
 		local source_link = core.GetItemLink(source_bag, source_slot)
 		local source_itemid = link_to_id(source_link)
 		local target_itemid = link_to_id(core.GetItemLink(target_bag, target_slot))
-		if not source_itemid then return end
+		if not source_itemid then
+			return core.StopStacking(L.confused)
+		end
 		local stack_size = select(8, GetItemInfo(source_itemid))
 		
 		core.announce(2, string.format(L.moving, source_link), 1,1,1)
