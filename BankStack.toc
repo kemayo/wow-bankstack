@@ -9,7 +9,8 @@
 ## SavedVariables: BankStackDB
 
 ## LoadManagers: AddonLoader
-## X-LoadOn-Always: true
+## X-LoadOn-Slash: /bankstack, /sort, /sortbags, /stack, /compress, /compressbags, /fill, /fillbags
+## X-LoadOn-LDB-Launcher: Interface\Icons\INV_Misc_Shovel_01
 
 #@no-lib-strip@
 lib\LibStub\LibStub.lua

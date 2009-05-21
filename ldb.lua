@@ -47,33 +47,35 @@ local function pretty_keybind(keybind)
 		"Click") or 'None'
 end
 
-local dataobject = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("BankStack", {
+local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
+local dataobject = ldb:GetDataObjectByName("BankStack") or ldb:NewDataObject("BankStack", {
 	type = "launcher",
 	label = "BankStack",
 	icon = [[Interface\Icons\INV_Misc_Shovel_01]],
-	OnClick = function(frame, button)
-		if button == "RightButton" then
-			-- open up the config
-			return InterfaceOptionsFrame_OpenToCategory(LibStub("AceConfigDialog-3.0").BlizOptions["BankStack"].frame)
-		end
-		if #(core.moves) > 0 then 
-			return core.StopStacking("BankStack: Aborted.")
-		end
-		--Build the keybind that triggered this.  There might be a better way to do this.
-		local keybind = build_current_keybind()
-		local action = core.db.fubar_keybinds[keybind]
-		if keybind and click_actions[action] then
-			click_actions[action]()
-		end
-	end,
-	OnTooltipShow = function(tooltip)
-		tooltip:AddLine("BankStack")
-		for _, action in ipairs(binding_order) do
-			tooltip:AddDoubleLine(pretty_keybind(get_binding_for_action(action)), name_map[action], 0, 1, 0, 1, 1, 1)
-		end
-		tooltip:AddDoubleLine("Click while stacking", "Abort", 1, 0, 0, 1, 0, 0)
-	end,
 })
+dataobject.OnClick = function(frame, button)
+	if button == "RightButton" then
+		-- open up the config
+		return InterfaceOptionsFrame_OpenToCategory(LibStub("AceConfigDialog-3.0").BlizOptions["BankStack"].frame)
+	end
+	if #(core.moves) > 0 then 
+		return core.StopStacking("BankStack: Aborted.")
+	end
+	--Build the keybind that triggered this.  There might be a better way to do this.
+	local keybind = build_current_keybind()
+	local action = core.db.fubar_keybinds[keybind]
+	if keybind and click_actions[action] then
+		click_actions[action]()
+	end
+end
+dataobject.OnTooltipShow = function(tooltip)
+	tooltip:AddLine("BankStack")
+	for _, action in ipairs(binding_order) do
+		tooltip:AddDoubleLine(pretty_keybind(get_binding_for_action(action)), name_map[action], 0, 1, 0, 1, 1, 1)
+	end
+	tooltip:AddDoubleLine("Click while stacking", "Abort", 1, 0, 0, 1, 0, 0)
+end
+
 
 local db
 function module:OnInitialize()
