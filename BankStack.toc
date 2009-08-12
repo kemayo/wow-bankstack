@@ -8,12 +8,12 @@
 ## OptionalDeps: Ace3
 ## SavedVariables: BankStackDB
 
-## LoadManagers: AddonLoader
-## X-LoadOn-Slash: /bankstack, /sort, /sortbags, /stack, /compress, /compressbags, /fill, /fillbags
-## X-LoadOn-LDB-Launcher: Interface\Icons\INV_Misc_Shovel_01
-## X-LoadOn-Events: BANKFRAME_OPENED, GUILDBANKFRAME_OPENED
-## X-LoadOn-BANKFRAME_OPENED: AddonLoader:LoadAddOn("BankStack"); BankStack.bank_open = true
-## X-LoadOn-GUILDBANKFRAME_OPENED: AddonLoader:LoadAddOn("BankStack"); BankStack.guild_bank_open = true
+# ## LoadManagers: AddonLoader
+# ## X-LoadOn-Slash: /bankstack, /sort, /sortbags, /stack, /compress, /compressbags, /fill, /fillbags
+# ## X-LoadOn-LDB-Launcher: Interface\Icons\INV_Misc_Shovel_01
+# ## X-LoadOn-Events: BANKFRAME_OPENED, GUILDBANKFRAME_OPENED
+# ## X-LoadOn-BANKFRAME_OPENED: AddonLoader:LoadAddOn("BankStack"); BankStack.bank_open = true
+# ## X-LoadOn-GUILDBANKFRAME_OPENED: AddonLoader:LoadAddOn("BankStack"); BankStack.guild_bank_open = true
 
 #@no-lib-strip@
 lib\LibStub\LibStub.lua
