@@ -5,7 +5,6 @@ local link_to_id = core.link_to_id
 local encode_bagslot = core.encode_bagslot
 local decode_bagslot = core.decode_bagslot
 local encode_move = core.encode_move
-local clear = core.clear
 local moves = core.moves
 
 local bag_ids = core.bag_ids
@@ -114,9 +113,9 @@ function core.Stack(source_bags, target_bags, can_move)
 		end
 	end
 	-- clean up the various cache tables
-	clear(target_items)
-	clear(target_slots)
-	clear(source_used)
+	wipe(target_items)
+	wipe(target_slots)
+	wipe(source_used)
 end
 
 SlashCmdList["BANKSTACK"] = core.BankStack

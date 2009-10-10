@@ -5,7 +5,6 @@ local link_to_id = core.link_to_id
 local encode_bagslot = core.encode_bagslot
 local decode_bagslot = core.decode_bagslot
 local encode_move = core.encode_move
-local clear = core.clear
 local moves = core.moves
 
 local bag_ids = core.bag_ids
@@ -43,9 +42,9 @@ function core.FillBags(arg)
 	for bagtype, sorted_bags in pairs(bagcache_from) do
 		if bagcache_to[bagtype] and #bagcache_to[bagtype] > 0 then
 			core.Fill(sorted_bags, bagcache_to[bagtype])
-			clear(bagcache_to[bagtype])
+			wipe(bagcache_to[bagtype])
 		end
-		clear(sorted_bags)
+		wipe(sorted_bags)
 	end
 	core.StartStacking()
 end
@@ -74,7 +73,7 @@ function core.Fill(source_bags, target_bags)
 			core.AddMove(bagslot, table.remove(empty_slots, 1))
 		end
 	end
-	clear(empty_slots)
+	wipe(empty_slots)
 end
 
 SlashCmdList["FILL"] = core.FillBags

@@ -205,20 +205,11 @@ local function decode_move(move)
 	return s, t
 end
 local function link_to_id(link) return link and tonumber(string.match(link, "item:(%d+)")) end -- "item" because we only care about items, duh
-local function clear(t)
-	for k in pairs(t) do
-		t[k] = nil
-	end
-	t[true] = true
-	t[true] = nil
-	return t
-end
 core.encode_bagslot = encode_bagslot
 core.decode_bagslot = decode_bagslot
 core.encode_move = encode_move
 core.decode_move = decode_move
 core.link_to_id = link_to_id
-core.clear = clear
 
 do
 	local bag_role, bagiter_forwards, bagiter_backwards
@@ -441,9 +432,9 @@ function core.DoMoves()
 end
 
 function core.StartStacking()
-	clear(bag_maxstacks)
-	clear(bag_stacks)
-	clear(bag_ids)
+	wipe(bag_maxstacks)
+	wipe(bag_stacks)
+	wipe(bag_ids)
 	
 	if #moves > 0 then
 		core.running = true
@@ -460,7 +451,7 @@ function core.StopStacking(message)
 	core.guildbankrequired = false
 	current_id = nil
 	current_target = nil
-	clear(moves)
+	wipe(moves)
 	frame:Hide()
 	if message then
 		core.announce(1, message, 1, 0, 0)

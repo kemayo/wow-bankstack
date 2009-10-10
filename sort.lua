@@ -5,7 +5,6 @@ local link_to_id = core.link_to_id
 local encode_bagslot = core.encode_bagslot
 local decode_bagslot = core.decode_bagslot
 local encode_move = core.encode_move
-local clear = core.clear
 local moves = core.moves
 
 local bagcache = {}
@@ -31,7 +30,7 @@ function core.SortBags(arg)
 	for _, sorted_bags in pairs(bagcache) do
 		core.Stack(sorted_bags, sorted_bags, core.is_partial)
 		core.Sort(sorted_bags)
-		clear(sorted_bags)
+		wipe(sorted_bags)
 	end
 	core.StartStacking()
 end
@@ -119,7 +118,7 @@ local function default_sorter(a, b)
 		local a_count = bag_stacks[a]
 		local b_count = bag_stacks[b]
 		if a_count == b_count then
-			-- maintain the original ordering
+			-- maintain the original order
 			return a < b
 		else
 			-- emptier stacks to the front
@@ -127,14 +126,15 @@ local function default_sorter(a, b)
 		end
 	end
 	
-	local a_name, _, a_rarity, a_level, a_minLevel, a_type, a_subType, a_stackCount, a_equipLoc, a_texture = GetItemInfo(a_id)
-	local b_name, _, b_rarity, b_level, b_minLevel, b_type, b_subType, b_stackCount, b_equipLoc, b_texture = GetItemInfo(b_id)
-	
 	-- Conjured items to the back?
 	if core.db.conjured and not bag_conjured[a] == bag_conjured[b] then
 		if bag_conjured[a] then return false end
 		if bag_conjured[b] then return true end
 	end
+	
+	local a_name, _, a_rarity, a_level, a_minLevel, a_type, a_subType, a_stackCount, a_equipLoc, a_texture = GetItemInfo(a_id)
+	local b_name, _, b_rarity, b_level, b_minLevel, b_type, b_subType, b_stackCount, b_equipLoc, b_texture = GetItemInfo(b_id)
+	
 	-- junk to the back?
 	if core.db.junk and not (a_rarity == b_rarity) then
 		if a_rarity == 0 then return false end
@@ -191,6 +191,22 @@ local function update_sorted(source, destination)
 		end
 	end
 end
+
+local function should_actually_move(source, destination)
+	-- work out whether a move from source to destination actually makes sense to do
+	
+	-- skip it if...
+	-- source and destination are the same
+	if destination == source then return end
+	-- nothing's in the source slot
+	if not bag_ids[source] then return end
+	-- slot contents are the same and stack sizes are the same
+	if bag_ids[source] == bag_ids[destination] and bag_stacks[source] == bag_stacks[destination] then return end
+	
+	-- go for it!
+	return true
+end
+
 function core.Sort(bags, sorter)
 	-- bags: table, e.g. {1,2,3,4}
 	-- sorter: function or nil.  Passed to table.sort.
@@ -212,8 +228,15 @@ function core.Sort(bags, sorter)
 	table.sort(bag_sorted, sorter)
 	--for i,s in ipairs(bag_sorted) do AceLibrary("AceConsole-2.0"):Print(i, core.GetItemLink(decode_bagslot(s))) end -- handy debug list
 	
+	-- We now have bag_sorted, which is a table containing all slots that contain items, in the order
+	-- that they need to be moved into.
+	
 	local another_pass_needed = true
 	while another_pass_needed do
+		-- Multiple "passes" are simulated here, for the purpose of fitting as many moves as possible
+		-- into a single run of the mover, which moves until it finds a locked item, then breaks until
+		-- the game removes the lock. By sequencing moves correctly, locks can be avoided as much as
+		-- possible.
 		another_pass_needed = false
 		local i = 1
 		for _, bag, slot in core.IterateBags(bags, nil, "both") do
@@ -224,26 +247,27 @@ function core.Sort(bags, sorter)
 			-- If destination is ignored we skip everything here
 			-- Notably, i does not get incremented.
 			if not core.db.ignore[destination] then
-				-- A move is required, and the source isn't empty, and the item's stacks are not the same same size if it's the same item.
-				if destination ~= source and bag_ids[source] and not ((bag_ids[source] == bag_ids[destination]) and (bag_stacks[source] == bag_stacks[destination])) then
+				if should_actually_move(source, destination) then
 					if not (bag_locked[source] or bag_locked[destination]) then
-						-- If we've moved to the destination or source slots before in this run then we pass and request another run.
 						core.AddMove(source, destination)
 						update_sorted(source, destination)
 						bag_locked[source] = true
 						bag_locked[destination] = true
 					else
+						-- If we've moved to the destination or source slots before in this run
+						-- then we pass and request another run. This is to make sure as many
+						-- moves as possible run per pass.
 						another_pass_needed = true
 					end
 				end
 				i = i + 1
 			end
 		end
-		clear(bag_locked)
+		wipe(bag_locked)
 	end
-	clear(bag_soulbound)
-	clear(bag_conjured)
-	clear(bag_sorted)
+	wipe(bag_soulbound)
+	wipe(bag_conjured)
+	wipe(bag_sorted)
 end
 
 SlashCmdList["SORT"] = core.SortBags

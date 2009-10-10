@@ -1,7 +1,6 @@
 local core = BankStack
 
 local announce = core.announce
-local clear = core.clear
 
 local sorted_bag_groups = {}
 local function print_groups(groups)
@@ -12,7 +11,7 @@ local function print_groups(groups)
 	for _,group in ipairs(sorted_bag_groups) do
 		announce(0, "-"..group..": "..string.join(", ", unpack(groups[group])), 1, 1, 1)
 	end
-	clear(sorted_bag_groups)
+	wipe(sorted_bag_groups)
 end
 
 local options = {
@@ -107,7 +106,7 @@ local group_options = {
 				if not core.db.groups[group] then
 					core.db.groups[group] = {}
 				end
-				local bags = clear(core.db.groups[group])
+				local bags = wipe(core.db.groups[group])
 				-- Populate with the new group:
 				for v in string.gmatch(action, "[^%s,]+") do
 					local bag = tonumber(v)
