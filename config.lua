@@ -223,6 +223,8 @@ end
 
 SLASH_BANKSTACKCONFIG1 = "/bankstack"
 SlashCmdList["BANKSTACKCONFIG"] = function(arg)
-	InterfaceOptionsFrame_OpenToCategory(LibStub("AceConfigDialog-3.0").BlizOptions["BankStack"].frame)
+	-- I'm not sure why the doubled-"BankStack" is necessary here...
+	InterfaceOptionsFrame_OpenToCategory(LibStub("AceConfigDialog-3.0").BlizOptions.BankStack.BankStack.frame)
+	--LibStub("AceConfigDialog-3.0"):Open("BankStack")
 end
 
