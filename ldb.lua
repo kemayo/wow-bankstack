@@ -56,7 +56,7 @@ local dataobject = ldb:GetDataObjectByName("BankStack") or ldb:NewDataObject("Ba
 dataobject.OnClick = function(frame, button)
 	if button == "RightButton" then
 		-- open up the config
-		return InterfaceOptionsFrame_OpenToCategory(LibStub("AceConfigDialog-3.0").BlizOptions["BankStack"].frame)
+		return InterfaceOptionsFrame_OpenToCategory(LibStub("AceConfigDialog-3.0").BlizOptions.BankStack.BankStack.frame)
 	end
 	if #(core.moves) > 0 then 
 		return core.StopStacking("BankStack: Aborted.")
@@ -109,7 +109,6 @@ function module:OnInitialize()
 				hidden = function() return not icon or not dataobject or not icon:IsRegistered("BankStack") end,
 			},
 		}
-
 	end
 end
 
