@@ -274,7 +274,7 @@ function core.GetNumSlots(bag, role)
 		local name, icon, canView, canDeposit, numWithdrawals = GetGuildBankTabInfo(tab)
 		--(numWithdrawals is negative if you have unlimited withdrawals available.)
 		if name and canView and ((role == "withdraw" and numWithdrawals ~= 0) or (role == "deposit" and canDeposit) or (role == "both" and numWithdrawals ~= 0 and canDeposit)) then
-			return MAX_GUILDBANK_SLOTS_PER_TAB or 0
+			return 98 -- MAX_GUILDBANK_SLOTS_PER_TAB (some bag addons stop Blizzard_GuildBankUI from loading, making the constant unavailable)
 		end
 	else
 		return GetContainerNumSlots(bag)
@@ -326,7 +326,6 @@ function core:BANKFRAME_CLOSED()
 	core.bank_open = false
 end
 function core:GUILDBANKFRAME_OPENED()
-	LoadAddOn("Blizzard_GuildBankUI")
 	core.guild_bank_open = true
 	Debug("GUILDBANKFRAME_OPENED")
 end
