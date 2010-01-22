@@ -3,6 +3,10 @@ local core = BankStack
 local L = LibStub("AceLocale-3.0"):GetLocale("BankStack")
 core.L = L
 
+local debugf = tekDebug and tekDebug:GetFrame("BankStack")
+local function Debug(...) if debugf then debugf:AddMessage(string.join(", ", ...)) end end
+core.Debug = Debug
+
 --Bindings locales:
 BINDING_HEADER_BANKSTACK_HEAD = L['BINDING_HEADER_BANKSTACK_HEAD']
 BINDING_NAME_BANKSTACK = L['BINDING_NAME_BANKSTACK']
@@ -267,7 +271,7 @@ function core.GetNumSlots(bag, role)
 	if is_guild_bank_bag(bag) then
 		if not role then role = "deposit" end
 		local tab = bag - 50
-		local name, _, canView, canDeposit, numWithdrawals = GetGuildBankTabInfo(tab)
+		local name, icon, canView, canDeposit, numWithdrawals = GetGuildBankTabInfo(tab)
 		--(numWithdrawals is negative if you have unlimited withdrawals available.)
 		if name and canView and ((role == "withdraw" and numWithdrawals ~= 0) or (role == "deposit" and canDeposit) or (role == "both" and numWithdrawals ~= 0 and canDeposit)) then
 			return MAX_GUILDBANK_SLOTS_PER_TAB or 0
@@ -322,10 +326,13 @@ function core:BANKFRAME_CLOSED()
 	core.bank_open = false
 end
 function core:GUILDBANKFRAME_OPENED()
+	LoadAddOn("Blizzard_GuildBankUI")
 	core.guild_bank_open = true
+	Debug("GUILDBANKFRAME_OPENED")
 end
 function core:GUILDBANKFRAME_CLOSED()
 	core.guild_bank_open = false
+	Debug("GUILDBANKFRAME_CLOSED")
 end
 
 local current_id

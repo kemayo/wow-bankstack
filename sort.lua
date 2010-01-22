@@ -1,5 +1,6 @@
 local core = BankStack
 local L = core.L
+local Debug = core.Debug
 
 local link_to_id = core.link_to_id
 local encode_bagslot = core.encode_bagslot
@@ -32,6 +33,7 @@ function core.SortBags(arg)
 		core.Sort(sorted_bags)
 		wipe(sorted_bags)
 	end
+	wipe(bagcache)
 	core.StartStacking()
 end
 

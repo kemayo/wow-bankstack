@@ -5,7 +5,7 @@
 ## Version: @project-version@
 ## X-Category: Inventory
 ## LoadOnDemand: 0
-## OptionalDeps: Ace3
+## OptionalDeps: Ace3, tekDebug
 ## SavedVariables: BankStackDB
 
 # ## LoadManagers: AddonLoader
