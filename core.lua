@@ -398,6 +398,8 @@ function core.DoMoves()
 	current_id = nil
 	current_target = nil
 	
+	if core.dataobject then core.dataobject.text = #moves .. " moves to go" end
+	
 	if #moves > 0 then for i=#moves, 1, -1 do
 		if CursorHasItem() then return end
 		local source, target = decode_move(moves[i])
@@ -459,6 +461,9 @@ function core.StopStacking(message)
 	current_target = nil
 	wipe(moves)
 	frame:Hide()
+	if core.dataobject then
+		core.dataobject.text = core.dataobject.label
+	end
 	if message then
 		core.announce(1, message, 1, 0, 0)
 	end

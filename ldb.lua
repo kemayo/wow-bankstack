@@ -112,3 +112,4 @@ function module:OnInitialize()
 	end
 end
 
+core.dataobject = dataobject
