@@ -1,5 +1,6 @@
 local core = BankStack
 local L = core.L
+local Debug = core.Debug
 
 local link_to_id = core.link_to_id
 local encode_bagslot = core.encode_bagslot
@@ -93,7 +94,14 @@ function core.Stack(source_bags, target_bags, can_move)
 			--there's an item in this slot *and* we have room for more of it in the bank somewhere
 			for i=#target_slots, 1, -1 do
 				local target_slot = target_slots[i]
-				if (not core.db.ignore[target_slot]) and bag_ids[target_slot] == itemid and target_slot ~= source_slot and not (bag_stacks[target_slot]==bag_maxstacks[target_slot]) and not source_used[target_slot] then
+				if 
+					not core.db.ignore[target_slot] -- not ignored
+					and bag_ids[source_slot] -- slot hasn't been emptied
+					and bag_ids[target_slot] == itemid -- target is same as source
+					and target_slot ~= source_slot -- target *isn't* source
+					and not (bag_stacks[target_slot] == bag_maxstacks[target_slot]) -- target isn't full
+					and not source_used[target_slot] -- already moved from slot
+				then
 					-- can't stack to itself, or to a full slot, or to a slot that has already been used as a source:
 					-- Schedule moving from this slot to the bank slot.
 					core.AddMove(source_slot, target_slot)

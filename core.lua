@@ -352,9 +352,11 @@ local function update_location(from, to)
 		-- If they're the same type we might have to deal with stacking.
 		local stack_size = bag_maxstacks[to]
 		if (bag_stacks[to] + bag_stacks[from]) > stack_size then
+			-- only some of the items have been moved, since the total is greater than the stack size
 			bag_stacks[from] = bag_stacks[from] - (stack_size - bag_stacks[to])
 			bag_stacks[to] = stack_size
 		else
+			-- from is empty, since everything in it has been moved
 			bag_stacks[to] = bag_stacks[to] + bag_stacks[from]
 			bag_stacks[from] = nil
 			bag_ids[from] = nil
@@ -382,11 +384,13 @@ function core.AddMove(source, destination)
 	table.insert(moves, 1, encode_move(source, destination))
 end
 
+local function debugtime(start, msg) Debug("took", GetTime() - start, msg or '') end
 function core.DoMoves()
 	if CursorHasItem() then
 		local itemid = link_to_id(select(3, GetCursorInfo()))
 		if current_id ~= itemid then
-			-- We didn't pick up whatever is on the cursor; things could get really screwed up if we carry on.  Abort!
+			-- We didn't pick up whatever is on the cursor; things could get really screwed up if we carry on. Abort!
+			Debug("Aborted because", current_id or 'nil', '~=', itemid or 'nil')
 			return core.StopStacking(L.confused)
 		end
 	end
@@ -399,22 +403,23 @@ function core.DoMoves()
 	current_target = nil
 	
 	if core.dataobject then core.dataobject.text = #moves .. " moves to go" end
-	
+	local start = GetTime()
 	if #moves > 0 then for i=#moves, 1, -1 do
-		if CursorHasItem() then return end
+		if CursorHasItem() then return debugtime(start, 'cursorhasitem') end
 		local source, target = decode_move(moves[i])
 		local source_bag, source_slot = decode_bagslot(source)
 		local target_bag, target_slot = decode_bagslot(target)
 		local _, source_count, source_locked = core.GetItemInfo(source_bag, source_slot)
 		local _, target_count, target_locked = core.GetItemInfo(target_bag, target_slot)
 		
-		if source_locked or target_locked then return end
+		if source_locked or target_locked then return debugtime(start, 'source/target_locked') end
 		
 		table.remove(moves, i)
 		local source_link = core.GetItemLink(source_bag, source_slot)
 		local source_itemid = link_to_id(source_link)
 		local target_itemid = link_to_id(core.GetItemLink(target_bag, target_slot))
 		if not source_itemid then
+			Debug("Aborted because not source_itemid", source_itemid or 'nil')
 			return core.StopStacking(L.confused)
 		end
 		local stack_size = select(8, GetItemInfo(source_itemid))
@@ -435,6 +440,7 @@ function core.DoMoves()
 		-- Guild bank CursorHasItem/CursorItemInfo isn't working, so slow down for it.
 		if guildbank then return end
 	end end
+	debugtime(start, 'done')
 	core.announce(1, L.complete, 1, 1, 1)
 	core.StopStacking()
 end
