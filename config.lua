@@ -102,7 +102,7 @@ local group_options = {
 			name = "Add", desc = "Add a group (see http://wowwiki.com/BagID)", type = "input", order = 2,
 			get = false,
 			set = function(info, v)
-				local group, action = string.match(v, "^(%a+) (.*)$")
+				local group, action = string.match(v, "^([^%s]+) (.*)$")
 				if not core.db.groups[group] then
 					core.db.groups[group] = {}
 				end

@@ -69,7 +69,23 @@ function core.Fill(source_bags, target_bags)
 		if #empty_slots == 0 then break end
 		local bagslot = encode_bagslot(bag, slot)
 		local target_bag, target_slot = decode_bagslot(empty_slots[1])
-		if (not core.db.ignore[bagslot]) and bag_ids[bagslot] and not (core.is_guild_bank_bag(target_bag) and (core.CheckTooltipFor(bag, slot, ITEM_SOULBOUND) or core.CheckTooltipFor(bag, slot, ITEM_CONJURED) or core.CheckTooltipFor(bag, slot, ITEM_BIND_QUEST))) then
+		if
+			(not core.db.ignore[bagslot])
+			and
+			bag_ids[bagslot]
+			and
+			not (
+				-- some things can't go in guild banks:
+				core.is_guild_bank_bag(target_bag)
+				and (
+					core.CheckTooltipFor(bag, slot, ITEM_SOULBOUND)
+					or
+					core.CheckTooltipFor(bag, slot, ITEM_CONJURED)
+					or
+					core.CheckTooltipFor(bag, slot, ITEM_BIND_QUEST)
+				)
+			)
+		then
 			core.AddMove(bagslot, table.remove(empty_slots, 1))
 		end
 	end

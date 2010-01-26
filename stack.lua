@@ -44,13 +44,8 @@ do
 		if not bags then
 			bags = core.player_bags
 		end
-		if core.contains_bank_bag(bags) then
-			if not core.bank_open then
-				core.announce(0, L.at_bank, 1, 0, 0)
-				return
-			end
-			core.bankrequired = true
-		end
+		if core.check_for_banks(bags) then return end
+		
 		core.ScanBags()
 		core.Stack(bags, bags, is_partial)
 		core.StartStacking()
