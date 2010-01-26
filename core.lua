@@ -73,6 +73,7 @@ local frame = CreateFrame("Frame")
 local t = 0
 frame:SetScript("OnUpdate", function()
 	if (core.bankrequired and not core.bank_open) or (core.guildbankrequired and not core.guild_bank_open) then
+		Debug(core.bankrequired and "bank required" or "guild bank required")
 		core.StopStacking(L.at_bank)
 	end
 	t = t + arg1
