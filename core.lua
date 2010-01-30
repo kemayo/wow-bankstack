@@ -70,14 +70,14 @@ function core:OnInitialize()
 end
 
 local frame = CreateFrame("Frame")
-local t = 0
+local t, WAIT_TIME = 0, 0.05
 frame:SetScript("OnUpdate", function()
 	if (core.bankrequired and not core.bank_open) or (core.guildbankrequired and not core.guild_bank_open) then
 		Debug(core.bankrequired and "bank required" or "guild bank required")
 		core.StopStacking(L.at_bank)
 	end
 	t = t + arg1
-	if t > 0.1 then
+	if t > WAIT_TIME then
 		t = 0
 		core.DoMoves()
 	end
@@ -335,9 +335,6 @@ function core:GUILDBANKFRAME_CLOSED()
 	Debug("GUILDBANKFRAME_CLOSED")
 end
 
-local current_id
-local current_target
-
 local moves = {--[[encode_move(encode_bagslot(),encode_bagslot(target)),. ..--]]}
 core.moves = moves
 
@@ -385,6 +382,9 @@ function core.AddMove(source, destination)
 	table.insert(moves, 1, encode_move(source, destination))
 end
 
+local current_id, current_target, lock_stop
+local STUTTER_INTERVAL, STUTTER_WAIT, PROCESSING_WAIT = 0.05, 0, 0.1
+
 local function debugtime(start, msg) Debug("took", GetTime() - start, msg or '') end
 function core.DoMoves()
 	if CursorHasItem() then
@@ -396,54 +396,79 @@ function core.DoMoves()
 		end
 	end
 	
-	if current_target and (link_to_id(core.GetItemLink(decode_bagslot(current_target))) ~= current_id) then
+	if lock_stop and current_target and (link_to_id(core.GetItemLink(decode_bagslot(current_target))) ~= current_id) then
+		Debug("Stopping DoMoves because last move hasn't happened yet.")
+		WAIT_TIME = PROCESSING_WAIT
 		return --give processing time to happen
 	end
 	
-	current_id = nil
-	current_target = nil
+	current_id, current_target, lock_stop = nil, nil, nil
 	
 	if core.dataobject then core.dataobject.text = #moves .. " moves to go" end
-	local start = GetTime()
+	local start, success, move_id, move_target, was_guild
+	start = GetTime()
 	if #moves > 0 then for i=#moves, 1, -1 do
-		if CursorHasItem() then return debugtime(start, 'cursorhasitem') end
-		local source, target = decode_move(moves[i])
-		local source_bag, source_slot = decode_bagslot(source)
-		local target_bag, target_slot = decode_bagslot(target)
-		local _, source_count, source_locked = core.GetItemInfo(source_bag, source_slot)
-		local _, target_count, target_locked = core.GetItemInfo(target_bag, target_slot)
-		
-		if source_locked or target_locked then return debugtime(start, 'source/target_locked') end
-		
+		success, move_id, move_target, was_guild = core.DoMove(moves[i])
+		if not success then
+			if move_id then debugtime(start, move_id) end -- repurposing for debugging
+			lock_stop = true
+			WAIT_TIME = PROCESSING_WAIT
+			return -- take a break!
+		end
+		current_id, current_target = move_id, move_target
 		table.remove(moves, i)
-		local source_link = core.GetItemLink(source_bag, source_slot)
-		local source_itemid = link_to_id(source_link)
-		local target_itemid = link_to_id(core.GetItemLink(target_bag, target_slot))
-		if not source_itemid then
-			Debug("Aborted because not source_itemid", source_itemid or 'nil')
-			return core.StopStacking(L.confused)
-		end
-		local stack_size = select(8, GetItemInfo(source_itemid))
-		
-		core.announce(2, string.format(L.moving, source_link), 1,1,1)
-		
-		current_target = target
-		current_id = source_itemid
-		if (source_itemid == target_itemid) and (target_count ~= stack_size) and ((target_count + source_count) > stack_size) then
-			core.SplitItem(source_bag, source_slot, stack_size - target_count)
-		else
-			core.PickupItem(source_bag, source_slot)
-		end
-		local guildbank = is_guild_bank_bag(source_bag)
-		if CursorHasItem() or guildbank then
-			core.PickupItem(target_bag, target_slot)
-		end
 		-- Guild bank CursorHasItem/CursorItemInfo isn't working, so slow down for it.
-		if guildbank then return end
+		if was_guild then return end
+		if (GetTime() - start) > STUTTER_INTERVAL then
+			-- avoiding the lags
+			WAIT_TIME = STUTTER_WAIT
+			debugtime(start, "stutter-avoider")
+			return
+		end
 	end end
 	debugtime(start, 'done')
 	core.announce(1, L.complete, 1, 1, 1)
 	core.StopStacking()
+end
+
+function core.DoMove(move)
+	if CursorHasItem() then return false, 'cursorhasitem' end
+	local source, target = decode_move(move)
+	local source_bag, source_slot = decode_bagslot(source)
+	local target_bag, target_slot = decode_bagslot(target)
+	local _, source_count, source_locked = core.GetItemInfo(source_bag, source_slot)
+	local _, target_count, target_locked = core.GetItemInfo(target_bag, target_slot)
+	
+	if source_locked or target_locked then return false, 'source/target_locked' end
+	
+	local source_link = core.GetItemLink(source_bag, source_slot)
+	local source_itemid = link_to_id(source_link)
+	local target_itemid = link_to_id(core.GetItemLink(target_bag, target_slot))
+	if not source_itemid then
+		Debug("Aborted because not source_itemid", source_itemid or 'nil')
+		return core.StopStacking(L.confused)
+	end
+	local stack_size = select(8, GetItemInfo(source_itemid))
+	
+	core.announce(2, string.format(L.moving, source_link), 1,1,1)
+	
+	if
+		(source_itemid == target_itemid)
+		and
+		(target_count ~= stack_size)
+		and
+		((target_count + source_count) > stack_size)
+	then
+		core.SplitItem(source_bag, source_slot, stack_size - target_count)
+	else
+		core.PickupItem(source_bag, source_slot)
+	end
+	local guildbank = is_guild_bank_bag(source_bag)
+	if CursorHasItem() or guildbank then
+		core.PickupItem(target_bag, target_slot)
+	end
+	
+	return true, source_itemid, target, guildbank
 end
 
 function core.StartStacking()
