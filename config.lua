@@ -21,22 +21,34 @@ local options = {
 	args = {
 		verbosity = {
 			name = "Verbosity", desc = "Talkativitinessism", type = "range", min = 0, max = 2, step = 1,
+			descStyle = "inline",
 		},
 		junk = {
-			name = "Junk", desc = "move junk to the end", type = "toggle",
+			name = "Junk", desc = "Move junk to the end", type = "toggle",
+			descStyle = "inline",
 		},
 		soul = {
-			name = "Soul", desc = "move soul shards to the end", type = "toggle",
+			name = "Soul", desc = "Move soul shards to the end", type = "toggle",
+			descStyle = "inline",
 		},
 		conjured = {
-			name = "Conjured", desc = "move conjured items to the end", type = "toggle",
+			name = "Conjured", desc = "Move conjured items to the end", type = "toggle",
+			descStyle = "inline",
 		},
 		soulbound = {
-			name = "Soulbound", desc = "move soulbound items to the front", type = "toggle",
+			name = "Soulbound", desc = "Move soulbound items to the front", type = "toggle",
+			descStyle = "inline",
 		},
 		reverse = {
-			name = "Reverse", desc = "reverse the sort", type = "toggle",
+			name = "Reverse", desc = "Reverse the sort", type = "toggle",
+			descStyle = "inline",
 		},
+		--[[conservative_guild = {
+			name = "Cautious guild",
+			desc = "If this option is enabled, only one move at a time will be made. This is slower, but is certain to work.",
+			descStyle = "inline",
+			type = "toggle",
+		},--]]
 	},
 	plugins = {},
 }

@@ -4,7 +4,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale("BankStack")
 core.L = L
 
 local debugf = tekDebug and tekDebug:GetFrame("BankStack")
-local function Debug(...) if debugf then debugf:AddMessage(string.join(", ", ...)) end end
+local function Debug(...) if debugf then debugf:AddMessage(string.join(", ", tostringall(...))) end end
 core.Debug = Debug
 
 --Bindings locales:
@@ -40,6 +40,7 @@ function core:OnInitialize()
 				['CTRL-SHIFT-BUTTON1'] = false,
 				['ALT-CTRL-SHIFT-BUTTON1'] = false,
 			},
+			conservative_guild = true,
 		},
 	}, "Default")
 	self.db = self.db_object.profile
@@ -382,48 +383,71 @@ function core.AddMove(source, destination)
 	table.insert(moves, 1, encode_move(source, destination))
 end
 
-local current_id, current_target, lock_stop
+local moves_underway, last_itemid
 local STUTTER_INTERVAL, STUTTER_WAIT, PROCESSING_WAIT = 0.05, 0, 0.1
+local move_tracker = {}
 
 local function debugtime(start, msg) Debug("took", GetTime() - start, msg or '') end
 function core.DoMoves()
+	Debug("DoMoves", #moves)
 	if CursorHasItem() then
 		local itemid = link_to_id(select(3, GetCursorInfo()))
-		if current_id ~= itemid then
+		if last_itemid ~= itemid then
 			-- We didn't pick up whatever is on the cursor; things could get really screwed up if we carry on. Abort!
-			Debug("Aborted because", current_id or 'nil', '~=', itemid or 'nil')
+			Debug("Aborted because", last_itemid or 'nil', '~=', itemid or 'nil')
 			return core.StopStacking(L.confused)
 		end
 	end
 	
-	if lock_stop and current_target and (link_to_id(core.GetItemLink(decode_bagslot(current_target))) ~= current_id) then
-		Debug("Stopping DoMoves because last move hasn't happened yet.")
-		WAIT_TIME = PROCESSING_WAIT
-		return --give processing time to happen
+	if lock_stop then
+		Debug("Checking whether it's safe to move again")
+		for slot,itemid in pairs(move_tracker) do
+			Debug("checking whether", slot, "contains", itemid, link_to_id(core.GetItemLink(decode_bagslot(slot))))
+			if link_to_id(core.GetItemLink(decode_bagslot(slot))) ~= itemid then
+				Debug("Stopping DoMoves because last move hasn't happened yet.", slot, itemid)
+				WAIT_TIME = PROCESSING_WAIT
+				return --give processing time to happen
+			end
+			move_tracker[slot] = nil
+		end
 	end
 	
-	current_id, current_target, lock_stop = nil, nil, nil
+	last_itemid, lock_stop = nil, nil
+	wipe(move_tracker)
 	
 	if core.dataobject then core.dataobject.text = #moves .. " moves to go" end
-	local start, success, move_id, move_target, was_guild
+	local start, success, move_id, target_id, move_source, move_target, was_guild
 	start = GetTime()
 	if #moves > 0 then for i=#moves, 1, -1 do
-		success, move_id, move_target, was_guild = core.DoMove(moves[i])
+		success, move_id, move_source, target_id, move_target, was_guild = core.DoMove(moves[i])
 		if not success then
-			if move_id then debugtime(start, move_id) end -- repurposing for debugging
-			lock_stop = true
+			debugtime(start, move_id or 'unspecified') -- repurposing for debugging
 			WAIT_TIME = PROCESSING_WAIT
+			lock_stop = true
 			return -- take a break!
 		end
-		current_id, current_target = move_id, move_target
+		move_tracker[move_source] = target_id
+		move_tracker[move_target] = move_id
+		last_itemid = move_id
 		table.remove(moves, i)
-		-- Guild bank CursorHasItem/CursorItemInfo isn't working, so slow down for it.
-		if was_guild then return end
-		if (GetTime() - start) > STUTTER_INTERVAL then
-			-- avoiding the lags
-			WAIT_TIME = STUTTER_WAIT
-			debugtime(start, "stutter-avoider")
-			return
+		if moves[i-1] then
+			-- Guild bank CursorHasItem/CursorItemInfo isn't working, so slow down for it.
+			if was_guild then
+				local next_source, next_target = decode_move(moves[i-1])
+				if core.db.conservative_guild or move_tracker[next_source] or move_tracker[next_target] then
+					Debug("fake-guild-locking is in effect", core.db.conservative_guild and "conservative" or "locking")
+					WAIT_TIME = PROCESSING_WAIT
+					lock_stop = true
+					debugtime(start, 'guild bank sucks')
+					return
+				end
+			end
+			if (GetTime() - start) > STUTTER_INTERVAL then
+				-- avoiding the lags
+				WAIT_TIME = STUTTER_WAIT
+				debugtime(start, "stutter-avoider")
+				return
+			end
 		end
 	end end
 	debugtime(start, 'done')
@@ -432,14 +456,18 @@ function core.DoMoves()
 end
 
 function core.DoMove(move)
-	if CursorHasItem() then return false, 'cursorhasitem' end
+	if CursorHasItem() then
+		return false, 'cursorhasitem'
+	end
 	local source, target = decode_move(move)
 	local source_bag, source_slot = decode_bagslot(source)
 	local target_bag, target_slot = decode_bagslot(target)
 	local _, source_count, source_locked = core.GetItemInfo(source_bag, source_slot)
 	local _, target_count, target_locked = core.GetItemInfo(target_bag, target_slot)
 	
-	if source_locked or target_locked then return false, 'source/target_locked' end
+	if source_locked or target_locked then
+		return false, 'source/target_locked'
+	end
 	
 	local source_link = core.GetItemLink(source_bag, source_slot)
 	local source_itemid = link_to_id(source_link)
@@ -465,16 +493,19 @@ function core.DoMove(move)
 	end
 	local guildbank = is_guild_bank_bag(source_bag)
 	if CursorHasItem() or guildbank then
+		-- CursorHasItem doesn't work on the guild bank
 		core.PickupItem(target_bag, target_slot)
 	end
 	
-	return true, source_itemid, target, guildbank
+	-- Debug("Moved", source, source_itemid, target, target_itemid, guildbank)
+	return true, source_itemid, source, target_itemid, target, guildbank
 end
 
 function core.StartStacking()
 	wipe(bag_maxstacks)
 	wipe(bag_stacks)
 	wipe(bag_ids)
+	wipe(move_tracker)
 	
 	if #moves > 0 then
 		core.running = true
@@ -489,9 +520,8 @@ function core.StopStacking(message)
 	core.running = false
 	core.bankrequired = false
 	core.guildbankrequired = false
-	current_id = nil
-	current_target = nil
 	wipe(moves)
+	wipe(move_tracker)
 	frame:Hide()
 	if core.dataobject then
 		core.dataobject.text = core.dataobject.label
