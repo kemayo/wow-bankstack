@@ -27,6 +27,7 @@ function core.FillBags(arg)
 	if core.check_for_banks(from) or core.check_for_banks(to) then return end
 	
 	core.ScanBags()
+	core.Stack(from, to)
 	for _,bag in ipairs(from) do
 		local bagtype = core.IsSpecialtyBag(bag)
 		if not bagtype then bagtype = 'Normal' end
@@ -58,14 +59,14 @@ function core.Fill(source_bags, target_bags)
 		return
 	end
 	--Create a list of empty slots.
-	for _, bag, slot in core.IterateBags(target_bags, core.db.profile.reverse, "deposit") do
+	for _, bag, slot in core.IterateBags(target_bags, core.db.reverse, "deposit") do
 		local bagslot = encode_bagslot(bag, slot)
 		if (not core.db.ignore[bagslot]) and not bag_ids[bagslot] then
 			table.insert(empty_slots, bagslot)
 		end
 	end
 	--Move items from the back of source_bags to the front of target_bags
-	for _, bag, slot in core.IterateBags(source_bags, not core.db.profile.reverse, "withdraw") do
+	for _, bag, slot in core.IterateBags(source_bags, not core.db.reverse, "withdraw") do
 		if #empty_slots == 0 then break end
 		local bagslot = encode_bagslot(bag, slot)
 		local target_bag, target_slot = decode_bagslot(empty_slots[1])
