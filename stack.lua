@@ -75,7 +75,7 @@ function core.Stack(source_bags, target_bags, can_move)
 	for _, bag, slot in core.IterateBags(target_bags, nil, "deposit") do
 		local bagslot = encode_bagslot(bag, slot)
 		local itemid = bag_ids[bagslot]
-		if (not core.db.ignore[bagslot]) and (bag_stacks[bagslot] ~= bag_maxstacks[bagslot]) then
+		if (not core.db.ignore[bagslot]) and itemid and (bag_stacks[bagslot] ~= bag_maxstacks[bagslot]) then
 			-- This is an item type that we'll want to bother moving.
 			target_items[itemid] = (target_items[itemid] or 0) + 1
 			table.insert(target_slots, bagslot)
