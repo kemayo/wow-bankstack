@@ -537,6 +537,13 @@ function core.DoMove(move)
 		-- CursorHasItem doesn't work on the guild bank
 		core.PickupItem(target_bag, target_slot)
 	end
+
+	if guildbank then
+		QueryGuildBankTab(source_bag - 50)
+	end
+	if is_guild_bank_bag(target_bag) then
+		QueryGuildBankTab(target_bag - 50)
+	end
 	
 	-- Debug("Moved", source, source_itemid, target, target_itemid, guildbank)
 	return true, source_itemid, source, target_itemid, target, guildbank
