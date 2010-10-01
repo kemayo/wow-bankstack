@@ -11,8 +11,7 @@ local bag_ids = core.bag_ids
 local bag_stacks = core.bag_stacks
 local bag_maxstacks = core.bag_maxstacks
 
-local bagcache_from = {}
-local bagcache_to = {}
+local specialty_bags = {}
 function core.FillBags(arg)
 	local to, from
 	if arg and #arg > 2 then
@@ -28,25 +27,18 @@ function core.FillBags(arg)
 	
 	core.ScanBags()
 	core.Stack(from, to)
-	for _,bag in ipairs(from) do
-		local bagtype = core.IsSpecialtyBag(bag)
-		if not bagtype then bagtype = 'Normal' end
-		if not bagcache_from[bagtype] then bagcache_from[bagtype] = {} end
-		table.insert(bagcache_from[bagtype], bag)
-	end
+	-- first, try to fill any specialty bags
 	for _,bag in ipairs(to) do
-		local bagtype = core.IsSpecialtyBag(bag)
-		if not bagtype then bagtype = 'Normal' end
-		if not bagcache_to[bagtype] then bagcache_to[bagtype] = {} end
-		table.insert(bagcache_to[bagtype], bag)
-	end
-	for bagtype, sorted_bags in pairs(bagcache_from) do
-		if bagcache_to[bagtype] and #bagcache_to[bagtype] > 0 then
-			core.Fill(sorted_bags, bagcache_to[bagtype])
-			wipe(bagcache_to[bagtype])
+		if core.IsSpecialtyBag(bag) then
+			table.insert(specialty_bags, bag)
 		end
-		wipe(sorted_bags)
 	end
+	if #specialty_bags > 0 then
+		core.Fill(from, specialty_bags)
+	end
+	-- and now the rest (no point filtering out the specialty bags here; it's covered)
+	core.Fill(from, to)
+	wipe(specialty_bags)
 	core.StartStacking()
 end
 
@@ -75,17 +67,7 @@ function core.Fill(source_bags, target_bags)
 			and
 			bag_ids[bagslot]
 			and
-			not (
-				-- some things can't go in guild banks:
-				core.is_guild_bank_bag(target_bag)
-				and (
-					core.CheckTooltipFor(bag, slot, ITEM_SOULBOUND)
-					or
-					core.CheckTooltipFor(bag, slot, ITEM_CONJURED)
-					or
-					core.CheckTooltipFor(bag, slot, ITEM_BIND_QUEST)
-				)
-			)
+			core.CanItemGoInBag(bag_ids[bagslot], target_bag)
 		then
 			core.AddMove(bagslot, table.remove(empty_slots, 1))
 		end

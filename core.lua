@@ -185,7 +185,15 @@ do
 			tooltip:SetOwner(UIParent, "ANCHOR_NONE")
 			--core.tooltip = tooltip
 		end
-		if is_guild_bank_bag(bag) then
+		if slot and not bag then
+			-- just showing tooltip for an itemid
+			-- uses rather innocent checking so that slot can be a link or an itemid
+			local link = slot
+			if not link:match("item:") then
+				link = "item:"..link
+			end
+			tooltop:SetHyperLink(link)
+		elseif is_guild_bank_bag(bag) then
 			tooltip:SetGuildBankItem(bag-50, slot)
 		else
 			tooltip:SetBagItem(bag, slot)
@@ -318,6 +326,34 @@ function core.SplitItem(bag, slot, amount)
 	else
 		return SplitContainerItem(bag, slot, amount)
 	end
+end
+
+function core.CanItemGoInBag(item, bag)
+	if is_guild_bank_bag(bag) then
+		-- almost anything can go in a guild bank... apart from:
+		if
+			core.CheckTooltipFor(false, item, ITEM_SOULBOUND)
+			or
+			core.CheckTooltipFor(false, item, ITEM_CONJURED)
+			or
+			core.CheckTooltipFor(false, item, ITEM_BIND_QUEST)
+		then
+			return false
+		end
+		return true
+	end
+	-- since we now know this isn't a guild bank we can just use the bag id provided
+	local item_family = GetItemFamily(item)
+	Debug("item_family", item, item_family)
+	if item_family > 0 then
+		-- if the item is a profession bag, this will actually be the bag_family, and it should be zero
+		local equip_slot = select(9, GetItemInfo(item))
+		if equip_slot == "INVTYPE_BAG" then
+			item_family = 1
+		end
+	end
+	local bag_family = select(2, GetContainerNumFreeSlots(bag))
+	return bag_family == 0 or bit.band(item_family, bag_family) > 0
 end
 
 --Respond to events:
