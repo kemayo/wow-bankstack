@@ -62,7 +62,9 @@ function core:OnInitialize()
 		copy(oldDB, self.db)
 	end
 
-	self.setup_config()
+	if self.setup_config then
+		self.setup_config()
+	end
 
 	self:RegisterEvent("BANKFRAME_OPENED")
 	self:RegisterEvent("BANKFRAME_CLOSED")
