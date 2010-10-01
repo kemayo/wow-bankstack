@@ -80,7 +80,7 @@ local ignore_options = {
 			usage = "[bag] [slot] (see http://wowwiki.com/BagID)",
 			validate = function(info, v)
 				-- "and true or false" because returning a string counts as false
-				return string.match(v, "^%d+ %d+$") and true or false
+				return string.match(v, "^[-%d]+ %d+$") and true or false
 			end,
 		},
 		remove = {
