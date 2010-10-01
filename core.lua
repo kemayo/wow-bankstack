@@ -148,6 +148,12 @@ local core_groups = {
 }
 core.groups = core_groups
 function core.get_group(id)
+	if id == "bank" and core.guild_bank_open then
+		local tab = GetCurrentGuildBankTab()
+		if tab then
+			return core_groups["guild" .. tab]
+		end
+	end
 	return core_groups[id] or core.db.groups[id]
 end
 function core.contains_bank_bag(group)
