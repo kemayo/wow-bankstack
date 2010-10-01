@@ -344,7 +344,6 @@ function core.CanItemGoInBag(item, bag)
 	end
 	-- since we now know this isn't a guild bank we can just use the bag id provided
 	local item_family = GetItemFamily(item)
-	Debug("item_family", item, item_family)
 	if item_family > 0 then
 		-- if the item is a profession bag, this will actually be the bag_family, and it should be zero
 		local equip_slot = select(9, GetItemInfo(item))
@@ -504,13 +503,17 @@ function core.DoMove(move)
 	if source_locked or target_locked then
 		return false, 'source/target_locked'
 	end
-	
+
 	local source_link = core.GetItemLink(source_bag, source_slot)
 	local source_itemid = link_to_id(source_link)
 	local target_itemid = link_to_id(core.GetItemLink(target_bag, target_slot))
 	if not source_itemid then
-		Debug("Aborted because not source_itemid", source_itemid or 'nil')
-		return core.StopStacking(L.confused)
+		if move_tracker[source] then
+			return false, 'move incomplete'
+		else
+			Debug("Aborted because not source_itemid", source_bag, source_slot, source_link, source_itemid or 'nil')
+			return core.StopStacking(L.confused)
+		end
 	end
 	local stack_size = select(8, GetItemInfo(source_itemid))
 	
