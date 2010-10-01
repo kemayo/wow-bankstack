@@ -72,12 +72,12 @@ end
 
 local frame = CreateFrame("Frame")
 local t, WAIT_TIME = 0, 0.05
-frame:SetScript("OnUpdate", function()
+frame:SetScript("OnUpdate", function(frame, time_since_last)
 	if (core.bankrequired and not core.bank_open) or (core.guildbankrequired and not core.guild_bank_open) then
 		Debug(core.bankrequired and "bank required" or "guild bank required")
 		core.StopStacking(L.at_bank)
 	end
-	t = t + arg1
+	t = t + time_since_last
 	if t > WAIT_TIME then
 		t = 0
 		core.DoMoves()
