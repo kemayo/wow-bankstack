@@ -26,6 +26,7 @@ function core.SortBags(arg)
 	for bagtype, sorted_bags in pairs(bagcache) do
 		if bagtype ~= 'Normal' then
 			core.Stack(bagcache['Normal'], sorted_bags)
+			core.Fill(bagcache['Normal'], sorted_bags)
 		end
 	end
 	for _, sorted_bags in pairs(bagcache) do
