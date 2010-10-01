@@ -77,7 +77,7 @@ frame:SetScript("OnUpdate", function(frame, time_since_last)
 		Debug(core.bankrequired and "bank required" or "guild bank required")
 		core.StopStacking(L.at_bank)
 	end
-	t = t + time_since_last
+	t = t + (time_since_last or 0.01)
 	if t > WAIT_TIME then
 		t = 0
 		core.DoMoves()
@@ -383,7 +383,7 @@ function core.AddMove(source, destination)
 	table.insert(moves, 1, encode_move(source, destination))
 end
 
-local moves_underway, last_itemid
+local moves_underway, last_itemid, lock_stop
 local STUTTER_INTERVAL, STUTTER_WAIT, PROCESSING_WAIT = 0.05, 0, 0.1
 local move_tracker = {}
 
