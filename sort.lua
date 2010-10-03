@@ -9,32 +9,40 @@ local encode_move = core.encode_move
 local moves = core.moves
 
 local bagcache = {}
+local bag_groups = {}
 function core.SortBags(arg)
-	local bags = core.get_group(arg)
-	if not bags then
-		bags = core.player_bags
-	end
-	if core.check_for_banks(bags) then return end
-
-	core.ScanBags()
-	for _,bag in ipairs(bags) do
-		local bagtype = core.IsSpecialtyBag(bag)
-		if not bagtype then bagtype = 'Normal' end
-		if not bagcache[bagtype] then bagcache[bagtype] = {} end
-		table.insert(bagcache[bagtype], bag)
-	end
-	for bagtype, sorted_bags in pairs(bagcache) do
-		if bagtype ~= 'Normal' then
-			core.Stack(bagcache['Normal'], sorted_bags)
-			core.Fill(bagcache['Normal'], sorted_bags)
+	for bags in (arg or ""):gmatch("[^%s]+") do
+		bags = core.get_group(bags)
+		if bags then
+			if core.check_for_banks(bags) then return wipe(bag_groups) end
+			table.insert(bag_groups, bags)
 		end
 	end
-	for _, sorted_bags in pairs(bagcache) do
-		core.Stack(sorted_bags, sorted_bags, core.is_partial)
-		core.Sort(sorted_bags)
-		wipe(sorted_bags)
+	if #bag_groups == 0 then
+		table.insert(bag_groups, core.player_bags)
 	end
-	wipe(bagcache)
+	core.ScanBags()
+	for _, bags in ipairs(bag_groups) do
+		for _, bag in ipairs(bags) do
+			local bagtype = core.IsSpecialtyBag(bag)
+			if not bagtype then bagtype = 'Normal' end
+			if not bagcache[bagtype] then bagcache[bagtype] = {} end
+			table.insert(bagcache[bagtype], bag)
+		end
+		for bagtype, sorted_bags in pairs(bagcache) do
+			if bagtype ~= 'Normal' then
+				core.Stack(bagcache['Normal'], sorted_bags)
+				core.Fill(bagcache['Normal'], sorted_bags)
+			end
+		end
+		for _, sorted_bags in pairs(bagcache) do
+			core.Stack(sorted_bags, sorted_bags, core.is_partial)
+			core.Sort(sorted_bags)
+			wipe(sorted_bags)
+		end
+		wipe(bagcache)
+	end
+	wipe(bag_groups)
 	core.StartStacking()
 end
 

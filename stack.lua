@@ -39,15 +39,24 @@ do
 		return (bag_maxstacks[bagslot] - bag_stacks[bagslot]) > 0
 	end
 	core.is_partial = is_partial
+	local bag_groups = {}
 	function core.Compress(arg)
-		local bags = core.get_group(arg)
-		if not bags then
-			bags = core.player_bags
+		for bags in (arg or ""):gmatch("[^%s]+") do
+			bags = core.get_group(arg)
+			if bags then
+				if core.check_for_banks(bags) then return wipe(bag_groups) end
+				table.insert(bag_groups, bags)
+			end
 		end
-		if core.check_for_banks(bags) then return end
+		if #bag_groups == 0 then
+			table.insert(bag_groups, core.player_bags)
+		end
 		
 		core.ScanBags()
-		core.Stack(bags, bags, is_partial)
+		for _, bags in ipairs(bag_groups) do
+			core.Stack(bags, bags, is_partial)
+		end
+		wipe(bag_groups)
 		core.StartStacking()
 	end
 end
