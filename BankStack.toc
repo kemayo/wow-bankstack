@@ -6,7 +6,7 @@
 ## Version: @project-version@
 ## X-Category: Inventory
 ## LoadOnDemand: 0
-## OptionalDeps: Ace3, tekDebug
+## OptionalDeps: Ace3, LibDBIcon-1.0, tekDebug
 ## SavedVariables: BankStackDB
 
 # ## LoadManagers: AddonLoader
@@ -46,4 +46,5 @@ sort.lua
 fill.lua
 config.lua
 
+auto.lua
 ldb.lua
