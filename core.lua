@@ -196,7 +196,7 @@ do
 		if slot and not bag then
 			-- just showing tooltip for an itemid
 			-- uses rather innocent checking so that slot can be a link or an itemid
-			local link = slot
+			local link = tostring(slot) -- so that ":match" is guaranteed to be okay
 			if not link:match("item:") then
 				link = "item:"..link
 			end
