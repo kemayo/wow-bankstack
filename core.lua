@@ -148,11 +148,21 @@ local core_groups = {
 }
 core.groups = core_groups
 function core.get_group(id)
+	Debug ("get_group", id)
 	if id == "bank" and core.guild_bank_open then
 		local tab = GetCurrentGuildBankTab()
 		if tab then
 			return core_groups["guild" .. tab]
 		end
+	end
+	if not core.db.groups[id] and string.match(id, "[-%d,]+") then
+		Debug("Looks like a bag list", id)
+		local bags = {}
+		for b in string.gmatch(id, "-?%d+") do
+			table.insert(bags, tonumber(b))
+		end
+		Debug("Parsed out", #bags)
+		return bags
 	end
 	return core_groups[id] or core.db.groups[id]
 end
