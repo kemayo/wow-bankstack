@@ -472,7 +472,7 @@ function core.DoMoves()
 	wipe(move_tracker)
 	
 	core.events:Fire("Doing_Moves", #moves, moves)
-	
+
 	local start, success, move_id, target_id, move_source, move_target, was_guild
 	start = GetTime()
 	if #moves > 0 then for i=#moves, 1, -1 do
@@ -582,10 +582,11 @@ function core.StartStacking()
 		core.events:Fire("Stacking_Started", #moves)
 	else
 		core.announce(1, L.perfect, 1, 1, 1)
+		core.StopStacking()
 	end
 end
 
-function core.StopStacking(message)
+function core.StopStacking(message, r, g, b)
 	core.running = false
 	core.bankrequired = false
 	core.guildbankrequired = false
@@ -593,7 +594,7 @@ function core.StopStacking(message)
 	wipe(move_tracker)
 	frame:Hide()
 	if message then
-		core.announce(1, message, 1, 0, 0)
+		core.announce(1, message, r or 1, g or 0, b or 0)
 	end
 	core.events:Fire("Stacking_Stopped", message)
 end
