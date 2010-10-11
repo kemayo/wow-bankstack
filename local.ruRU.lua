@@ -18,9 +18,7 @@ L['to_move'] = "BankStack: %d moves to make."
 
 -- Item types and subtypes:
 L['ARMOR'] = "Доспехи"
-L['BAG'] = "Сумка"
 L['CONSUMABLE'] = "Потребляемые"
-L['CONTAINER'] = "Сумки"
 L['GEM'] = "Самоцветы"
 L['KEY'] = "Ключ"
 L['MISC'] = "Разное"

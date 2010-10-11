@@ -347,6 +347,23 @@ function core.SplitItem(bag, slot, amount)
 	end
 end
 
+do
+	local safe = {
+		[BANK_CONTAINER]=true,
+		[0]=true,
+	}
+	function core.IsSpecialtyBag(bagid)
+		if safe[bagid] or is_guild_bank_bag(bagid) then return false end
+		local invslot = ContainerIDToInventoryID(bagid)
+		if not invslot then return false end
+		local bag = GetInventoryItemLink("player", invslot)
+		if not bag then return false end
+		local family = GetItemFamily(item)
+		if family == 0 then return false end
+		return family
+	end
+end
+
 function core.CanItemGoInBag(item, bag)
 	if is_guild_bank_bag(bag) then
 		-- almost anything can go in a guild bank... apart from:
@@ -598,23 +615,3 @@ function core.StopStacking(message, r, g, b)
 	end
 	core.events:Fire("Stacking_Stopped", message)
 end
-
-do
-	local safe = {
-		[BANK_CONTAINER]=true,
-		[0]=true,
-	}
-	function core.IsSpecialtyBag(bagid)
-		if safe[bagid] or is_guild_bank_bag(bagid) then return false end
-		local invslot = ContainerIDToInventoryID(bagid)
-		if not invslot then return false end
-		local bag = GetInventoryItemLink("player", invslot)
-		if not bag then return false end
-		local item_type, item_subtype = select(6, GetItemInfo(bag))
-		if item_type == L.CONTAINER and item_subtype == L.BAG then
-			return false
-		end
-		return item_subtype
-	end
-end
-
