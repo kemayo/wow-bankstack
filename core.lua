@@ -210,7 +210,7 @@ do
 			if not link:match("item:") then
 				link = "item:"..link
 			end
-			tooltip:SetHyperLink(link)
+			tooltip:SetHyperlink(link)
 		elseif is_guild_bank_bag(bag) then
 			tooltip:SetGuildBankItem(bag-50, slot)
 		else
