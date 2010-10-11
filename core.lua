@@ -2,6 +2,7 @@ BankStack = LibStub("AceAddon-3.0"):NewAddon("BankStack", "AceEvent-3.0")
 local core = BankStack
 local L = LibStub("AceLocale-3.0"):GetLocale("BankStack")
 core.L = L
+core.events = LibStub("CallbackHandler-1.0"):New(core)
 
 local debugf = tekDebug and tekDebug:GetFrame("BankStack")
 local function Debug(...) if debugf then debugf:AddMessage(string.join(", ", tostringall(...))) end end
@@ -375,18 +376,20 @@ end
 
 --Respond to events:
 function core:BANKFRAME_OPENED()
-	core.bank_open = true
+	self.bank_open = true
+	self.events:Fire("Bank_Open")
 end
 function core:BANKFRAME_CLOSED()
-	core.bank_open = false
+	self.bank_open = false
+	self.events:Fire("Bank_Close")
 end
 function core:GUILDBANKFRAME_OPENED()
-	core.guild_bank_open = true
-	Debug("GUILDBANKFRAME_OPENED")
+	self.guild_bank_open = true
+	self.events:Fire("GuildBank_Open")
 end
 function core:GUILDBANKFRAME_CLOSED()
-	core.guild_bank_open = false
-	Debug("GUILDBANKFRAME_CLOSED")
+	self.guild_bank_open = false
+	self.events:Fire("GuildBank_Close")
 end
 
 local moves = {--[[encode_move(encode_bagslot(),encode_bagslot(target)),. ..--]]}
@@ -468,7 +471,8 @@ function core.DoMoves()
 	last_itemid, lock_stop = nil, nil
 	wipe(move_tracker)
 	
-	if core.dataobject then core.dataobject.text = #moves .. " moves to go" end
+	core.events:Fire("Doing_Moves", #moves, moves)
+	
 	local start, success, move_id, target_id, move_source, move_target, was_guild
 	start = GetTime()
 	if #moves > 0 then for i=#moves, 1, -1 do
@@ -575,6 +579,7 @@ function core.StartStacking()
 		core.running = true
 		core.announce(1, string.format(L.to_move, #moves), 1, 1, 1)
 		frame:Show()
+		core.events:Fire("Stacking_Started", #moves)
 	else
 		core.announce(1, L.perfect, 1, 1, 1)
 	end
@@ -587,12 +592,10 @@ function core.StopStacking(message)
 	wipe(moves)
 	wipe(move_tracker)
 	frame:Hide()
-	if core.dataobject then
-		core.dataobject.text = core.dataobject.label
-	end
 	if message then
 		core.announce(1, message, 1, 0, 0)
 	end
+	core.events:Fire("Stacking_Stopped", message)
 end
 
 do

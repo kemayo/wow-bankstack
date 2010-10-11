@@ -48,9 +48,7 @@ function module:OnInitialize()
 			},
 		}
 	end
-
-	self:RegisterEvent("BANKFRAME_OPENED")
-	-- self:RegisterEvent("GUILDBANKFRAME_OPENED", "BANKFRAME_OPENED")
+	
 	self:RegisterEvent("PLAYER_FLAGS_CHANGED")
 end
 
@@ -65,10 +63,10 @@ local actions = {
 	compress_both = function() core.Compress("bags bank") end,
 }
 
-function module:BANKFRAME_OPENED()
+core.RegisterCallback("Auto", "Bank_Open", function(callback)
 	if not actions[db.profile.bank_opened] then return end
 	actions[db.profile.bank_opened]()
-end
+end)
 
 function module:PLAYER_FLAGS_CHANGED(event, unit)
 	if unit ~= "player" then return end

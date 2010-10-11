@@ -112,4 +112,12 @@ function module:OnInitialize()
 	end
 end
 
+core.RegisterCallback("LDB", "Doing_Moves", function(callback, num_moves)
+	dataobject.text = num_moves .. " moves to go"
+end)
+
+core.RegisterCallback("LDB", "Stacking_Stopped", function(callback, message)
+	dataobject.text = dataobject.label
+end)
+
 core.dataobject = dataobject
