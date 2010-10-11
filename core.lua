@@ -29,6 +29,8 @@ function core:OnInitialize()
 			soul = true,
 			conjured = false,
 			soulbound = true,
+			reverse = false,
+			backfill = false,
 			ignore = {},
 			groups = {},
 			fubar_keybinds={

@@ -43,6 +43,10 @@ local options = {
 			name = "Reverse", desc = "Reverse the sort", type = "toggle",
 			descStyle = "inline",
 		},
+		backfill = {
+			name = "Backfill", desc = "Fill starting at the back of your bags", type = "toggle",
+			descStyle = "inline",
+		},
 		--[[conservative_guild = {
 			name = "Cautious guild",
 			desc = "If this option is enabled, only one move at a time will be made. This is slower, but is certain to work.",
