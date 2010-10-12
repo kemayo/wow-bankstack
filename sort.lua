@@ -24,21 +24,27 @@ function core.SortBags(arg)
 	core.ScanBags()
 	for _, bags in ipairs(bag_groups) do
 		for _, bag in ipairs(bags) do
+			Debug("Considering bag", bag)
 			local bagtype = core.IsSpecialtyBag(bag)
 			if not bagtype then bagtype = 'Normal' end
 			if not bagcache[bagtype] then bagcache[bagtype] = {} end
 			table.insert(bagcache[bagtype], bag)
+			Debug(" went with", bag, bagtype)
 		end
 		for bagtype, sorted_bags in pairs(bagcache) do
 			if bagtype ~= 'Normal' then
+				Debug("Moving to normal from", bagtype)
+				core.Stack(sorted_bags, sorted_bags, core.is_partial)
 				core.Stack(bagcache['Normal'], sorted_bags)
-				core.Fill(bagcache['Normal'], sorted_bags)
+				core.Fill(bagcache['Normal'], sorted_bags, core.db.reverse)
+				core.Sort(sorted_bags)
+				wipe(sorted_bags)
 			end
 		end
-		for _, sorted_bags in pairs(bagcache) do
-			core.Stack(sorted_bags, sorted_bags, core.is_partial)
-			core.Sort(sorted_bags)
-			wipe(sorted_bags)
+		if bagcache['Normal'] then
+			core.Stack(bagcache['Normal'], bagcache['Normal'], core.is_partial)
+			core.Sort(bagcache['Normal'])
+			wipe(bagcache['Normal'])
 		end
 		wipe(bagcache)
 	end

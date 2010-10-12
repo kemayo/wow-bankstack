@@ -43,22 +43,25 @@ function core.FillBags(arg)
 end
 
 local empty_slots = {}
-function core.Fill(source_bags, target_bags)
+function core.Fill(source_bags, target_bags, reverse)
 	-- source_bags and target_bags are tables ({1,2,3})
 	-- Note: assumes that any item can be placed in any bag.
 	if core.running then
 		core.announce(0, L.already_running, 1, 0, 0)
 		return
 	end
+	if reverse == nil then
+		reverse = core.db.backfill
+	end
 	--Create a list of empty slots.
-	for _, bag, slot in core.IterateBags(target_bags, core.db.backfill, "deposit") do
+	for _, bag, slot in core.IterateBags(target_bags, reverse, "deposit") do
 		local bagslot = encode_bagslot(bag, slot)
 		if (not core.db.ignore[bagslot]) and not bag_ids[bagslot] then
 			table.insert(empty_slots, bagslot)
 		end
 	end
 	--Move items from the back of source_bags to the front of target_bags
-	for _, bag, slot in core.IterateBags(source_bags, not core.db.backfill, "withdraw") do
+	for _, bag, slot in core.IterateBags(source_bags, not reverse, "withdraw") do
 		if #empty_slots == 0 then break end
 		local bagslot = encode_bagslot(bag, slot)
 		local target_bag, target_slot = decode_bagslot(empty_slots[1])

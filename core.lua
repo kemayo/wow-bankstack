@@ -360,7 +360,7 @@ do
 		if not invslot then return false end
 		local bag = GetInventoryItemLink("player", invslot)
 		if not bag then return false end
-		local family = GetItemFamily(item)
+		local family = GetItemFamily(bag)
 		if family == 0 then return false end
 		return family
 	end
