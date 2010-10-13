@@ -36,7 +36,7 @@ do
 	local function is_partial(itemid, bag, slot)
 		-- (stacksize - count) > 0
 		local bagslot = encode_bagslot(bag, slot)
-		return (bag_maxstacks[bagslot] - bag_stacks[bagslot]) > 0
+		return ((bag_maxstacks[bagslot] or 0) - (bag_stacks[bagslot] or 0)) > 0
 	end
 	core.is_partial = is_partial
 	local bag_groups = {}
