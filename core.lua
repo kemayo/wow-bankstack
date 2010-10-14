@@ -158,7 +158,7 @@ function core.get_group(id)
 			return core_groups["guild" .. tab]
 		end
 	end
-	if not core.db.groups[id] and string.match(id, "[-%d,]+") then
+	if not core.db.groups[id] and string.match(id, "^[-%d,]+$") then
 		Debug("Looks like a bag list", id)
 		local bags = {}
 		for b in string.gmatch(id, "-?%d+") do
