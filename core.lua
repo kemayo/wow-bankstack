@@ -109,8 +109,11 @@ for i = 0, NUM_BAG_SLOTS do
 	table.insert(player_bags, i)
 end
 core.player_bags = player_bags
-local all_bags = {BANK_CONTAINER}
-for i = 0, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
+local all_bags = {}
+for _,i in ipairs(player_bags) do
+	table.insert(all_bags, i)
+end
+for _,i in ipairs(bank_bags) do
 	table.insert(all_bags, i)
 end
 core.all_bags = all_bags
