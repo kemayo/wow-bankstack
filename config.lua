@@ -27,10 +27,6 @@ local options = {
 			name = "Junk", desc = "Move junk to the end", type = "toggle",
 			descStyle = "inline",
 		},
-		soul = {
-			name = "Soul", desc = "Move soul shards to the end", type = "toggle",
-			descStyle = "inline",
-		},
 		conjured = {
 			name = "Conjured", desc = "Move conjured items to the end", type = "toggle",
 			descStyle = "inline",

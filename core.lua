@@ -26,7 +26,6 @@ function core:OnInitialize()
 		profile = {
 			verbosity = 1,
 			junk = true,
-			soul = true,
 			conjured = false,
 			soulbound = true,
 			reverse = false,

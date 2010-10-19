@@ -81,6 +81,7 @@ local inventory_slots = {
 	INVTYPE_RELIC = 24,
 	INVTYPE_TABARD = 25,
 }
+
 -- Sorting
 local item_types
 local item_subtypes
@@ -157,17 +158,13 @@ local function default_sorter(a, b)
 		if a_rarity == 0 then return false end
 		if b_rarity == 0 then return true end
 	end
-	-- Soul shards to the back? (doesn't need equivalence testing, as that's covered above)
-	if core.db.soul then
-		if a_id == 6265 then return false end
-		if b_id == 6265 then return true end
-	end
+	
 	-- Soulbound items to the front?
 	if core.db.soulbound and not bag_soulbound[a] == bag_soulbound[b] then
 		if bag_soulbound[a] then return true end
 		if bag_soulbound[b] then return false end
 	end
-	
+
 	-- are they the same type?
 	if item_types[a_type] == item_types[b_type] then
 		if a_rarity == b_rarity then
