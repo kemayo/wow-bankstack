@@ -121,6 +121,7 @@ local function prime_sort(a, b)
 		return a_level > b_level
 	end
 end
+local initial_order = {}
 local function default_sorter(a, b)
 	-- a and b are from encode_bagslot
 	-- note that "return a < b" would maintain the bag's state
@@ -131,13 +132,15 @@ local function default_sorter(a, b)
 	-- is either slot empty?  If so, move it to the back.
 	if (not a_id) or (not b_id) then return a_id end
 	
+	local a_order, b_order = initial_order[a], initial_order[b]
+
 	-- are they the same item?
 	if a_id == b_id then
 		local a_count = bag_stacks[a]
 		local b_count = bag_stacks[b]
 		if a_count == b_count then
 			-- maintain the original order
-			return a < b
+			return a_order < b_order
 		else
 			-- emptier stacks to the front
 			return a_count < b_count
@@ -168,7 +171,7 @@ local function default_sorter(a, b)
 	-- are they the same type?
 	if item_types[a_type] == item_types[b_type] then
 		if a_rarity == b_rarity then
-			if a_type == L.ARMOR or a_type == L.WEAPON then
+			if a_type == ARMOR or a_type == ENCHSLOT_WEAPON then
 				-- "or -1" because some things are classified as armor/weapon without being equipable; note Everlasting Underspore Frond
 				local a_equipLoc = inventory_slots[a_equipLoc] or -1
 				local b_equipLoc = inventory_slots[b_equipLoc] or -1
@@ -231,10 +234,11 @@ function core.Sort(bags, sorter)
 	if not sorter then sorter = core.db.reverse and reverse_sort or default_sorter end
 	if not item_types then build_sort_order() end
 	
-	for _, bag, slot in core.IterateBags(bags, nil, "both") do
+	for i, bag, slot in core.IterateBags(bags, nil, "both") do
 		--(you need withdraw *and* deposit permissions in the guild bank to move items within it)
 		local bagslot = encode_bagslot(bag, slot)
 		if (not core.db.ignore[bagslot]) then
+			initial_order[bagslot] = i
 			table.insert(bag_sorted, bagslot)
 		end
 	end
@@ -282,6 +286,7 @@ function core.Sort(bags, sorter)
 	wipe(bag_soulbound)
 	wipe(bag_conjured)
 	wipe(bag_sorted)
+	wipe(initial_order)
 end
 
 SlashCmdList["SORT"] = core.SortBags
