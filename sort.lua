@@ -113,18 +113,20 @@ local bag_conjured = setmetatable({}, {__index = function(self, bagslot)
 	return is_conjured
 end,})
 local function prime_sort(a, b)
-	local a_name, _, a_rarity, a_level, a_minLevel, a_type, a_subType, a_stackCount, a_equipLoc, a_texture = GetItemInfo(bag_ids[a])
-	local b_name, _, b_rarity, b_level, b_minLevel, b_type, b_subType, b_stackCount, b_equipLoc, b_texture = GetItemInfo(bag_ids[b])
-	if a_level == b_level then
-		return a_name < b_name
-	else
+	local a_name, _, a_rarity, a_level, a_minLevel, a_type, a_subType, a_stackCount, a_equipLoc, a_texture, a_price = GetItemInfo(bag_ids[a])
+	local b_name, _, b_rarity, b_level, b_minLevel, b_type, b_subType, b_stackCount, b_equipLoc, b_texture, b_price = GetItemInfo(bag_ids[b])
+	if a_level ~= b_level then
 		return a_level > b_level
 	end
+	if a_price ~= b_price then
+		return a_price > b_price
+	end
+	return a_name < b_name
 end
 local initial_order = {}
 local function default_sorter(a, b)
 	-- a and b are from encode_bagslot
-	-- note that "return a < b" would maintain the bag's state
+	-- note that "return initial_order[a] < initial_order[b]" would maintain the bag's state
 	-- I'm certain this could be made to be more efficient
 	local a_id = bag_ids[a]
 	local b_id = bag_ids[b]
@@ -163,37 +165,34 @@ local function default_sorter(a, b)
 	end
 	
 	-- Soulbound items to the front?
-	if core.db.soulbound and not bag_soulbound[a] == bag_soulbound[b] then
+	if core.db.soulbound and bag_soulbound[a] ~= bag_soulbound[b] then
 		if bag_soulbound[a] then return true end
 		if bag_soulbound[b] then return false end
 	end
 
-	-- are they the same type?
-	if item_types[a_type] == item_types[b_type] then
-		if a_rarity == b_rarity then
-			if a_type == ARMOR or a_type == ENCHSLOT_WEAPON then
-				-- "or -1" because some things are classified as armor/weapon without being equipable; note Everlasting Underspore Frond
-				local a_equipLoc = inventory_slots[a_equipLoc] or -1
-				local b_equipLoc = inventory_slots[b_equipLoc] or -1
-				if a_equipLoc == b_equipLoc then
-					-- sort by level, then name
-					return prime_sort(a, b)
-				else
-					return a_equipLoc < b_equipLoc
-				end
-			else
-				if a_subType == b_subType then
-					return prime_sort(a, b)
-				else
-					return ((item_subtypes[a_type] or {})[a_subType] or 99) < ((item_subtypes[b_type] or {})[b_subType] or 99)
-				end
-			end
-		else
-			return a_rarity > b_rarity
-		end
-	else
+	if a_rarity ~= b_rarity then
+		return a_rarity > b_rarity
+	end
+
+	if item_types[a_type] ~= item_types[b_type] then
 		return (item_types[a_type] or 99) < (item_types[b_type] or 99)
 	end
+
+	-- are they the same type?
+	if a_type == ARMOR or a_type == ENCHSLOT_WEAPON then
+		-- "or -1" because some things are classified as armor/weapon without being equipable; note Everlasting Underspore Frond
+		local a_equipLoc = inventory_slots[a_equipLoc] or -1
+		local b_equipLoc = inventory_slots[b_equipLoc] or -1
+		if a_equipLoc == b_equipLoc then
+			-- sort by level, then name
+			return prime_sort(a, b)
+		end
+		return a_equipLoc < b_equipLoc
+	end
+	if a_subType == b_subType then
+		return prime_sort(a, b)
+	end
+	return ((item_subtypes[a_type] or {})[a_subType] or 99) < ((item_subtypes[b_type] or {})[b_subType] or 99)
 end
 local function reverse_sort(a, b) return default_sorter(b, a) end
 
@@ -244,7 +243,7 @@ function core.Sort(bags, sorter)
 	end
 	
 	table.sort(bag_sorted, sorter)
-	--for i,s in ipairs(bag_sorted) do AceLibrary("AceConsole-2.0"):Print(i, core.GetItemLink(decode_bagslot(s))) end -- handy debug list
+	for i,s in ipairs(bag_sorted) do Debug("SORTED", i, core.GetItemLink(decode_bagslot(s))) end
 	
 	-- We now have bag_sorted, which is a table containing all slots that contain items, in the order
 	-- that they need to be moved into.

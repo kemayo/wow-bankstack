@@ -368,20 +368,21 @@ do
 	end
 end
 
-function core.CanItemGoInBag(item, bag)
+function core.CanItemGoInBag(bag, slot, target_bag)
 	if is_guild_bank_bag(bag) then
 		-- almost anything can go in a guild bank... apart from:
 		if
-			core.CheckTooltipFor(false, item, ITEM_SOULBOUND)
+			core.CheckTooltipFor(bag, slot, ITEM_SOULBOUND)
 			or
-			core.CheckTooltipFor(false, item, ITEM_CONJURED)
+			core.CheckTooltipFor(bag, slot, ITEM_CONJURED)
 			or
-			core.CheckTooltipFor(false, item, ITEM_BIND_QUEST)
+			core.CheckTooltipFor(bag, slot, ITEM_BIND_QUEST)
 		then
 			return false
 		end
 		return true
 	end
+	local item = core.bag_ids[encode_bagslot(bag, slot)]
 	-- since we now know this isn't a guild bank we can just use the bag id provided
 	local item_family = GetItemFamily(item)
 	if item_family > 0 then
