@@ -19,7 +19,7 @@ function core.SortBags(arg)
 		end
 	end
 	if #bag_groups == 0 then
-		table.insert(bag_groups, core.player_bags)
+		table.insert(bag_groups, core.get_group('bags'))
 	end
 	core.ScanBags()
 	for _, bags in ipairs(bag_groups) do

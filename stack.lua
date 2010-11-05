@@ -17,13 +17,10 @@ function core.BankStack(arg)
 	if arg and (#arg > 2) then
 		-- 2 because "x y" would be the minimal declaration of two groups.
 		from, to = string.match(arg, "^([^%s]+)%s+([^%s]+)$")
-		from = core.get_group(from)
-		to = core.get_group(to)
 	end
-	if not (from and to) then
-		from = core.player_bags
-		to = core.bank_bags
-	end
+	from = core.get_group(from or 'bags')
+	to = core.get_group(to or 'bank')
+	
 	if core.check_for_banks(from) or core.check_for_banks(to) then return end
 	
 	core.ScanBags()
