@@ -392,7 +392,7 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 			item_family = 1
 		end
 	end
-	local bag_family = select(2, GetContainerNumFreeSlots(bag))
+	local bag_family = select(2, GetContainerNumFreeSlots(target_bag))
 	return bag_family == 0 or bit.band(item_family, bag_family) > 0
 end
 
