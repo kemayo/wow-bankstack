@@ -369,7 +369,7 @@ do
 end
 
 function core.CanItemGoInBag(bag, slot, target_bag)
-	if is_guild_bank_bag(bag) then
+	if is_guild_bank_bag(target_bag) then
 		-- almost anything can go in a guild bank... apart from:
 		if
 			core.CheckTooltipFor(bag, slot, ITEM_SOULBOUND)
