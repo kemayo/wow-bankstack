@@ -116,7 +116,7 @@ for _,i in ipairs(bank_bags) do
 	table.insert(all_bags, i)
 end
 core.all_bags = all_bags
-local guild = {51,52,53,54,55,56}
+local guild = {51,52,53,54,55,56,57,58}
 core.guild = guild
 local all_bags_with_guild = {}
 for _,bag in ipairs(all_bags) do table.insert(all_bags_with_guild, bag) end
@@ -133,9 +133,9 @@ end
 core.is_bank_bag = is_bank_bag
 local function is_guild_bank_bag(bagid)
 	-- Note that this is an artificial slot id, which we're using internally to trigger usage of guild bank functions.
-	-- Guild bank slots are: 51, 52, 53, 54, 55, 56.
-	-- I couldn't find a constant for the maximum number of guild bank tabs; it's currently 6.
-	return (bagid > 50 and bagid <= 56)
+	-- Guild bank slots are: 51, 52, 53, 54, 55, 56, 57, 58.
+	-- I couldn't find a constant for the maximum number of guild bank tabs; it's currently 8.
+	return (bagid > 50 and bagid <= 58)
 end
 core.is_guild_bank_bag = is_guild_bank_bag
 
@@ -150,6 +150,8 @@ local core_groups = {
 	guild4 = {54,},
 	guild5 = {55,},
 	guild6 = {56,},
+	guild7 = {57,},
+	guild8 = {58,},
 }
 core.groups = core_groups
 function core.get_group(id)
