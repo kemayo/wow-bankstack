@@ -204,12 +204,17 @@ end
 
 do
 	local tooltip
+	-- tooltip:SetOwner(UIParent, "ANCHOR_NONE")
 	function core.CheckTooltipFor(bag, slot, text)
 		if not tooltip then
 			tooltip = CreateFrame("GameTooltip", "BankStackTooltip", nil, "GameTooltipTemplate")
-			tooltip:SetOwner(UIParent, "ANCHOR_NONE")
-			--core.tooltip = tooltip
+			tooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
+			tooltip:AddFontStrings(
+				tooltip:CreateFontString("$parentTextLeft1", nil, "GameTooltipText"),
+				tooltip:CreateFontString("$parentTextRight1", nil, "GameTooltipText")
+			)
 		end
+		tooltip:ClearLines()
 		if slot and not bag then
 			-- just showing tooltip for an itemid
 			-- uses rather innocent checking so that slot can be a link or an itemid
@@ -221,7 +226,15 @@ do
 		elseif is_guild_bank_bag(bag) then
 			tooltip:SetGuildBankItem(bag-50, slot)
 		else
-			tooltip:SetBagItem(bag, slot)
+			-- This is just ridiculous... since 3.3, SetBagItem doesn't work in the base
+			-- bank slot or the keyring since they're not real bags.
+			if bag == BANK_CONTAINER then
+				tooltip:SetInventoryItem("player", BankButtonIDToInvSlotID(slot, nil))
+			elseif bag == KEYRING_CONTAINER then
+				tooltip:SetInventoryItem("player", KeyRingButtonIDToInvSlotID(slot))
+			else
+				tooltip:SetBagItem(bag, slot)
+			end
 		end
 		for i=2, tooltip:NumLines() do
 			local left = _G["BankStackTooltipTextLeft"..i]
