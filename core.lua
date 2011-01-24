@@ -470,6 +470,10 @@ local move_tracker = {}
 local function debugtime(start, msg) Debug("took", GetTime() - start, msg or '') end
 function core.DoMoves()
 	Debug("DoMoves", #moves)
+	if InCombatLockdown() then
+		Debug("Aborted because of combat")
+		return core.StopStacking(L.confused)
+	end
 	if CursorHasItem() then
 		local itemid = link_to_id(select(3, GetCursorInfo()))
 		if last_itemid ~= itemid then
@@ -616,6 +620,7 @@ function core.StopStacking(message, r, g, b)
 	core.guildbankrequired = false
 	wipe(moves)
 	wipe(move_tracker)
+	last_itemid, lock_stop = nil, nil
 	frame:Hide()
 	if message then
 		core.announce(1, message, r or 1, g or 0, b or 0)
