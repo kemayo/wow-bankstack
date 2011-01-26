@@ -204,15 +204,10 @@ end
 
 do
 	local tooltip
-	-- tooltip:SetOwner(UIParent, "ANCHOR_NONE")
 	function core.CheckTooltipFor(bag, slot, text)
 		if not tooltip then
 			tooltip = CreateFrame("GameTooltip", "BankStackTooltip", nil, "GameTooltipTemplate")
 			tooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
-			tooltip:AddFontStrings(
-				tooltip:CreateFontString("$parentTextLeft1", nil, "GameTooltipText"),
-				tooltip:CreateFontString("$parentTextRight1", nil, "GameTooltipText")
-			)
 		end
 		tooltip:ClearLines()
 		if slot and not bag then
