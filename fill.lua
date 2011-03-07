@@ -39,10 +39,15 @@ function core.FillBags(arg)
 	core.StartStacking()
 end
 
+local function default_can_move() return true end
 local empty_slots = {}
-function core.Fill(source_bags, target_bags, reverse)
-	-- source_bags and target_bags are tables ({1,2,3})
-	-- Note: assumes that any item can be placed in any bag.
+function core.Fill(source_bags, target_bags, reverse, can_move)
+	-- source_bags: table, e.g. {1,2,3,4}
+	-- target_bags: table, e.g. {1,2,3,4}
+	-- reverse: bool, whether to fill from the front or back of the bags
+	-- can_move: function or nil.  Called as can_move(itemid, bag, slot)
+	--   for any slot in source that is not empty and contains an item that
+	--   could be moved to target.  If it returns false then ignore the slot.
 	if core.running then
 		core.announce(0, L.already_running, 1, 0, 0)
 		return
@@ -50,14 +55,16 @@ function core.Fill(source_bags, target_bags, reverse)
 	if reverse == nil then
 		reverse = core.db.backfill
 	end
-	--Create a list of empty slots.
+	if not can_move then can_move = default_can_move end
+	--Create a list of empty slots in the target bags
 	for _, bag, slot in core.IterateBags(target_bags, reverse, "deposit") do
 		local bagslot = encode_bagslot(bag, slot)
 		if (not core.db.ignore[bagslot]) and not bag_ids[bagslot] then
 			table.insert(empty_slots, bagslot)
 		end
 	end
-	--Move items from the back of source_bags to the front of target_bags
+	--Move items from the back of source_bags to the front of target_bags (or
+	--front to back if `reverse`)
 	for _, bag, slot in core.IterateBags(source_bags, not reverse, "withdraw") do
 		if #empty_slots == 0 then break end
 		local bagslot = encode_bagslot(bag, slot)
@@ -68,6 +75,8 @@ function core.Fill(source_bags, target_bags, reverse)
 			bag_ids[bagslot]
 			and
 			core.CanItemGoInBag(bag, slot, target_bag)
+			and
+			can_move(bag_ids[bagslot], bag, slot)
 		then
 			core.AddMove(bagslot, table.remove(empty_slots, 1))
 		end
