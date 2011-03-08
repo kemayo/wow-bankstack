@@ -12,17 +12,7 @@ local bag_stacks = core.bag_stacks
 local bag_maxstacks = core.bag_maxstacks
 
 local specialty_bags = {}
-function core.FillBags(arg)
-	local to, from
-	if arg and #arg > 2 then
-		from, to = string.match(arg, "^([^%s]+)%s+([^%s]+)$")
-	end
-	from = core.get_group(from or 'bags')
-	to = core.get_group(to or 'bank')
-	
-	if core.check_for_banks(from) or core.check_for_banks(to) then return end
-	
-	core.ScanBags()
+function core.FillBags(from, to)
 	core.Stack(from, to)
 	-- first, try to fill any specialty bags
 	for _,bag in ipairs(to) do
@@ -36,7 +26,6 @@ function core.FillBags(arg)
 	-- and now the rest (no point filtering out the specialty bags here; it's covered)
 	core.Fill(from, to)
 	wipe(specialty_bags)
-	core.StartStacking()
 end
 
 local function default_can_move() return true end
@@ -48,10 +37,6 @@ function core.Fill(source_bags, target_bags, reverse, can_move)
 	-- can_move: function or nil.  Called as can_move(itemid, bag, slot)
 	--   for any slot in source that is not empty and contains an item that
 	--   could be moved to target.  If it returns false then ignore the slot.
-	if core.running then
-		core.announce(0, L.already_running, 1, 0, 0)
-		return
-	end
 	if reverse == nil then
 		reverse = core.db.backfill
 	end
@@ -84,6 +69,6 @@ function core.Fill(source_bags, target_bags, reverse, can_move)
 	wipe(empty_slots)
 end
 
-SlashCmdList["FILL"] = core.FillBags
+SlashCmdList["FILL"] = core.CommandDecorator(core.FillBags, "bags bank")
 SLASH_FILL1 = "/fill"
 SLASH_FILL2 = "/fillbags"

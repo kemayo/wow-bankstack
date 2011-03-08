@@ -12,21 +12,6 @@ local bag_ids = core.bag_ids
 local bag_stacks = core.bag_stacks
 local bag_maxstacks = core.bag_maxstacks
 
-function core.BankStack(arg)
-	local from, to
-	if arg and (#arg > 2) then
-		-- 2 because "x y" would be the minimal declaration of two groups.
-		from, to = string.match(arg, "^([^%s]+)%s+([^%s]+)$")
-	end
-	from = core.get_group(from or 'bags')
-	to = core.get_group(to or 'bank')
-	
-	if core.check_for_banks(from) or core.check_for_banks(to) then return end
-	
-	core.ScanBags()
-	core.Stack(from, to)
-	core.StartStacking()
-end
 do
 	-- This is a stack filterer.  It's used to stop full stacks being shuffled around
 	-- while compressing bags.
@@ -37,24 +22,11 @@ do
 	end
 	core.is_partial = is_partial
 	local bag_groups = {}
-	function core.Compress(arg)
-		for bags in (arg or ""):gmatch("[^%s]+") do
-			bags = core.get_group(arg)
-			if bags then
-				if core.check_for_banks(bags) then return wipe(bag_groups) end
-				table.insert(bag_groups, bags)
-			end
-		end
-		if #bag_groups == 0 then
-			table.insert(bag_groups, core.player_bags)
-		end
-		
-		core.ScanBags()
-		for _, bags in ipairs(bag_groups) do
+	function core.Compress(...)
+		for i=1, select("#", ...) do
+			local bags = select(i, ...)
 			core.Stack(bags, bags, is_partial)
 		end
-		wipe(bag_groups)
-		core.StartStacking()
 	end
 end
 
@@ -72,10 +44,6 @@ function core.Stack(source_bags, target_bags, can_move)
 	-- can_move: function or nil.  Called as can_move(itemid, bag, slot)
 	--   for any slot in source that is not empty and contains an item that
 	--   could be moved to target.  If it returns false then ignore the slot.
-	if core.running then
-		core.announce(0, L.already_running, 1, 0, 0)
-		return
-	end
 	if not can_move then can_move = default_can_move end
 	-- Model the target bags.
 	for _, bag, slot in core.IterateBags(target_bags, nil, "deposit") do
@@ -127,8 +95,8 @@ function core.Stack(source_bags, target_bags, can_move)
 	wipe(source_used)
 end
 
-SlashCmdList["BANKSTACK"] = core.BankStack
+SlashCmdList["BANKSTACK"] = core.CommandDecorator(core.Stack, "bags bank")
 SLASH_BANKSTACK1 = "/stack"
-SlashCmdList["COMPRESSBAGS"] = core.Compress
+SlashCmdList["COMPRESSBAGS"] = core.CommandDecorator(core.Compress, "bags")
 SLASH_COMPRESSBAGS1 = "/compress"
 SLASH_COMPRESSBAGS2 = "/compressbags"

@@ -3,12 +3,12 @@ local module = core:NewModule("LDB")
 local icon = LibStub("LibDBIcon-1.0", true)
 
 local click_actions = {
-	sortbags = core.SortBags,
-	sortbank = function() core.SortBags('bank') end,
-	stackbags = function() core.BankStack('bank bags') end,
-	stackbank = core.BankStack,
-	compressbags = core.Compress,
-	compressbank = function() core.Compress('bank') end,
+	sortbags = core.CommandDecorator(core.SortBags, 'bags'),
+	sortbank = core.CommandDecorator(core.SortBags, 'bank'),
+	stackbags = core.CommandDecorator(core.Stack, 'bank bags'),
+	stackbank = core.CommandDecorator(core.Stack, 'bags bank'),
+	compressbags = core.CommandDecorator(core.Compress, 'bags'),
+	compressbank = core.CommandDecorator(core.Compress, 'bank'),
 }
 local name_map = {
 	sortbags = "Sort Bags",

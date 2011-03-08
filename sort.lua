@@ -10,19 +10,9 @@ local moves = core.moves
 
 local bagcache = {}
 local bag_groups = {}
-function core.SortBags(arg)
-	for bags in (arg or ""):gmatch("[^%s]+") do
-		bags = core.get_group(bags)
-		if bags then
-			if core.check_for_banks(bags) then return wipe(bag_groups) end
-			table.insert(bag_groups, bags)
-		end
-	end
-	if #bag_groups == 0 then
-		table.insert(bag_groups, core.get_group('bags'))
-	end
-	core.ScanBags()
-	for _, bags in ipairs(bag_groups) do
+function core.SortBags(...)
+	for i=1, select("#", ...) do
+		local bags = select(i, ...)
 		for _, bag in ipairs(bags) do
 			Debug("Considering bag", bag)
 			local bagtype = core.IsSpecialtyBag(bag)
@@ -48,8 +38,6 @@ function core.SortBags(arg)
 		end
 		wipe(bagcache)
 	end
-	wipe(bag_groups)
-	core.StartStacking()
 end
 
 -- Sorting:
@@ -226,10 +214,6 @@ end
 function core.Sort(bags, sorter)
 	-- bags: table, e.g. {1,2,3,4}
 	-- sorter: function or nil.  Passed to table.sort.
-	if core.running then
-		core.announce(0, L.already_running, 1, 0, 0)
-		return
-	end
 	if not sorter then sorter = core.db.reverse and reverse_sort or default_sorter end
 	if not item_types then build_sort_order() end
 	
@@ -288,6 +272,6 @@ function core.Sort(bags, sorter)
 	wipe(initial_order)
 end
 
-SlashCmdList["SORT"] = core.SortBags
+SlashCmdList["SORT"] = core.CommandDecorator(core.SortBags, 'bags')
 SLASH_SORT1 = "/sort"
 SLASH_SORT2 = "/sortbags"

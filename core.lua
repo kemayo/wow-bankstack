@@ -406,6 +406,38 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 	return bag_family == 0 or bit.band(item_family, bag_family) > 0
 end
 
+function core.CommandDecorator(func, groups_defaults)
+	local bag_groups = {}
+	return function(groups)
+		if core.running then
+			return core.announce(0, L.already_running, 1, 0, 0)
+		end
+		wipe(bag_groups)
+		if not groups or #groups == 0 then
+			groups = groups_defaults
+		end
+		for bags in (groups or ""):gmatch("[^%s]+") do
+			bags = core.get_group(bags)
+			if bags then
+				if core.check_for_banks(bags) then
+					return
+				end
+				table.insert(bag_groups, bags)
+			end
+		end
+		if #bag_groups == 0 then
+			return core.announce(0, L.confused, 1, 0, 0)
+		end
+
+		core.ScanBags()
+		if func(unpack(bag_groups)) == false then
+			return
+		end
+		wipe(bag_groups)
+		core.StartStacking()
+	end
+end
+
 --Respond to events:
 function core:BANKFRAME_OPENED()
 	self.bank_open = true

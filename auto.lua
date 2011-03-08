@@ -53,14 +53,14 @@ function module:OnInitialize()
 end
 
 local actions = {
-	sort_bags = function() core.SortBags("bags") end,
-	sort_bank = function() core.SortBags("bank") end,
-	sort_both = function() core.SortBags("bank bags") end,
-	stack_to_bank = function() core.BankStack("bags bank") end,
-	stack_to_bags = function() core.BankStack("bank bags") end,
-	compress_bags = function() core.Compress("bags") end,
-	compress_bank = function() core.Compress("bank") end,
-	compress_both = function() core.Compress("bags bank") end,
+	sort_bags = core.CommandDecorator(core.SortBags, 'bags'),
+	sort_bank = core.CommandDecorator(core.SortBags, 'bank'),
+	sort_both = core.CommandDecorator(core.SortBags, 'bank bags'),
+	stack_to_bags = core.CommandDecorator(core.Stack, 'bank bags'),
+	stack_to_bank = core.CommandDecorator(core.Stack, 'bags bank'),
+	compress_bags = core.CommandDecorator(core.Compress, 'bags'),
+	compress_bank = core.CommandDecorator(core.Compress, 'bank'),
+	compress_bank = core.CommandDecorator(core.Compress, 'bags bank'),
 }
 
 core.RegisterCallback("Auto", "Bank_Open", function(callback)
