@@ -49,7 +49,7 @@ end
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
 local dataobject = ldb:GetDataObjectByName("BankStack") or ldb:NewDataObject("BankStack", {
-	type = "launcher",
+	type = "data source",
 	label = "BankStack",
 	icon = [[Interface\Icons\INV_Misc_Shovel_01]],
 })
