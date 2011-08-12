@@ -131,7 +131,7 @@ local group_options = {
 				announce(0, "Added group: "..group.." ("..string.join(", ", unpack(bags))..")", 1, 1, 1)
 			end,
 			usage = "[name] [bagid],[bagid],[bagid]",
-			validate = function(_, v) return string.match(v, "^[^%s]+ [%d%s,]+$") and true or false end,
+			validate = function(_, v) return string.match(v, "^[^%s]+ [-%d%s,]+$") and true or false end,
 		},
 		remove = {
 			name = "Remove", desc = "Remove a group", type = "input", order = 3,
