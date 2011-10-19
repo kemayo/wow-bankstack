@@ -620,21 +620,22 @@ function core.DoMove(move)
 	else
 		core.PickupItem(source_bag, source_slot)
 	end
-	local guildbank = is_guild_bank_bag(source_bag)
-	if CursorHasItem() or guildbank then
+	local source_guildbank = is_guild_bank_bag(source_bag)
+	local target_guildbank = is_guild_bank_bag(target_bag)
+	if CursorHasItem() or source_guildbank then
 		-- CursorHasItem doesn't work on the guild bank
 		core.PickupItem(target_bag, target_slot)
 	end
 
-	if guildbank then
+	if source_guildbank then
 		QueryGuildBankTab(source_bag - 50)
 	end
-	if is_guild_bank_bag(target_bag) then
+	if target_guildbank then
 		QueryGuildBankTab(target_bag - 50)
 	end
 	
 	-- Debug("Moved", source, source_itemid, target, target_itemid, guildbank)
-	return true, source_itemid, source, target_itemid, target, guildbank
+	return true, source_itemid, source, target_itemid, target, source_guildbank or target_guildbank
 end
 
 function core.StartStacking()
