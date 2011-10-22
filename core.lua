@@ -43,6 +43,10 @@ function core:OnInitialize()
 				['ALT-CTRL-SHIFT-BUTTON1'] = false,
 			},
 			conservative_guild = true,
+			stutter_duration = 0.05,
+			stutter_delay = 0,
+			processing_delay = 0.1,
+			processing_delay_guild = 0.1,
 		},
 	}, "Default")
 	self.db = self.db_object.profile
@@ -504,7 +508,6 @@ function core.AddMove(source, destination)
 end
 
 local moves_underway, last_itemid, lock_stop
-local STUTTER_INTERVAL, STUTTER_WAIT, PROCESSING_WAIT = 0.05, 0, 0.1
 local move_tracker = {}
 
 local function debugtime(start, msg) Debug("took", GetTime() - start, msg or '') end
@@ -529,7 +532,7 @@ function core.DoMoves()
 			Debug("checking whether", slot, "contains", itemid, link_to_id(core.GetItemLink(decode_bagslot(slot))))
 			if link_to_id(core.GetItemLink(decode_bagslot(slot))) ~= itemid then
 				Debug("Stopping DoMoves because last move hasn't happened yet.", slot, itemid)
-				WAIT_TIME = PROCESSING_WAIT
+				WAIT_TIME = core.db.processing_delay
 				return --give processing time to happen
 			end
 			move_tracker[slot] = nil
@@ -547,7 +550,7 @@ function core.DoMoves()
 		success, move_id, move_source, target_id, move_target, was_guild = core.DoMove(moves[i])
 		if not success then
 			debugtime(start, move_id or 'unspecified') -- repurposing for debugging
-			WAIT_TIME = PROCESSING_WAIT
+			WAIT_TIME = core.db.processing_delay
 			lock_stop = true
 			return -- take a break!
 		end
@@ -561,15 +564,15 @@ function core.DoMoves()
 				local next_source, next_target = decode_move(moves[i-1])
 				if core.db.conservative_guild or move_tracker[next_source] or move_tracker[next_target] then
 					Debug("fake-guild-locking is in effect", core.db.conservative_guild and "conservative" or "locking")
-					WAIT_TIME = PROCESSING_WAIT
+					WAIT_TIME = core.db.processing_delay_guild
 					lock_stop = true
 					debugtime(start, 'guild bank sucks')
 					return
 				end
 			end
-			if (GetTime() - start) > STUTTER_INTERVAL then
+			if (GetTime() - start) > core.db.stutter_duration then
 				-- avoiding the lags
-				WAIT_TIME = STUTTER_WAIT
+				WAIT_TIME = core.db.stutter_delay
 				debugtime(start, "stutter-avoider")
 				return
 			end

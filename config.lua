@@ -43,12 +43,6 @@ local options = {
 			name = "Backfill", desc = "Fill starting at the back of your bags", type = "toggle",
 			descStyle = "inline",
 		},
-		--[[conservative_guild = {
-			name = "Cautious guild",
-			desc = "If this option is enabled, only one move at a time will be made. This is slower, but is certain to work.",
-			descStyle = "inline",
-			type = "toggle",
-		},--]]
 	},
 	plugins = {},
 }
@@ -215,12 +209,60 @@ local launcher_options = {
 	},
 }
 
+local advanced_options = {
+	name = "Advanced", desc = "Advanced settings", type = "group", order = 100,
+	get = function(info) return core.db[info[#info]] end,
+	set = function(info, value) core.db[info[#info]] = value end,
+	args = {
+		conservative_guild = {
+			name = "Cautious guild",
+			desc = "If this option is enabled, only one move at a time will be made. This is slower, but is nearly certain to work.",
+			descStyle = "inline",
+			type = "toggle",
+		},
+		timing = {
+			name = "Timing", inline = true, type = "group",
+			args = {
+				desc = {
+					type = "description", order = 0,
+					name = "How long to wait during sorting. If you run into problems with Blizzard throttling moves, especially in the guild bank, you can adjust these settings.",
+				},
+				stutter_duration = {
+					name = "Stutter Interval", type = "range",
+					desc = "How long to spend moving items before pausing to avoid the game noticably stuttering",
+					min = 0, max = 1, step = 0.05,
+					order = 10,
+				},
+				stutter_delay = {
+					name = "Stutter Delay", type = "range",
+					desc = "How long to wait after the stutter interval before starting to move items again",
+					min = 0, max = 1, step = 0.05,
+					order = 20,
+				},
+				processing_delay = {
+					name = "Processing Delay", type = "range",
+					desc = "How long to wait while a move operation is pending. Lower values might make sorting faster, but will use more CPU time.",
+					min = 0, max = 1, step = 0.05,
+					order = 30,
+				},
+				processing_delay_guild = {
+					name = "Processing Delay (Guild)", type = "range",
+					desc = "How long to wait while a move operation is pending if it involves the guild bank.",
+					min = 0, max = 1, step = 0.05,
+					order = 40,
+				},
+			},
+		}
+	},
+}
+
 core.setup_config = function()
 	local acreg = LibStub("AceConfigRegistry-3.0")
 	acreg:RegisterOptionsTable("BankStack", options)
 	acreg:RegisterOptionsTable("BankStack Profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(core.db_object))
 	acreg:RegisterOptionsTable("BankStack Help", help_options)
 	acreg:RegisterOptionsTable("BankStack Launcher", launcher_options)
+	acreg:RegisterOptionsTable("BankStack Advanced", advanced_options)
 	acreg:RegisterOptionsTable("BankStack Groups", group_options)
 	acreg:RegisterOptionsTable("BankStack Ignore", ignore_options)
 
@@ -229,6 +271,7 @@ core.setup_config = function()
 	acdia:AddToBlizOptions("BankStack Ignore", "Ignore", "BankStack")
 	acdia:AddToBlizOptions("BankStack Groups", "Groups", "BankStack")
 	acdia:AddToBlizOptions("BankStack Launcher", "Launcher", "BankStack")
+	acdia:AddToBlizOptions("BankStack Advanced", "Advanced", "BankStack")
 	acdia:AddToBlizOptions("BankStack Profiles", "Profiles", "BankStack")
 	acdia:AddToBlizOptions("BankStack Help", "Help", "BankStack")
 end
