@@ -46,7 +46,7 @@ function core:OnInitialize()
 			stutter_duration = 0.05,
 			stutter_delay = 0,
 			processing_delay = 0.1,
-			processing_delay_guild = 0.1,
+			processing_delay_guild = 0.4,
 		},
 	}, "Default")
 	self.db = self.db_object.profile
