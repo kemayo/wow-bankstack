@@ -410,7 +410,7 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 	return bag_family == 0 or bit.band(item_family, bag_family) > 0
 end
 
-function core.CommandDecorator(func, groups_defaults)
+function core.CommandDecorator(func, groups_defaults, required_count)
 	local bag_groups = {}
 	return function(groups)
 		if core.running then
@@ -429,7 +429,8 @@ function core.CommandDecorator(func, groups_defaults)
 				table.insert(bag_groups, bags)
 			end
 		end
-		if #bag_groups == 0 then
+		required_count = required_count or 1
+		if #bag_groups < required_count then
 			return core.announce(0, L.confused, 1, 0, 0)
 		end
 

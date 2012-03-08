@@ -69,6 +69,6 @@ function core.Fill(source_bags, target_bags, reverse, can_move)
 	wipe(empty_slots)
 end
 
-SlashCmdList["FILL"] = core.CommandDecorator(core.FillBags, "bags bank")
+SlashCmdList["FILL"] = core.CommandDecorator(core.FillBags, "bags bank", 2)
 SLASH_FILL1 = "/fill"
 SLASH_FILL2 = "/fillbags"

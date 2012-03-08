@@ -95,7 +95,7 @@ function core.Stack(source_bags, target_bags, can_move)
 	wipe(source_used)
 end
 
-SlashCmdList["BANKSTACK"] = core.CommandDecorator(core.Stack, "bags bank")
+SlashCmdList["BANKSTACK"] = core.CommandDecorator(core.Stack, "bags bank", 2)
 SLASH_BANKSTACK1 = "/stack"
 SlashCmdList["COMPRESSBAGS"] = core.CommandDecorator(core.Compress, "bags")
 SLASH_COMPRESSBAGS1 = "/compress"
