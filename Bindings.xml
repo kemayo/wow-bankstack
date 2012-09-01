@@ -1,11 +1,11 @@
 <Bindings>
 	<Binding name="BANKSTACK" description="Fill incomplete stacks in your bank from your bags" header="BANKSTACK_HEAD">
-		BankStack.BankStack()
+		SlashCmdList["BANKSTACK"]("bags bank")
 	</Binding>
 	<Binding name="COMPRESS" description="Merge stacks in your bags">
-		BankStack.Compress()
+		SlashCmdList["COMPRESSBAGS"]("bags")
 	</Binding>
 	<Binding name="BAGSORT" description="Sort your bags">
-		BankStack.SortBags()
+		SlashCmdList["SORT"]("bags")
 	</Binding>
 </Bindings>
