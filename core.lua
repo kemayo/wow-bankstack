@@ -31,6 +31,7 @@ function core:OnInitialize()
 			reverse = false,
 			backfill = false,
 			ignore = {},
+			ignore_bags = {},
 			groups = {},
 			fubar_keybinds={
 				['BUTTON1'] = 'sortbags',

@@ -1,4 +1,5 @@
 local core = BankStack
+local Debug = core.Debug
 
 local announce = core.announce
 
@@ -48,12 +49,17 @@ local options = {
 }
 core.options = options
 
+local bag_slot_pattern = "^(-?[%d]+)%s*(%d*)$"
+
 local ignore_options = {
 	name = "Ignore", desc = "Slots to ignore", type = "group", order = 20,
 	args = {
 		list = {
 			name = "List", desc = "List all ignored slots", type = "execute", order = 1,
 			func = function()
+				for ignored,_ in pairs(core.db.ignore_bags) do
+					core.announce(0, "Ignoring bag: "..ignored, 1, 1, 1)
+				end
 				for ignored,_ in pairs(core.db.ignore) do
 					local bag, slot = core.decode_bagslot(ignored)
 					core.announce(0, "Ignoring: "..bag.." "..slot, 1, 1, 1)
@@ -64,31 +70,45 @@ local ignore_options = {
 			name = "Add", desc = "Add an ignore", type = "input", order = 2,
 			get = false,
 			set = function(info, v)
-				local bag, slot = string.match(v, "^([-%d]+) (%d+)$")
+				local bag, slot = v:match(bag_slot_pattern)
+				bag = tonumber(bag)
+				slot = tonumber(slot)
 				if bag and slot then
-					local bagslot = core.encode_bagslot(tonumber(bag), tonumber(slot))
+					local bagslot = core.encode_bagslot(bag, slot)
 					core.db.ignore[bagslot] = true
-					core.announce(0, bag.." "..slot.." ignored.", 1, 1, 1)
+					core.announce(0, "bag:"..bag.." slot:"..slot.." ignored.", 1, 1, 1)
+				elseif bag then
+					core.db.ignore_bags[bag] = true
+					core.announce(0, "bag:"..bag.." ignored.", 1, 1, 1)
 				end
 			end,
 			usage = "[bag] [slot] (see http://wowwiki.com/BagID)",
 			validate = function(info, v)
 				-- "and true or false" because returning a string counts as false
-				return string.match(v, "^[-%d]+ %d+$") and true or false
+				return v:match(bag_slot_pattern) and true or false
 			end,
 		},
 		remove = {
 			name = "Remove", desc = "Remove an ignore", type = "input", order = 3,
 			get = false,
 			set = function(info, v)
-				local bag, slot = string.match(v, "^([-%d]+) (%d+)$")
+				local bag, slot = v:match(bag_slot_pattern)
+				bag = tonumber(bag)
+				slot = tonumber(slot)
 				if bag and slot then
-					local bagslot = core.encode_bagslot(tonumber(bag), tonumber(slot))
+					local bagslot = core.encode_bagslot(bag, slot)
 					core.db.ignore[bagslot] = nil
-					announce(0, bag.." "..slot.." no longer ignored.", 1, 1, 1)
+					announce(0, "bag:"..bag.." slot:"..slot.." no longer ignored.", 1, 1, 1)
+				elseif bag then
+					core.db.ignore_bags[bag] = nil
+					announce(0, "bag:"..bag.." no longer ignored.", 1, 1, 1)
 				end
 			end,
 			usage = "[bag] [slot] (see http://wowwiki.com/BagID)",
+			validate = function(info, v)
+				-- "and true or false" because returning a string counts as false
+				return v:match(bag_slot_pattern) and true or false
+			end,
 		},
 	},
 }

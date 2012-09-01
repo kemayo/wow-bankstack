@@ -220,7 +220,7 @@ function core.Sort(bags, sorter)
 	for i, bag, slot in core.IterateBags(bags, nil, "both") do
 		--(you need withdraw *and* deposit permissions in the guild bank to move items within it)
 		local bagslot = encode_bagslot(bag, slot)
-		if (not core.db.ignore[bagslot]) then
+		if (not core.db.ignore_bags[bag] and not core.db.ignore[bagslot]) then
 			initial_order[bagslot] = i
 			table.insert(bag_sorted, bagslot)
 		end
@@ -247,7 +247,7 @@ function core.Sort(bags, sorter)
 			
 			-- If destination is ignored we skip everything here
 			-- Notably, i does not get incremented.
-			if not core.db.ignore[destination] then
+			if not core.db.ignore_bags[bag] and not core.db.ignore[destination] then
 				if should_actually_move(source, destination) then
 					if not (bag_locked[source] or bag_locked[destination]) then
 						core.AddMove(source, destination)

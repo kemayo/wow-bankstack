@@ -49,7 +49,7 @@ function core.Stack(source_bags, target_bags, can_move)
 	for _, bag, slot in core.IterateBags(target_bags, nil, "deposit") do
 		local bagslot = encode_bagslot(bag, slot)
 		local itemid = bag_ids[bagslot]
-		if (not core.db.ignore[bagslot]) and itemid and (bag_stacks[bagslot] ~= bag_maxstacks[bagslot]) then
+		if (not core.db.ignore_bags[bag] and not core.db.ignore[bagslot]) and itemid and (bag_stacks[bagslot] ~= bag_maxstacks[bagslot]) then
 			-- This is an item type that we'll want to bother moving.
 			target_items[itemid] = (target_items[itemid] or 0) + 1
 			table.insert(target_slots, bagslot)
@@ -59,13 +59,12 @@ function core.Stack(source_bags, target_bags, can_move)
 	for _, bag, slot in core.IterateBags(source_bags, true, "withdraw") do
 		local source_slot = encode_bagslot(bag, slot)
 		local itemid = bag_ids[source_slot]
-		if (not core.db.ignore[source_slot]) and itemid and target_items[itemid] and can_move(itemid, bag, slot) then
+		if (not core.db.ignore_bags[bag] and not core.db.ignore[source_slot]) and itemid and target_items[itemid] and can_move(itemid, bag, slot) then
 			--there's an item in this slot *and* we have room for more of it in the bank somewhere
 			for i=#target_slots, 1, -1 do
 				local target_slot = target_slots[i]
-				if 
-					not core.db.ignore[target_slot] -- not ignored
-					and bag_ids[source_slot] -- slot hasn't been emptied
+				if
+					bag_ids[source_slot] -- slot hasn't been emptied
 					and bag_ids[target_slot] == itemid -- target is same as source
 					and target_slot ~= source_slot -- target *isn't* source
 					and not (bag_stacks[target_slot] == bag_maxstacks[target_slot]) -- target isn't full
