@@ -256,12 +256,10 @@ local function decode_move(move)
 	t = (t>9000) and (t-10000) or t
 	return s, t
 end
-local function link_to_id(link) return link and tonumber(string.match(link, "item:(%d+)")) end -- "item" because we only care about items, duh
 core.encode_bagslot = encode_bagslot
 core.decode_bagslot = decode_bagslot
 core.encode_move = encode_move
 core.decode_move = decode_move
-core.link_to_id = link_to_id
 
 do
 	local bag_role, bagiter_forwards, bagiter_backwards
@@ -345,6 +343,15 @@ function core.GetItemLink(bag, slot)
 		return GetGuildBankItemLink(tab, slot)
 	else
 		return GetContainerItemLink(bag, slot)
+	end
+end
+
+function core.GetItemID(bag, slot)
+	if is_guild_bank_bag(bag) then
+		local link = core.GetItemLink(bag, slot)
+		return link and tonumber(string.match(link, "item:(%d+)"))
+	else
+		return GetContainerItemID(bag, slot)
 	end
 end
 
@@ -496,7 +503,7 @@ end
 function core.ScanBags()
 	for _, bag, slot in core.IterateBags(all_bags_with_guild) do
 		local bagslot = encode_bagslot(bag, slot)
-		local itemid = link_to_id(core.GetItemLink(bag, slot))
+		local itemid = core.GetItemID(bag, slot)
 		if itemid then
 			bag_ids[bagslot] = itemid
 			bag_stacks[bagslot] = select(2, core.GetItemInfo(bag, slot))
@@ -519,21 +526,22 @@ function core.DoMoves()
 		Debug("Aborted because of combat")
 		return core.StopStacking(L.confused)
 	end
-	if CursorHasItem() then
-		local itemid = link_to_id(select(3, GetCursorInfo()))
-		if last_itemid ~= itemid then
+	local cursortype, cursor_itemid = GetCursorInfo()
+	if cursortype == "item" and cursor_itemid then
+		if last_itemid ~= cursor_itemid then
 			-- We didn't pick up whatever is on the cursor; things could get really screwed up if we carry on. Abort!
-			Debug("Aborted because", last_itemid or 'nil', '~=', itemid or 'nil')
+			Debug("Aborted because", last_itemid or 'nil', '~=', cursor_itemid or 'nil')
 			return core.StopStacking(L.confused)
 		end
 	end
 	
 	if lock_stop then
 		Debug("Checking whether it's safe to move again")
-		for slot,itemid in pairs(move_tracker) do
-			Debug("checking whether", slot, "contains", itemid, link_to_id(core.GetItemLink(decode_bagslot(slot))))
-			if link_to_id(core.GetItemLink(decode_bagslot(slot))) ~= itemid then
-				Debug("Stopping DoMoves because last move hasn't happened yet.", slot, itemid)
+		for slot, itemid in pairs(move_tracker) do
+			local actual_slot_itemid = core.GetItemID(decode_bagslot(slot))
+			Debug("checking whether", slot, "contains", itemid, actual_slot_itemid)
+			if actual_slot_itemid ~= itemid then
+				Debug("Stopping DoMoves because last move hasn't happened yet.", slot, itemid, actual_slot_itemid)
 				WAIT_TIME = core.db.processing_delay
 				return --give processing time to happen
 			end
@@ -586,7 +594,7 @@ function core.DoMoves()
 end
 
 function core.DoMove(move)
-	if CursorHasItem() then
+	if GetCursorInfo() == "item" then
 		return false, 'cursorhasitem'
 	end
 	local source, target = decode_move(move)
@@ -600,8 +608,8 @@ function core.DoMove(move)
 	end
 
 	local source_link = core.GetItemLink(source_bag, source_slot)
-	local source_itemid = link_to_id(source_link)
-	local target_itemid = link_to_id(core.GetItemLink(target_bag, target_slot))
+	local source_itemid = core.GetItemID(source_bag, source_slot)
+	local target_itemid = core.GetItemID(target_bag, target_slot)
 	if not source_itemid then
 		if move_tracker[source] then
 			return false, 'move incomplete'
@@ -627,7 +635,7 @@ function core.DoMove(move)
 	end
 	local source_guildbank = is_guild_bank_bag(source_bag)
 	local target_guildbank = is_guild_bank_bag(target_bag)
-	if CursorHasItem() or source_guildbank then
+	if GetCursorInfo() == "item" then
 		-- CursorHasItem doesn't work on the guild bank
 		core.PickupItem(target_bag, target_slot)
 	end

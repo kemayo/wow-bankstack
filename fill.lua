@@ -1,7 +1,6 @@
 local core = BankStack
 local L = core.L
 
-local link_to_id = core.link_to_id
 local encode_bagslot = core.encode_bagslot
 local decode_bagslot = core.decode_bagslot
 local encode_move = core.encode_move
