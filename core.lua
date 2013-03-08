@@ -80,7 +80,7 @@ function core:OnInitialize()
 end
 
 local frame = CreateFrame("Frame")
-local t, WAIT_TIME = 0, 0.05
+local t, WAIT_TIME, MAX_MOVE_TIME = 0, 0.05, 1
 frame:SetScript("OnUpdate", function(frame, time_since_last)
 	if (core.bankrequired and not core.bank_open) or (core.guildbankrequired and not core.guild_bank_open) then
 		Debug(core.bankrequired and "bank required" or "guild bank required")
@@ -543,6 +543,11 @@ function core.DoMoves()
 			if actual_slot_itemid ~= itemid then
 				Debug("Stopping DoMoves because last move hasn't happened yet.", slot, itemid, actual_slot_itemid)
 				WAIT_TIME = core.db.processing_delay
+				if (GetTime() - lock_stop) > MAX_MOVE_TIME then
+					-- Abandon it, since we've taken far too long on this move
+					-- TODO: try requeueing the move
+					return core.StopStacking(L.confused)
+				end
 				return --give processing time to happen
 			end
 			move_tracker[slot] = nil
@@ -561,7 +566,7 @@ function core.DoMoves()
 		if not success then
 			debugtime(start, move_id or 'unspecified') -- repurposing for debugging
 			WAIT_TIME = core.db.processing_delay
-			lock_stop = true
+			lock_stop = GetTime()
 			return -- take a break!
 		end
 		move_tracker[move_source] = target_id
@@ -575,7 +580,7 @@ function core.DoMoves()
 				if core.db.conservative_guild or move_tracker[next_source] or move_tracker[next_target] then
 					Debug("fake-guild-locking is in effect", core.db.conservative_guild and "conservative" or "locking")
 					WAIT_TIME = core.db.processing_delay_guild
-					lock_stop = true
+					lock_stop = GetTime()
 					debugtime(start, 'guild bank sucks')
 					return
 				end
