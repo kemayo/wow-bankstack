@@ -232,6 +232,7 @@ function core.Sort(bags, sorter)
 	-- that they need to be moved into.
 	
 	local another_pass_needed = true
+	local passes_tried = 0
 	while another_pass_needed do
 		-- Multiple "passes" are simulated here, for the purpose of fitting as many moves as possible
 		-- into a single run of the mover, which moves until it finds a locked item, then breaks until
@@ -264,6 +265,11 @@ function core.Sort(bags, sorter)
 			end
 		end
 		wipe(bag_locked)
+		passes_tried = passes_tried + 1
+		if passes_tried > 666 then
+			Debug("Broke out of passes because it took over 666 tries")
+			break
+		end
 	end
 	wipe(bag_soulbound)
 	wipe(bag_conjured)

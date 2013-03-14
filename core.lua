@@ -480,6 +480,7 @@ local function update_location(from, to)
 	-- When I move something from (3,12) to (0,1), the contents of (0,1) are now in (3,12).
 	-- Therefore if I find later that I need to move something from (0,1), I actually need to move whatever wound up in (3,12).
 	-- This function updates the various cache tables to reflect current locations.
+	-- Debug("update_location", from, to)
 	if (bag_ids[from] == bag_ids[to]) and (bag_stacks[to] < bag_maxstacks[to]) then
 		-- If they're the same type we might have to deal with stacking.
 		local stack_size = bag_maxstacks[to]
