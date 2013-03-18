@@ -10,7 +10,13 @@ local moves = core.moves
 local bagcache = {}
 local bag_groups = {}
 function core.SortBags(...)
-	for i=1, select("#", ...) do
+	local start = 1
+	local sorter
+	if type(...) == "function" then
+		start = 2
+		sorter = ...
+	end
+	for i = start, select("#", ...) do
 		local bags = select(i, ...)
 		for _, bag in ipairs(bags) do
 			Debug("Considering bag", bag)
@@ -26,13 +32,13 @@ function core.SortBags(...)
 				core.Stack(sorted_bags, sorted_bags, core.is_partial)
 				core.Stack(bagcache['Normal'], sorted_bags)
 				core.Fill(bagcache['Normal'], sorted_bags, core.db.reverse)
-				core.Sort(sorted_bags)
+				core.Sort(sorted_bags, sorter)
 				wipe(sorted_bags)
 			end
 		end
 		if bagcache['Normal'] then
 			core.Stack(bagcache['Normal'], bagcache['Normal'], core.is_partial)
-			core.Sort(bagcache['Normal'])
+			core.Sort(bagcache['Normal'], sorter)
 			wipe(bagcache['Normal'])
 		end
 		wipe(bagcache)
@@ -280,3 +286,19 @@ end
 SlashCmdList["SORT"] = core.CommandDecorator(core.SortBags, 'bags')
 SLASH_SORT1 = "/sort"
 SLASH_SORT2 = "/sortbags"
+
+SlashCmdList["SHUFFLE"] = core.CommandDecorator(function(...)
+	local sort = {}
+	core.SortBags(function(a, b)
+		if not sort[a] then
+			sort[a] = math.random()
+		end
+		if not sort[b] then
+			sort[b] = math.random()
+		end
+		return sort[a] < sort[b]
+	end, ...)
+	wipe(sort)
+end, 'bags')
+SLASH_SHUFFLE1 = "/shuffle"
+SLASH_SHUFFLE2 = "/shufflebags"
