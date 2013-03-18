@@ -80,7 +80,7 @@ function core:OnInitialize()
 end
 
 local frame = CreateFrame("Frame")
-local t, WAIT_TIME, MAX_MOVE_TIME = 0, 0.05, 1
+local t, WAIT_TIME, MAX_MOVE_TIME = 0, 0.05, 3
 frame:SetScript("OnUpdate", function(frame, time_since_last)
 	if (core.bankrequired and not core.bank_open) or (core.guildbankrequired and not core.guild_bank_open) then
 		Debug(core.bankrequired and "bank required" or "guild bank required")
@@ -517,10 +517,10 @@ function core.AddMove(source, destination)
 	table.insert(moves, 1, encode_move(source, destination))
 end
 
-local moves_underway, last_itemid, lock_stop
+local moves_underway, last_itemid, lock_stop, last_move, move_retries
 local move_tracker = {}
 
-local function debugtime(start, msg) Debug("took", GetTime() - start, msg or '') end
+local function debugtime(start, ...) Debug("took", GetTime() - start, ...) end
 function core.DoMoves()
 	Debug("DoMoves", #moves)
 	if InCombatLockdown() then
@@ -534,6 +534,18 @@ function core.DoMoves()
 			Debug("Aborted because", last_itemid or 'nil', '~=', cursor_itemid or 'nil')
 			return core.StopStacking(L.confused)
 		end
+		if move_retries < 10 then
+			local target_bag, target_slot = decode_bagslot(last_destination)
+			local _, _, target_locked = core.GetItemInfo(target_bag, target_slot)
+			if not target_locked then
+				Debug("Attempting to repeat move drop", last_itemid, target_bag, target_slot)
+				core.PickupItem(target_bag, target_slot)
+				WAIT_TIME = core.db.processing_delay
+				lock_stop = GetTime()
+				move_retries = move_retries + 1
+				return
+			end
+		end
 	end
 	
 	if lock_stop then
@@ -545,8 +557,15 @@ function core.DoMoves()
 				Debug("Stopping DoMoves because last move hasn't happened yet.", slot, itemid, actual_slot_itemid)
 				WAIT_TIME = core.db.processing_delay
 				if (GetTime() - lock_stop) > MAX_MOVE_TIME then
+					if last_move and move_retries < 4 then
+						local success, move_id = core.DoMove(last_move, true)
+						Debug("Attempting to repeat entire move", last_move, success, move_id, move_retries)
+						WAIT_TIME = core.db.processing_delay
+						lock_stop = GetTime()
+						move_retries = move_retries + 1
+						return -- take a break!
+					end
 					-- Abandon it, since we've taken far too long on this move
-					-- TODO: try requeueing the move
 					return core.StopStacking(L.confused)
 				end
 				return --give processing time to happen
@@ -554,10 +573,10 @@ function core.DoMoves()
 			move_tracker[slot] = nil
 		end
 	end
-	
-	last_itemid, lock_stop = nil, nil
+
+	move_retries, last_itemid, last_destination, last_move, lock_stop = 0, nil, nil, nil, nil
 	wipe(move_tracker)
-	
+
 	core.events:Fire("Doing_Moves", #moves, moves)
 
 	local start, success, move_id, target_id, move_source, move_target, was_guild
@@ -573,6 +592,8 @@ function core.DoMoves()
 		move_tracker[move_source] = target_id
 		move_tracker[move_target] = move_id
 		last_itemid = move_id
+		last_destination = move_target
+		last_move = moves[i]
 		table.remove(moves, i)
 		if moves[i-1] then
 			-- Guild bank CursorHasItem/CursorItemInfo isn't working, so slow down for it.
@@ -653,7 +674,7 @@ function core.DoMove(move)
 		QueryGuildBankTab(target_bag - 50)
 	end
 	
-	-- Debug("Moved", source, source_itemid, target, target_itemid, guildbank)
+	Debug("Moved", source, source_itemid, target, target_itemid, guildbank)
 	return true, source_itemid, source, target_itemid, target, source_guildbank or target_guildbank
 end
 
@@ -680,7 +701,7 @@ function core.StopStacking(message, r, g, b)
 	core.guildbankrequired = false
 	wipe(moves)
 	wipe(move_tracker)
-	last_itemid, lock_stop = nil, nil
+	move_retries, last_itemid, lock_stop, last_destination, last_move = 0, nil, nil, nil, nil
 	frame:Hide()
 	if message then
 		core.announce(1, message, r or 1, g or 0, b or 0)

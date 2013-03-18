@@ -236,7 +236,7 @@ local advanced_options = {
 	args = {
 		conservative_guild = {
 			name = "Cautious guild",
-			desc = "If this option is enabled, only one move at a time will be made. This is slower, but is nearly certain to work.",
+			desc = "If this option is enabled, only one move at a time will be made. This is slower, but is nearly certain to work. If you turn this off, I make no promises.",
 			descStyle = "inline",
 			type = "toggle",
 		},
