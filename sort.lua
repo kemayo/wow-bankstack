@@ -150,7 +150,13 @@ local function default_sorter(a, b)
 	
 	local a_name, _, a_rarity, a_level, a_minLevel, a_type, a_subType, a_stackCount, a_equipLoc, a_texture = GetItemInfo(a_id)
 	local b_name, _, b_rarity, b_level, b_minLevel, b_type, b_subType, b_stackCount, b_equipLoc, b_texture = GetItemInfo(b_id)
-	
+
+	-- Quick sanity-check to make sure we correctly fetched information about the items
+	if not (a_name and b_name and a_rarity and b_rarity) then
+		-- preserve the existing order in this case
+		return a_order < b_order
+	end
+
 	-- junk to the back?
 	if core.db.junk and not (a_rarity == b_rarity) then
 		if a_rarity == 0 then return false end
