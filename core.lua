@@ -232,8 +232,6 @@ do
 				tooltip:SetInventoryItem("player", BankButtonIDToInvSlotID(slot, nil))
 			elseif bag == REAGENTBANK_CONTAINER then
 				tooltip:SetInventoryItem("player", ReagentBankButtonIDToInvSlotID(slot))
-			elseif bag == KEYRING_CONTAINER then
-				tooltip:SetInventoryItem("player", KeyRingButtonIDToInvSlotID(slot))
 			else
 				tooltip:SetBagItem(bag, slot)
 			end
