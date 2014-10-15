@@ -103,7 +103,7 @@ function core.announce(level, message, r, g, b)
 end
 
 -- http://wowwiki.com/API_TYPE_bagID
-local bank_bags = {BANK_CONTAINER}
+local bank_bags = {REAGENTBANK_CONTAINER, BANK_CONTAINER}
 for i = NUM_BAG_SLOTS+1, NUM_BAG_SLOTS+NUM_BANKBAGSLOTS do
 	table.insert(bank_bags, i)
 end
@@ -230,6 +230,8 @@ do
 			-- bank slot or the keyring since they're not real bags.
 			if bag == BANK_CONTAINER then
 				tooltip:SetInventoryItem("player", BankButtonIDToInvSlotID(slot, nil))
+			elseif bag == REAGENTBANK_CONTAINER then
+				tooltip:SetInventoryItem("player", ReagentBankButtonIDToInvSlotID(slot))
 			elseif bag == KEYRING_CONTAINER then
 				tooltip:SetInventoryItem("player", KeyRingButtonIDToInvSlotID(slot))
 			else
@@ -380,6 +382,7 @@ do
 	}
 	function core.IsSpecialtyBag(bagid)
 		if safe[bagid] or is_guild_bank_bag(bagid) then return false end
+		if bagid == REAGENTBANK_CONTAINER then return true end
 		local invslot = ContainerIDToInventoryID(bagid)
 		if not invslot then return false end
 		local bag = GetInventoryItemLink("player", invslot)
@@ -411,9 +414,17 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 		-- if the item is a profession bag, this will actually be the bag_family, and it should be zero
 		local equip_slot = select(9, GetItemInfo(item))
 		if equip_slot == "INVTYPE_BAG" then
-			item_family = 1
+			item_family = 0
 		end
 	end
+	if target_bag == REAGENTBANK_CONTAINER then
+		-- considered this route:
+		-- bag_family = bit.bor(0x0008, 0x0010, 0x0020, 0x0040, 0x0200, 0x0400, 0x10000) -- might add 0x0080 (engineering bag), but I don't think tools are allowed
+		-- but it's imprecise; there are tools and suchlike in there
+		-- For some strange reason this is "Crafting Reagent". I expect this to break later.
+		return core.CheckTooltipFor(bag, slot, PROFESSIONS_USED_IN_COOKING)
+	end
+
 	local bag_family = select(2, GetContainerNumFreeSlots(target_bag))
 	return bag_family == 0 or bit.band(item_family, bag_family) > 0
 end
