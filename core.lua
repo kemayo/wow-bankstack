@@ -683,7 +683,17 @@ function core.DoMove(move)
 		QueryGuildBankTab(target_bag - 50)
 	end
 	
-	Debug("Moved", source, source_itemid, target, target_itemid, guildbank)
+	if (source_itemid == target_itemid)
+		and
+		(target_count ~= stack_size)
+		and
+		((target_count + source_count) <= stack_size)
+	then
+		-- we're doing a merge, so we pass back that we're not moving anything from the target slot to the source slot
+		target_itemid = nil
+	end
+
+	Debug("Moved", source, source_itemid, target, target_itemid, source_guildbank or target_guildbank)
 	return true, source_itemid, source, target_itemid, target, source_guildbank or target_guildbank
 end
 
