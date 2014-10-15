@@ -133,7 +133,7 @@ local function is_valid_bag(bagid)
 end
 core.is_valid_bag = is_valid_bag
 local function is_bank_bag(bagid)
-	return (bagid == BANK_CONTAINER or (bagid > NUM_BAG_SLOTS and bagid <= NUM_BANKBAGSLOTS))
+	return (bagid == BANK_CONTAINER or bagid == REAGENTBANK_CONTAINER or (bagid > NUM_BAG_SLOTS and bagid <= NUM_BANKBAGSLOTS))
 end
 core.is_bank_bag = is_bank_bag
 local function is_guild_bank_bag(bagid)
@@ -416,6 +416,9 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 		end
 	end
 	if target_bag == REAGENTBANK_CONTAINER then
+		if not IsReagentBankUnlocked() then
+			return false
+		end
 		-- considered this route:
 		-- bag_family = bit.bor(0x0008, 0x0010, 0x0020, 0x0040, 0x0200, 0x0400, 0x10000) -- might add 0x0080 (engineering bag), but I don't think tools are allowed
 		-- but it's imprecise; there are tools and suchlike in there
