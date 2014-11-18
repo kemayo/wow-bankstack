@@ -34,6 +34,7 @@ end
 local target_items = {--[[link = available_slots--]]}
 local source_used = {}
 local target_slots = {}
+local summary = {}
 
 local function default_can_move() return true end
 function core.Stack(source_bags, target_bags, can_move)
@@ -44,6 +45,7 @@ function core.Stack(source_bags, target_bags, can_move)
 	--   for any slot in source that is not empty and contains an item that
 	--   could be moved to target.  If it returns false then ignore the slot.
 	if not can_move then can_move = default_can_move end
+	wipe(summary)
 	-- Model the target bags.
 	for _, bag, slot in core.IterateBags(target_bags, nil, "deposit") do
 		local bagslot = encode_bagslot(bag, slot)
@@ -70,10 +72,14 @@ function core.Stack(source_bags, target_bags, can_move)
 					and not source_used[target_slot] -- already moved from slot
 				then
 					-- can't stack to itself, or to a full slot, or to a slot that has already been used as a source:
+
+					-- record a summary of the move (has to happen before AddMove, since that updates bag_stacks)
+					summary[itemid] = (summary[itemid] or 0) + bag_stacks[source_slot]
+
 					-- Schedule moving from this slot to the bank slot.
 					core.AddMove(source_slot, target_slot)
 					source_used[source_slot] = true
-					
+
 					if bag_stacks[target_slot] == bag_maxstacks[target_slot] then
 						target_items[itemid] = (target_items[itemid] > 1) and (target_items[itemid] - 1) or nil
 					end
@@ -93,7 +99,16 @@ function core.Stack(source_bags, target_bags, can_move)
 	wipe(source_used)
 end
 
-SlashCmdList["BANKSTACK"] = core.CommandDecorator(core.Stack, "bags bank", 2)
+function core.StackSummary(...)
+	core.Stack(...)
+	local summary_text = {}
+	for itemid, count in pairs(summary) do
+		table.insert(summary_text, select(2, GetItemInfo(itemid)) .. 'x' .. count)
+	end
+	core.announce(1, "Stacking items: " .. string.join(", ", unpack(summary_text)))
+end
+
+SlashCmdList["BANKSTACK"] = core.CommandDecorator(core.StackSummary, "bags bank", 2)
 SLASH_BANKSTACK1 = "/stack"
 SlashCmdList["COMPRESSBAGS"] = core.CommandDecorator(core.Compress, "bags")
 SLASH_COMPRESSBAGS1 = "/compress"
