@@ -5,8 +5,8 @@ local icon = LibStub("LibDBIcon-1.0", true)
 local click_actions = {
 	sortbags = core.CommandDecorator(core.SortBags, 'bags'),
 	sortbank = core.CommandDecorator(core.SortBags, 'bank'),
-	stackbags = core.CommandDecorator(core.Stack, 'bank bags'),
-	stackbank = core.CommandDecorator(core.Stack, 'bags bank'),
+	stackbags = core.CommandDecorator(core.StackSummary, 'bank bags'),
+	stackbank = core.CommandDecorator(core.StackSummary, 'bags bank'),
 	compressbags = core.CommandDecorator(core.Compress, 'bags'),
 	compressbank = core.CommandDecorator(core.Compress, 'bank'),
 }
