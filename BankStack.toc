@@ -1,4 +1,4 @@
-## Interface: 60000
+## Interface: 60200
 ## Title: BankStack
 ## Author: Kemayo
 ## Notes: From bags we came, to bank we return
