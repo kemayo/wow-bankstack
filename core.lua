@@ -435,7 +435,9 @@ end
 function core.CommandDecorator(func, groups_defaults, required_count)
 	local bag_groups = {}
 	return function(groups)
+		Debug("command wrapper", groups, groups_defaults, required_count)
 		if core.running then
+			Debug("abort", "already running")
 			return core.announce(0, L.already_running, 1, 0, 0)
 		end
 		wipe(bag_groups)
@@ -446,6 +448,7 @@ function core.CommandDecorator(func, groups_defaults, required_count)
 			bags = core.get_group(bags)
 			if bags then
 				if core.check_for_banks(bags) then
+					Debug("abort", "bank needed", bags)
 					return
 				end
 				table.insert(bag_groups, bags)
@@ -453,6 +456,7 @@ function core.CommandDecorator(func, groups_defaults, required_count)
 		end
 		required_count = required_count or 1
 		if #bag_groups < required_count then
+			Debug("abort", "less groups than required", #bag_groups, required_count)
 			return core.announce(0, L.confused, 1, 0, 0)
 		end
 

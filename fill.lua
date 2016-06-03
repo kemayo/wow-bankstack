@@ -27,9 +27,11 @@ function core.FillBags(from, to)
 	wipe(specialty_bags)
 end
 
-local function default_can_move() return true end
 local empty_slots = {}
-function core.Fill(source_bags, target_bags, reverse, can_move)
+local function default_can_move() return true end
+local function default_should_halt() return #empty_slots == 0 end
+
+function core.Fill(source_bags, target_bags, reverse, can_move, should_halt)
 	-- source_bags: table, e.g. {1,2,3,4}
 	-- target_bags: table, e.g. {1,2,3,4}
 	-- reverse: bool, whether to fill from the front or back of the bags
@@ -39,7 +41,8 @@ function core.Fill(source_bags, target_bags, reverse, can_move)
 	if reverse == nil then
 		reverse = core.db.backfill
 	end
-	if not can_move then can_move = default_can_move end
+	can_move = can_move or default_can_move
+	should_halt = should_halt or default_should_halt
 	--Create a list of empty slots in the target bags
 	for _, bag, slot in core.IterateBags(target_bags, reverse, "deposit") do
 		local bagslot = encode_bagslot(bag, slot)
@@ -50,7 +53,7 @@ function core.Fill(source_bags, target_bags, reverse, can_move)
 	--Move items from the back of source_bags to the front of target_bags (or
 	--front to back if `reverse`)
 	for _, bag, slot in core.IterateBags(source_bags, not reverse, "withdraw") do
-		if #empty_slots == 0 then break end
+		if should_halt(bag_ids[bagslot], bag, slot) then break end
 		local bagslot = encode_bagslot(bag, slot)
 		local target_bag, target_slot = decode_bagslot(empty_slots[1])
 		if
@@ -68,6 +71,36 @@ function core.Fill(source_bags, target_bags, reverse, can_move)
 	wipe(empty_slots)
 end
 
+function is_squashed(bags, reverse)
+	--Bags are "squashed" if they contain only a contiguous set of items starting at the front of the bag
+	local was_filled = true
+	for _, bag, slot in core.IterateBags(bags, reverse, "deposit") do
+		local bagslot = encode_bagslot(bag, slot)
+		if (not core.db.ignore_bags[bag] and not core.db.ignore[bagslot]) then
+			if not was_filled and bag_ids[bagslot] then
+				-- last slot was empty, this slot is not, therefore a gap exists
+				return false
+			end
+			was_filled = bag_ids[bagslot]
+		end
+	end
+	return true
+end
+
+function core.Squash(bags, reverse, can_move)
+	-- bags: table, e.g. {1,2,3,4}
+	return core.Fill(bags, bags, reverse, can_move, function(itemid, bag, slot)
+		if is_squashed(bags) then
+			return true
+		end
+		return default_should_halt(itemid, bag, slot)
+	end)
+end
+
 SlashCmdList["FILL"] = core.CommandDecorator(core.FillBags, "bags bank", 2)
 SLASH_FILL1 = "/fill"
 SLASH_FILL2 = "/fillbags"
+
+SlashCmdList["SQUASH"] = core.CommandDecorator(core.Squash, "bags", 1)
+SLASH_SQUASH1 = "/squash"
+SLASH_SQUASH2 = "/squashbags"
