@@ -79,13 +79,28 @@ local inventory_slots = {
 local item_types
 local item_subtypes
 local function build_sort_order()
+	local auction_classes = {
+		LE_ITEM_CLASS_WEAPON,
+		LE_ITEM_CLASS_ARMOR,
+		LE_ITEM_CLASS_CONTAINER,
+		LE_ITEM_CLASS_GEM,
+		LE_ITEM_CLASS_ITEM_ENHANCEMENT,
+		LE_ITEM_CLASS_CONSUMABLE,
+		LE_ITEM_CLASS_GLYPH,
+		LE_ITEM_CLASS_TRADEGOODS,
+		LE_ITEM_CLASS_RECIPE,
+		LE_ITEM_CLASS_BATTLEPET,
+		LE_ITEM_CLASS_QUESTITEM,
+		LE_ITEM_CLASS_MISCELLANEOUS,
+	}
 	item_types = {}
 	item_subtypes = {}
-	for i, itype in ipairs({GetAuctionItemClasses()}) do
-		item_types[itype] = i
-		item_subtypes[itype] = {}
-		for ii, istype in ipairs({GetAuctionItemSubClasses(i)}) do
-			item_subtypes[itype][istype] = ii
+	for i, itype in ipairs(auction_classes) do
+		local itype_name = GetItemClassInfo(itype)
+		item_types[itype_name] = i
+		item_subtypes[itype_name] = {}
+		for ii, istype in ipairs({GetAuctionItemSubClasses(itype)}) do
+			item_subtypes[itype_name][GetItemSubClassInfo(itype, istype)] = ii
 		end
 	end
 end
