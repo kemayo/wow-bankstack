@@ -97,10 +97,10 @@ local function build_sort_order()
 	item_subtypes = {}
 	for i, itype in ipairs(auction_classes) do
 		local itype_name = GetItemClassInfo(itype)
-		item_types[itype_name] = i
-		item_subtypes[itype_name] = {}
+		item_types[itype] = i
+		item_subtypes[itype] = {}
 		for ii, istype in ipairs({GetAuctionItemSubClasses(itype)}) do
-			item_subtypes[itype_name][GetItemSubClassInfo(itype, istype)] = ii
+			item_subtypes[itype][istype] = ii
 		end
 	end
 end
@@ -163,8 +163,8 @@ local function default_sorter(a, b)
 		if bag_conjured[b] then return true end
 	end
 	
-	local a_name, _, a_rarity, a_level, a_minLevel, a_type, a_subType, a_stackCount, a_equipLoc, a_texture = GetItemInfo(a_id)
-	local b_name, _, b_rarity, b_level, b_minLevel, b_type, b_subType, b_stackCount, b_equipLoc, b_texture = GetItemInfo(b_id)
+	local a_name, _, a_rarity, a_level, a_minLevel, a_type, a_subType, a_stackCount, a_equipLoc, a_texture, a_price, a_class, a_subClass = GetItemInfo(a_id)
+	local b_name, _, b_rarity, b_level, b_minLevel, b_type, b_subType, b_stackCount, b_equipLoc, b_texture, b_price, b_class, b_subClass = GetItemInfo(b_id)
 
 	-- Quick sanity-check to make sure we correctly fetched information about the items
 	if not (a_name and b_name and a_rarity and b_rarity) then
@@ -188,12 +188,12 @@ local function default_sorter(a, b)
 		return a_rarity > b_rarity
 	end
 
-	if item_types[a_type] ~= item_types[b_type] then
-		return (item_types[a_type] or 99) < (item_types[b_type] or 99)
+	if a_class ~= b_class then
+		return (item_types[a_class] or 99) < (item_types[b_class] or 99)
 	end
 
 	-- are they the same type?
-	if a_type == ARMOR or a_type == ENCHSLOT_WEAPON then
+	if a_class == LE_ITEM_CLASS_ARMOR or a_class == LE_ITEM_CLASS_WEAPON then
 		-- "or -1" because some things are classified as armor/weapon without being equipable; note Everlasting Underspore Frond
 		local a_equipLoc = inventory_slots[a_equipLoc] or -1
 		local b_equipLoc = inventory_slots[b_equipLoc] or -1
@@ -203,10 +203,16 @@ local function default_sorter(a, b)
 		end
 		return a_equipLoc < b_equipLoc
 	end
-	if a_subType == b_subType then
+	if a_subClass == b_subClass then
 		return prime_sort(a, b)
 	end
-	return ((item_subtypes[a_type] or {})[a_subType] or 99) < ((item_subtypes[b_type] or {})[b_subType] or 99)
+
+	if (item_subtypes[a_class] or {})[a_subClass] ~= (item_subtypes[b_class] or {})[b_subClass] then
+		return ((item_subtypes[a_class] or {})[a_subClass] or 99) < ((item_subtypes[b_class] or {})[b_subClass] or 99)
+	end
+
+	-- Utter fallback: initial order wins
+	return initial_order[a] < initial_order[b]
 end
 local function reverse_sort(a, b) return default_sorter(b, a) end
 
