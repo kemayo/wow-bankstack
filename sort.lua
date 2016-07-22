@@ -120,16 +120,44 @@ local bag_conjured = setmetatable({}, {__index = function(self, bagslot)
 	self[bagslot] = is_conjured
 	return is_conjured
 end,})
+
+-- Avoid a *lot* of calls to GetItemInfo...
+local item_name, item_rarity, item_level, item_equipLoc, item_price, item_class, item_subClass = {}, {}, {}, {}, {}, {}, {}
+local iteminfo_metatable = {__index = function(self, itemid)
+	local name, _, rarity, level, _, _, _, _, equipLoc, _, price, class, subClass = GetItemInfo(itemid)
+
+	if not name then
+		return false
+	end
+
+	item_name[itemid] = name
+	item_rarity[itemid] = rarity
+	item_level[itemid] = level
+	item_equipLoc[itemid] = item_equipLoc
+	item_price[itemid] = item_price
+	item_class[itemid] = class
+	item_subClass[itemid] = subClass
+
+	return self[itemid]
+end,}
+item_name = setmetatable(item_name, iteminfo_metatable)
+item_rarity = setmetatable(item_rarity, iteminfo_metatable)
+item_level = setmetatable(item_level, iteminfo_metatable)
+item_equipLoc = setmetatable(item_equipLoc, iteminfo_metatable)
+item_price = setmetatable(item_price, iteminfo_metatable)
+item_class = setmetatable(item_class, iteminfo_metatable)
+item_subClass = setmetatable(item_subClass, iteminfo_metatable)
+
 local function prime_sort(a, b)
-	local a_name, _, a_rarity, a_level, a_minLevel, a_type, a_subType, a_stackCount, a_equipLoc, a_texture, a_price = GetItemInfo(bag_ids[a])
-	local b_name, _, b_rarity, b_level, b_minLevel, b_type, b_subType, b_stackCount, b_equipLoc, b_texture, b_price = GetItemInfo(bag_ids[b])
-	if a_level ~= b_level then
-		return a_level > b_level
+	local a_id = bag_ids[a]
+	local b_id = bag_ids[b]
+	if item_level[a_id] ~= item_level[b_id] then
+		return item_level[a_id] > item_level[b_id]
 	end
-	if a_price ~= b_price then
-		return a_price > b_price
+	if item_price[a_id] ~= item_price[b_id] then
+		return item_price[a_id] > item_price[b_id]
 	end
-	return a_name < b_name
+	return item_name[a_id] < item_name[b_id]
 end
 local initial_order = {}
 local function default_sorter(a, b)
@@ -163,19 +191,16 @@ local function default_sorter(a, b)
 		if bag_conjured[b] then return true end
 	end
 	
-	local a_name, _, a_rarity, a_level, a_minLevel, a_type, a_subType, a_stackCount, a_equipLoc, a_texture, a_price, a_class, a_subClass = GetItemInfo(a_id)
-	local b_name, _, b_rarity, b_level, b_minLevel, b_type, b_subType, b_stackCount, b_equipLoc, b_texture, b_price, b_class, b_subClass = GetItemInfo(b_id)
-
 	-- Quick sanity-check to make sure we correctly fetched information about the items
-	if not (a_name and b_name and a_rarity and b_rarity) then
+	if not (item_name[a_id] and item_name[b_id] and item_rarity[a_id] and item_rarity)[b_id] then
 		-- preserve the existing order in this case
 		return a_order < b_order
 	end
 
 	-- junk to the back?
-	if core.db.junk and not (a_rarity == b_rarity) then
-		if a_rarity == 0 then return false end
-		if b_rarity == 0 then return true end
+	if core.db.junk and not (item_rarity[a_id] == item_rarity[b_id]) then
+		if item_rarity[a_id] == 0 then return false end
+		if item_rarity[b_id] == 0 then return true end
 	end
 	
 	-- Soulbound items to the front?
@@ -184,35 +209,35 @@ local function default_sorter(a, b)
 		if bag_soulbound[b] then return false end
 	end
 
-	if a_rarity ~= b_rarity then
-		return a_rarity > b_rarity
+	if item_rarity[a_id] ~= item_rarity[b_id] then
+		return item_rarity[a_id] > item_rarity[b_id]
 	end
 
-	if a_class ~= b_class then
-		return (item_types[a_class] or 99) < (item_types[b_class] or 99)
+	if item_class[a_id] ~= item_class[b_id] then
+		return (item_types[item_class[a_id]] or 99) < (item_types[item_class[b_id]] or 99)
 	end
 
 	-- are they the same type?
-	if a_class == LE_ITEM_CLASS_ARMOR or a_class == LE_ITEM_CLASS_WEAPON then
+	if item_class[a_id] == LE_ITEM_CLASS_ARMOR or item_class[a_id] == LE_ITEM_CLASS_WEAPON then
 		-- "or -1" because some things are classified as armor/weapon without being equipable; note Everlasting Underspore Frond
-		local a_equipLoc = inventory_slots[a_equipLoc] or -1
-		local b_equipLoc = inventory_slots[b_equipLoc] or -1
+		local a_equipLoc = inventory_slots[item_equipLoc[a_id]] or -1
+		local b_equipLoc = inventory_slots[item_equipLoc[b_id]] or -1
 		if a_equipLoc == b_equipLoc then
 			-- sort by level, then name
 			return prime_sort(a, b)
 		end
 		return a_equipLoc < b_equipLoc
 	end
-	if a_subClass == b_subClass then
+	if item_subClass[a_id] == item_subClass[b_id] then
 		return prime_sort(a, b)
 	end
 
-	if (item_subtypes[a_class] or {})[a_subClass] ~= (item_subtypes[b_class] or {})[b_subClass] then
-		return ((item_subtypes[a_class] or {})[a_subClass] or 99) < ((item_subtypes[b_class] or {})[b_subClass] or 99)
+	if (item_subtypes[item_class[a_id]] or {})[item_subClass[a_id]] ~= (item_subtypes[item_class[b_id]] or {})[item_subClass[b_id]] then
+		return ((item_subtypes[item_class[a_id]] or {})[item_subClass[a_id]] or 99) < ((item_subtypes[item_class[b_id]] or {})[item_subClass[b_id]] or 99)
 	end
 
 	-- Utter fallback: initial order wins
-	return initial_order[a] < initial_order[b]
+	return a_order < b_order
 end
 local function reverse_sort(a, b) return default_sorter(b, a) end
 
