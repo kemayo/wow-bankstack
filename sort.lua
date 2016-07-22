@@ -30,8 +30,10 @@ function core.SortBags(...)
 			if bagtype ~= 'Normal' then
 				Debug("Moving to normal from", bagtype)
 				core.Stack(sorted_bags, sorted_bags, core.is_partial)
-				core.Stack(bagcache['Normal'], sorted_bags)
-				core.Fill(bagcache['Normal'], sorted_bags, core.db.reverse)
+				if bagcache['Normal'] then
+					core.Stack(bagcache['Normal'], sorted_bags)
+					core.Fill(bagcache['Normal'], sorted_bags, core.db.reverse)
+				end
 				core.Sort(sorted_bags, sorter)
 				wipe(sorted_bags)
 			end
