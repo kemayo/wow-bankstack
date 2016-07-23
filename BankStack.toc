@@ -50,3 +50,5 @@ config.lua
 
 auto.lua
 ldb.lua
+
+debug.lua
