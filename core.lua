@@ -410,10 +410,13 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 	local item = core.bag_ids[encode_bagslot(bag, slot)]
 	-- since we now know this isn't a guild bank we can just use the bag id provided
 	local item_family = GetItemFamily(item)
+	if not item_family then
+		Debug("Item without family", item, bag, slot)
+		return false
+	end
 	if item_family > 0 then
 		-- if the item is a profession bag, this will actually be the bag_family, and it should be zero
-		local equip_slot = select(9, GetItemInfo(item))
-		if equip_slot == "INVTYPE_BAG" then
+		if select(4, GetItemInfoInstant(item)) == "INVTYPE_BAG" then
 			item_family = 0
 		end
 	end
