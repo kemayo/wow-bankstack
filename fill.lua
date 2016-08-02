@@ -38,6 +38,10 @@ function core.Fill(source_bags, target_bags, reverse, can_move, should_halt)
 	-- can_move: function or nil.  Called as can_move(itemid, bag, slot)
 	--   for any slot in source that is not empty and contains an item that
 	--   could be moved to target.  If it returns false then ignore the slot.
+	-- should_halt: function or nil. Called as should_halt(itemid, bag, slot)
+	--   for any slot in source. If it returns true, stop all filling. Default
+	--   is to stop if we run out of empty slots to fill to. (Squash uses it
+	--   to halt if the bag-state becomes squashed.)
 	if reverse == nil then
 		reverse = core.db.backfill
 	end
@@ -58,12 +62,9 @@ function core.Fill(source_bags, target_bags, reverse, can_move, should_halt)
 		local target_bag, target_slot = decode_bagslot(empty_slots[1])
 		if
 			(not core.db.ignore_bags[bag] and not core.db.ignore[bagslot])
-			and
-			bag_ids[bagslot]
-			and
-			core.CanItemGoInBag(bag, slot, target_bag)
-			and
-			can_move(bag_ids[bagslot], bag, slot)
+			and bag_ids[bagslot]
+			and core.CanItemGoInBag(bag, slot, target_bag)
+			and can_move(bag_ids[bagslot], bag, slot)
 		then
 			core.AddMove(bagslot, table.remove(empty_slots, 1))
 		end
