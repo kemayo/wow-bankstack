@@ -32,6 +32,7 @@ function core:OnInitialize()
 			backfill = false,
 			ignore = {},
 			ignore_bags = {},
+			ignore_blizzard = true,
 			groups = {},
 			fubar_keybinds={
 				['BUTTON1'] = 'sortbags',
@@ -433,6 +434,26 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 
 	local bag_family = select(2, GetContainerNumFreeSlots(target_bag))
 	return bag_family == 0 or bit.band(item_family, bag_family) > 0
+end
+
+function core.IsIgnored(bag, slot)
+	if core.db.ignore_bags[bag] then
+		return true
+	end
+	if core.db.ignore[encode_bagslot(bag, slot)] then
+		return true
+	end
+	if core.db.ignore_blizzard then
+		if (bag == -1) then
+			return GetBankAutosortDisabled()
+		elseif (bag == 0) then
+			return GetBackpackAutosortDisabled()
+		elseif is_bank_bag(bag) then
+			return GetBankBagSlotFlag(bag - NUM_BAG_SLOTS, LE_BAG_FILTER_FLAG_IGNORE_CLEANUP)
+		elseif not is_guild_bank_bag(bag) then
+			return GetBagSlotFlag(bag, LE_BAG_FILTER_FLAG_IGNORE_CLEANUP)
+		end
+	end
 end
 
 function core.CommandDecorator(func, groups_defaults, required_count)

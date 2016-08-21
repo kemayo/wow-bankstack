@@ -54,6 +54,13 @@ local bag_slot_pattern = "^(-?[%d]+)%s*(%d*)$"
 local ignore_options = {
 	name = "Ignore", desc = "Slots to ignore", type = "group", order = 20,
 	args = {
+		inherit = {
+			name = "Inherit Blizzard",
+			desc = "Respect the built-in \"ignore this bag\" checkboxes from the default UI",
+			type = "toggle",
+			get = function() return core.db.ignore_blizzard end,
+			set = function(info, value) core.db.ignore_blizzard = value end,
+		},
 		list = {
 			name = "List", desc = "List all ignored slots", type = "execute", order = 1,
 			func = function()

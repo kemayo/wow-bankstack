@@ -50,7 +50,7 @@ function core.Fill(source_bags, target_bags, reverse, can_move, should_halt)
 	--Create a list of empty slots in the target bags
 	for _, bag, slot in core.IterateBags(target_bags, reverse, "deposit") do
 		local bagslot = encode_bagslot(bag, slot)
-		if (not core.db.ignore_bags[bag] and not core.db.ignore[bagslot]) and not bag_ids[bagslot] then
+		if not core.IsIgnored(bag, slot) and not bag_ids[bagslot] then
 			table.insert(empty_slots, bagslot)
 		end
 	end
@@ -61,7 +61,7 @@ function core.Fill(source_bags, target_bags, reverse, can_move, should_halt)
 		local bagslot = encode_bagslot(bag, slot)
 		local target_bag, target_slot = decode_bagslot(empty_slots[1])
 		if
-			(not core.db.ignore_bags[bag] and not core.db.ignore[bagslot])
+			not core.IsIgnored(bag, slot)
 			and bag_ids[bagslot]
 			and core.CanItemGoInBag(bag, slot, target_bag)
 			and can_move(bag_ids[bagslot], bag, slot)
@@ -77,7 +77,7 @@ function is_squashed(bags, reverse)
 	local was_filled = true
 	for _, bag, slot in core.IterateBags(bags, reverse, "deposit") do
 		local bagslot = encode_bagslot(bag, slot)
-		if (not core.db.ignore_bags[bag] and not core.db.ignore[bagslot]) then
+		if not core.IsIgnored(bag, slot) then
 			if not was_filled and bag_ids[bagslot] then
 				-- last slot was empty, this slot is not, therefore a gap exists
 				return false
