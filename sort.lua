@@ -194,7 +194,7 @@ local function default_sorter(a, b)
 	end
 	
 	-- Quick sanity-check to make sure we correctly fetched information about the items
-	if not (item_name[a_id] and item_name[b_id] and item_rarity[a_id] and item_rarity)[b_id] then
+	if not (item_name[a_id] and item_name[b_id] and item_rarity[a_id] and item_rarity[b_id]) then
 		-- preserve the existing order in this case
 		return a_order < b_order
 	end
