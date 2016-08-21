@@ -25,8 +25,13 @@ local options = {
 			descStyle = "inline",
 		},
 		junk = {
-			name = "Junk", desc = "Move junk to the end", type = "toggle",
+			name = "Junk", desc = "Move junk to the end", type = "select",
 			descStyle = "inline",
+			values = {
+				[0] = "No",
+				[1] = "End of your items",
+				[2] = "Back of your bags",
+			},
 		},
 		conjured = {
 			name = "Conjured", desc = "Move conjured items to the end", type = "toggle",

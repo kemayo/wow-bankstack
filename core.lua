@@ -25,7 +25,7 @@ function core:OnInitialize()
 	self.db_object = LibStub("AceDB-3.0"):New("BankStackDB", {
 		profile = {
 			verbosity = 1,
-			junk = true,
+			junk = 2, -- 0: no special treatment, 1: end of sort, 2: back of bags
 			conjured = false,
 			soulbound = true,
 			reverse = false,
@@ -68,6 +68,10 @@ function core:OnInitialize()
 			return to
 		end
 		copy(oldDB, self.db)
+	end
+
+	if type(self.db.junk) == "boolean" then
+		self.db.junk = self.db.junk and 1 or 0
 	end
 
 	if self.setup_config then

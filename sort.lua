@@ -166,11 +166,18 @@ local function default_sorter(a, b)
 	-- a and b are from encode_bagslot
 	-- note that "return initial_order[a] < initial_order[b]" would maintain the bag's state
 	-- I'm certain this could be made to be more efficient
+	-- return: whether a should be in front of b
 	local a_id = bag_ids[a]
 	local b_id = bag_ids[b]
 	
 	-- is either slot empty?  If so, move it to the back.
-	if (not a_id) or (not b_id) then return a_id end
+	if (not a_id) or (not b_id) then
+		if core.db.junk == 2 then
+			if a_id and item_rarity[a_id] == 0 then return false end
+			if b_id and item_rarity[b_id] == 0 then return true end
+		end
+		return a_id
+	end
 	
 	local a_order, b_order = initial_order[a], initial_order[b]
 
@@ -200,7 +207,7 @@ local function default_sorter(a, b)
 	end
 
 	-- junk to the back?
-	if core.db.junk and not (item_rarity[a_id] == item_rarity[b_id]) then
+	if core.db.junk == 1 and not (item_rarity[a_id] == item_rarity[b_id]) then
 		if item_rarity[a_id] == 0 then return false end
 		if item_rarity[b_id] == 0 then return true end
 	end
