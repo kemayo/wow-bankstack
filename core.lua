@@ -429,11 +429,8 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 		if not IsReagentBankUnlocked() then
 			return false
 		end
-		-- considered this route:
-		-- bag_family = bit.bor(0x0008, 0x0010, 0x0020, 0x0040, 0x0200, 0x0400, 0x10000) -- might add 0x0080 (engineering bag), but I don't think tools are allowed
-		-- but it's imprecise; there are tools and suchlike in there
-		-- For some strange reason this is "Crafting Reagent". I expect this to break later.
-		return core.CheckTooltipFor(bag, slot, PROFESSIONS_USED_IN_COOKING)
+		-- 7.1.5 finally added an "is crafting reagent" return
+		return select(17, GetItemInfo(item))
 	end
 
 	local bag_family = select(2, GetContainerNumFreeSlots(target_bag))
