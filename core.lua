@@ -324,6 +324,7 @@ function core.GetNumSlots(bag, role)
 	if is_guild_bank_bag(bag) then
 		if not role then role = "deposit" end
 		local tab = bag - 50
+		QueryGuildBankTab(tab)
 		local name, icon, canView, canDeposit, numWithdrawals = GetGuildBankTabInfo(tab)
 		--(numWithdrawals is negative if you have unlimited withdrawals available.)
 		if name and canView and ((role == "withdraw" and numWithdrawals ~= 0) or (role == "deposit" and canDeposit) or (role == "both" and numWithdrawals ~= 0 and canDeposit)) then
@@ -338,6 +339,7 @@ end
 function core.GetItemInfo(bag, slot)
 	if is_guild_bank_bag(bag) then
 		local tab = bag - 50
+		QueryGuildBankTab(tab)
 		return GetGuildBankItemInfo(tab, slot)
 	else
 		return GetContainerItemInfo(bag, slot)
@@ -347,6 +349,7 @@ end
 function core.GetItemLink(bag, slot)
 	if is_guild_bank_bag(bag) then
 		local tab = bag - 50
+		QueryGuildBankTab(tab)
 		return GetGuildBankItemLink(tab, slot)
 	else
 		return GetContainerItemLink(bag, slot)
