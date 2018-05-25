@@ -316,6 +316,14 @@ do
 	end
 end
 
+already_queried = {}
+function QueryGuildBankTabIfNeeded(tab)
+	if not already_queried[tab] then
+		QueryGuildBankTab(tab)
+		already_queried[tab] = true
+	end
+end
+
 -- Wrapper functions to allow for pretending that the guild bank and bags are the same.
 function core.GetNumSlots(bag, role)
 	-- role: "withdraw", "deposit", "both"; defaults to "both", as that is the most restrictive
@@ -324,7 +332,7 @@ function core.GetNumSlots(bag, role)
 	if is_guild_bank_bag(bag) then
 		if not role then role = "deposit" end
 		local tab = bag - 50
-		QueryGuildBankTab(tab)
+		QueryGuildBankTabIfNeeded(tab)
 		local name, icon, canView, canDeposit, numWithdrawals = GetGuildBankTabInfo(tab)
 		--(numWithdrawals is negative if you have unlimited withdrawals available.)
 		if name and canView and ((role == "withdraw" and numWithdrawals ~= 0) or (role == "deposit" and canDeposit) or (role == "both" and numWithdrawals ~= 0 and canDeposit)) then
@@ -339,7 +347,7 @@ end
 function core.GetItemInfo(bag, slot)
 	if is_guild_bank_bag(bag) then
 		local tab = bag - 50
-		QueryGuildBankTab(tab)
+		QueryGuildBankTabIfNeeded(tab)
 		return GetGuildBankItemInfo(tab, slot)
 	else
 		return GetContainerItemInfo(bag, slot)
@@ -349,7 +357,7 @@ end
 function core.GetItemLink(bag, slot)
 	if is_guild_bank_bag(bag) then
 		local tab = bag - 50
-		QueryGuildBankTab(tab)
+		QueryGuildBankTabIfNeeded(tab)
 		return GetGuildBankItemLink(tab, slot)
 	else
 		return GetContainerItemLink(bag, slot)
@@ -573,6 +581,7 @@ function core.DoMoves()
 		Debug("Aborted because of combat")
 		return core.StopStacking(L.confused)
 	end
+	wipe(already_queried)
 	local cursortype, cursor_itemid = GetCursorInfo()
 	if cursortype == "item" and cursor_itemid then
 		if last_itemid ~= cursor_itemid then
@@ -714,10 +723,10 @@ function core.DoMove(move)
 	end
 
 	if source_guildbank then
-		QueryGuildBankTab(source_bag - 50)
+		QueryGuildBankTabIfNeeded(source_bag - 50)
 	end
 	if target_guildbank then
-		QueryGuildBankTab(target_bag - 50)
+		QueryGuildBankTabIfNeeded(target_bag - 50)
 	end
 	
 	if (source_itemid == target_itemid)
