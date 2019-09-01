@@ -8,6 +8,9 @@ local debugf = tekDebug and tekDebug:GetFrame("BankStack")
 local function Debug(...) if debugf then debugf:AddMessage(string.join(", ", tostringall(...))) end end
 core.Debug = Debug
 
+local version, build, date, tocversion = GetBuildInfo()
+core.has_guild_bank = tocversion >= 20300
+
 --Bindings locales:
 BINDING_HEADER_BANKSTACK_HEAD = L['BINDING_HEADER_BANKSTACK_HEAD']
 BINDING_NAME_BANKSTACK = L['BINDING_NAME_BANKSTACK']
@@ -80,8 +83,10 @@ function core:OnInitialize()
 
 	self:RegisterEvent("BANKFRAME_OPENED")
 	self:RegisterEvent("BANKFRAME_CLOSED")
-	self:RegisterEvent("GUILDBANKFRAME_OPENED")
-	self:RegisterEvent("GUILDBANKFRAME_CLOSED")
+	if self.has_guild_bank then
+		self:RegisterEvent("GUILDBANKFRAME_OPENED")
+		self:RegisterEvent("GUILDBANKFRAME_CLOSED")
+	end
 end
 
 local frame = CreateFrame("Frame")
@@ -457,9 +462,9 @@ function core.IsIgnored(bag, slot)
 	end
 	if core.db.ignore_blizzard then
 		if (bag == -1) then
-			return GetBankAutosortDisabled()
+			return GetBankAutosortDisabled and GetBankAutosortDisabled() or false
 		elseif (bag == 0) then
-			return GetBackpackAutosortDisabled()
+			return GetBackpackAutosortDisabled and GetBackpackAutosortDisabled() or false
 		elseif is_bank_bag(bag) then
 			return GetBankBagSlotFlag(bag - NUM_BAG_SLOTS, LE_BAG_FILTER_FLAG_IGNORE_CLEANUP)
 		elseif not is_guild_bank_bag(bag) then
@@ -556,7 +561,7 @@ local function update_location(from, to)
 	end
 end
 function core.ScanBags()
-	for _, bag, slot in core.IterateBags(all_bags_with_guild) do
+	for _, bag, slot in core.IterateBags(core.has_guild_bank and all_bags_with_guild or all_bags) do
 		local bagslot = encode_bagslot(bag, slot)
 		local itemid = core.GetItemID(bag, slot)
 		if itemid then
