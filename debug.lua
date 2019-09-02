@@ -74,7 +74,7 @@ local function getFrame()
 end
 
 SlashCmdList["BANKSTACKDEBUG"] = core.CommandDecorator(function(bags)
-    local frame = getFrame()
+    getFrame()
 
     for i, bag, slot in core.IterateBags(bags, nil, "both") do
         local bagslot = encode_bagslot(bag, slot)
@@ -87,7 +87,7 @@ SlashCmdList["BANKSTACKDEBUG"] = core.CommandDecorator(function(bags)
             frame.editbox:Insert(("%d | %d.%d | EMPTY\n"):format(i, bag, slot))
         end
         -- if (not core.db.ignore_bags[bag] and not core.db.ignore[bagslot]) then
-            
+
         -- end
     end
 

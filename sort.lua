@@ -169,7 +169,7 @@ local function default_sorter(a, b)
 	-- return: whether a should be in front of b
 	local a_id = bag_ids[a]
 	local b_id = bag_ids[b]
-	
+
 	-- is either slot empty?  If so, move it to the back.
 	if (not a_id) or (not b_id) then
 		if core.db.junk == 2 then
@@ -178,7 +178,7 @@ local function default_sorter(a, b)
 		end
 		return a_id
 	end
-	
+
 	local a_order, b_order = initial_order[a], initial_order[b]
 
 	-- are they the same item?
@@ -193,13 +193,13 @@ local function default_sorter(a, b)
 			return a_count < b_count
 		end
 	end
-	
+
 	-- Conjured items to the back?
 	if core.db.conjured and not bag_conjured[a] == bag_conjured[b] then
 		if bag_conjured[a] then return false end
 		if bag_conjured[b] then return true end
 	end
-	
+
 	-- Quick sanity-check to make sure we correctly fetched information about the items
 	if not (item_name[a_id] and item_name[b_id] and item_rarity[a_id] and item_rarity[b_id]) then
 		-- preserve the existing order in this case
@@ -211,7 +211,7 @@ local function default_sorter(a, b)
 		if item_rarity[a_id] == 0 then return false end
 		if item_rarity[b_id] == 0 then return true end
 	end
-	
+
 	-- Soulbound items to the front?
 	if core.db.soulbound and bag_soulbound[a] ~= bag_soulbound[b] then
 		if bag_soulbound[a] then return true end
@@ -264,7 +264,7 @@ end
 
 local function should_actually_move(source, destination)
 	-- work out whether a move from source to destination actually makes sense to do
-	
+
 	-- skip it if...
 	-- source and destination are the same
 	if destination == source then return end
@@ -272,7 +272,7 @@ local function should_actually_move(source, destination)
 	if not bag_ids[source] then return end
 	-- slot contents are the same and stack sizes are the same
 	if bag_ids[source] == bag_ids[destination] and bag_stacks[source] == bag_stacks[destination] then return end
-	
+
 	-- go for it!
 	return true
 end
@@ -282,7 +282,7 @@ function core.Sort(bags, sorter)
 	-- sorter: function or nil.  Passed to table.sort.
 	if not sorter then sorter = core.db.reverse and reverse_sort or default_sorter end
 	if not item_types then build_sort_order() end
-	
+
 	for i, bag, slot in core.IterateBags(bags, nil, "both") do
 		--(you need withdraw *and* deposit permissions in the guild bank to move items within it)
 		local bagslot = encode_bagslot(bag, slot)
@@ -291,13 +291,13 @@ function core.Sort(bags, sorter)
 			table.insert(bag_sorted, bagslot)
 		end
 	end
-	
+
 	table.sort(bag_sorted, sorter)
 	for i,s in ipairs(bag_sorted) do Debug("SORTED", i, core.GetItemLink(decode_bagslot(s))) end
-	
+
 	-- We now have bag_sorted, which is a table containing all slots that contain items, in the order
 	-- that they need to be moved into.
-	
+
 	local another_pass_needed = true
 	local passes_tried = 0
 	while another_pass_needed do
@@ -311,7 +311,7 @@ function core.Sort(bags, sorter)
 			-- Make sure the origin slot isn't empty; if so no move needs to be scheduled.
 			local destination = encode_bagslot(bag, slot) -- This is like i, increasing as we go on.
 			local source = bag_sorted[i]
-			
+
 			-- If destination is ignored we skip everything here
 			-- Notably, i does not get incremented.
 			if not core.IsIgnored(bag, slot) then

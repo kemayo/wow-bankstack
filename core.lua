@@ -24,7 +24,7 @@ function core:OnInitialize()
 		oldDB = BankStackDB
 		BankStackDB = nil
 	end
-	
+
 	self.db_object = LibStub("AceDB-3.0"):New("BankStackDB", {
 		profile = {
 			verbosity = 1,
@@ -91,7 +91,7 @@ end
 
 local frame = CreateFrame("Frame")
 local t, WAIT_TIME, MAX_MOVE_TIME = 0, 0.05, 3
-frame:SetScript("OnUpdate", function(frame, time_since_last)
+frame:SetScript("OnUpdate", function(self, time_since_last)
 	if (core.bankrequired and not core.bank_open) or (core.guildbankrequired and not core.guild_bank_open) then
 		Debug(core.bankrequired and "bank required" or "guild bank required")
 		core.StopStacking(L.at_bank)
@@ -262,11 +262,11 @@ local function encode_bagslot(bag, slot) return (bag*100) + slot end
 local function decode_bagslot(int) return math.floor(int/100), int % 100 end
 local function encode_move(source, target) return (source*10000)+target end
 local function decode_move(move)
-	local s = math.floor(move/10000)
-	local t = move%10000
-	s = (t>9000) and (s+1) or s
-	t = (t>9000) and (t-10000) or t
-	return s, t
+	local source = math.floor(move/10000)
+	local target = move%10000
+	source = (target>9000) and (source+1) or source
+	target = (target>9000) and (target-10000) or target
+	return source, target
 end
 core.encode_bagslot = encode_bagslot
 core.decode_bagslot = decode_bagslot
@@ -321,8 +321,8 @@ do
 	end
 end
 
-already_queried = {}
-function QueryGuildBankTabIfNeeded(tab)
+local already_queried = {}
+local function QueryGuildBankTabIfNeeded(tab)
 	if not already_queried[tab] then
 		QueryGuildBankTab(tab)
 		already_queried[tab] = true
@@ -576,7 +576,7 @@ function core.AddMove(source, destination)
 	table.insert(moves, 1, encode_move(source, destination))
 end
 
-local moves_underway, last_itemid, lock_stop, last_move, move_retries
+local moves_underway, last_itemid, last_destination, lock_stop, last_move, move_retries
 local move_tracker = {}
 
 local function debugtime(start, ...) Debug("took", GetTime() - start, ...) end
@@ -607,7 +607,7 @@ function core.DoMoves()
 			end
 		end
 	end
-	
+
 	if lock_stop then
 		Debug("Checking whether it's safe to move again")
 		for slot, itemid in pairs(move_tracker) do
@@ -689,7 +689,7 @@ function core.DoMove(move)
 	local target_bag, target_slot = decode_bagslot(target)
 	local _, source_count, source_locked = core.GetItemInfo(source_bag, source_slot)
 	local _, target_count, target_locked = core.GetItemInfo(target_bag, target_slot)
-	
+
 	if source_locked or target_locked then
 		return false, 'source/target_locked'
 	end
@@ -706,9 +706,9 @@ function core.DoMove(move)
 		end
 	end
 	local stack_size = select(8, GetItemInfo(source_itemid))
-	
+
 	core.announce(2, string.format(L.moving, source_link), 1,1,1)
-	
+
 	if
 		(source_itemid == target_itemid)
 		and
@@ -733,7 +733,7 @@ function core.DoMove(move)
 	if target_guildbank then
 		QueryGuildBankTabIfNeeded(target_bag - 50)
 	end
-	
+
 	if (source_itemid == target_itemid)
 		and
 		(target_count ~= stack_size)
@@ -753,7 +753,7 @@ function core.StartStacking()
 	wipe(bag_stacks)
 	wipe(bag_ids)
 	wipe(move_tracker)
-	
+
 	if #moves > 0 then
 		core.running = true
 		core.announce(1, string.format(L.to_move, #moves), 1, 1, 1)

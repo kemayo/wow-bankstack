@@ -58,7 +58,7 @@ dataobject.OnClick = function(frame, button)
 		-- open up the config
 		return InterfaceOptionsFrame_OpenToCategory(LibStub("AceConfigDialog-3.0").BlizOptions.BankStack.BankStack.frame)
 	end
-	if #(core.moves) > 0 then 
+	if #(core.moves) > 0 then
 		return core.StopStacking("BankStack: Aborted.")
 	end
 	--Build the keybind that triggered this.  There might be a better way to do this.
@@ -75,7 +75,6 @@ dataobject.OnTooltipShow = function(tooltip)
 	end
 	tooltip:AddDoubleLine("Click while stacking", "Abort", 1, 0, 0, 1, 0, 0)
 end
-
 
 local db
 function module:OnInitialize()

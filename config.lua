@@ -146,12 +146,12 @@ local group_options = {
 				end
 				local bags = wipe(core.db.groups[group])
 				-- Populate with the new group:
-				for v in string.gmatch(action, "[^%s,]+") do
-					local bag = tonumber(v)
+				for maybe_bagid in string.gmatch(action, "[^%s,]+") do
+					local bag = tonumber(maybe_bagid)
 					if core.is_valid_bag(bag) or core.is_guild_bank_bag(bag) then
 						table.insert(bags, bag)
 					else
-						announce(0, v.." was not a valid bag id.", 1, 0, 0)
+						announce(0, maybe_bagid.." was not a valid bag id.", 1, 0, 0)
 					end
 				end
 				announce(0, "Added group: "..group.." ("..string.join(", ", unpack(bags))..")", 1, 1, 1)
@@ -231,7 +231,7 @@ local launcher_options = {
 				"StatBlockCore, Fortress, ButtonBin, Broker2FuBar, and others, which can be used as a quick way to "..
 				"sort your bags.",
 		},
-		
+
 		sortbags = {name = "Sort Bags", desc = "Modified left-clicks only", type = "select", values = keybindings, order = 10,},
 		sortbank = {name = "Sort Bank", desc = "Modified left-clicks only", type = "select", values = keybindings, order = 20,},
 		stackbank = {name = "Stack to Bank", desc = "Modified left-clicks only", type = "select", values = keybindings, order = 30,},
@@ -314,4 +314,3 @@ SlashCmdList["BANKSTACKCONFIG"] = function(arg)
 	InterfaceOptionsFrame_OpenToCategory(LibStub("AceConfigDialog-3.0").BlizOptions.BankStack.BankStack.frame)
 	--LibStub("AceConfigDialog-3.0"):Open("BankStack")
 end
-

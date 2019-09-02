@@ -57,8 +57,8 @@ function core.Fill(source_bags, target_bags, reverse, can_move, should_halt)
 	--Move items from the back of source_bags to the front of target_bags (or
 	--front to back if `reverse`)
 	for _, bag, slot in core.IterateBags(source_bags, not reverse, "withdraw") do
-		if should_halt(bag_ids[bagslot], bag, slot) then break end
 		local bagslot = encode_bagslot(bag, slot)
+		if should_halt(bag_ids[bagslot], bag, slot) then break end
 		local target_bag, target_slot = decode_bagslot(empty_slots[1])
 		if
 			not core.IsIgnored(bag, slot)
@@ -72,7 +72,7 @@ function core.Fill(source_bags, target_bags, reverse, can_move, should_halt)
 	wipe(empty_slots)
 end
 
-function is_squashed(bags, reverse)
+local function is_squashed(bags, reverse)
 	--Bags are "squashed" if they contain only a contiguous set of items starting at the front of the bag
 	local was_filled = true
 	for _, bag, slot in core.IterateBags(bags, reverse, "deposit") do

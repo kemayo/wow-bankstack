@@ -48,7 +48,7 @@ function module:OnInitialize()
 			},
 		}
 	end
-	
+
 	self:RegisterEvent("PLAYER_FLAGS_CHANGED")
 end
 
@@ -60,7 +60,7 @@ local actions = {
 	stack_to_bank = core.CommandDecorator(core.StackSummary, 'bags bank'),
 	compress_bags = core.CommandDecorator(core.Compress, 'bags'),
 	compress_bank = core.CommandDecorator(core.Compress, 'bank'),
-	compress_bank = core.CommandDecorator(core.Compress, 'bags bank'),
+	compress_both = core.CommandDecorator(core.Compress, 'bags bank'),
 }
 
 core.RegisterCallback("Auto", "Bank_Open", function(callback)
