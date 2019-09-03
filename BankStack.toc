@@ -5,7 +5,7 @@
 ## Version: @project-version@
 ## X-Category: Inventory
 ## LoadOnDemand: 0
-## OptionalDeps: Ace3, LibDBIcon-1.0, tekDebug
+## OptionalDeps: Ace3, LibDBIcon-1.0, tekDebug, Inventorian
 ## SavedVariables: BankStackDB
 
 ## X-Website: https://www.wowace.com/projects/bank-stack
@@ -38,5 +38,7 @@ config.lua
 
 auto.lua
 ldb.lua
+blizzard.lua
+inventorian.lua
 
 debug.lua
