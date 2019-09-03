@@ -20,7 +20,7 @@ local makeSortButton = function(frame, callback)
 		end
 	end)
 	sort:SetScript("OnEnter", function(self)
-		GameTooltip:SetOwner(button, "ANCHOR_LEFT")
+		GameTooltip:SetOwner(self, "ANCHOR_LEFT")
 		GameTooltip:SetText(BAG_CLEANUP_BAGS, 1, 1, 1)
 		GameTooltip:Show()
 	end)

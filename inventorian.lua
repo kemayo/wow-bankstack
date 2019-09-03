@@ -5,8 +5,8 @@ if inv then
 	local sortbags = core.CommandDecorator(core.SortBags, 'bags')
 	local sortbank = core.CommandDecorator(core.SortBags, 'bank')
 	local original_FrameCreate = inv.Frame.Create
-	inv.Frame.Create = function(self, ...)
-		local frame = original_FrameCreate(self, ...)
+	inv.Frame.Create = function(inventorianFrame, ...)
+		local frame = original_FrameCreate(inventorianFrame, ...)
 
 		local sort = CreateFrame("Button", nil, frame) --, "UIPanelButtonTemplate")
 		sort:SetSize(25, 23)

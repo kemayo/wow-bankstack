@@ -85,6 +85,7 @@ read_globals = {
     "IsControlKeyDown",
     "IsShiftKeyDown",
     "IsReagentBankUnlocked",
+    "PlaySound",
     "PickupContainerItem",
     "PickupGuildBankItem",
     "QueryGuildBankTab",
@@ -94,6 +95,7 @@ read_globals = {
     "UnitName",
 
     -- FrameXML frames
+    "ContainerFrame1",
     "BankFrame",
     "GameTooltip",
     "UIParent",
@@ -109,11 +111,13 @@ read_globals = {
     "UISpecialFrames",
     "ScrollingEdit_OnCursorChanged",
     "ScrollingEdit_OnUpdate",
+    "GameTooltip_Hide",
 
     -- FrameXML Constants
     "BACKPACK_CONTAINER",
     "BACKPACK_TOOLTIP",
     "BAG_CLEANUP_BAGS",
+    "BAG_CLEANUP_BANK",
     "BAG_FILTER_ICONS",
     "BAGSLOT",
     "BANK",
