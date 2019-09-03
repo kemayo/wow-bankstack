@@ -3,7 +3,7 @@ local core = BankStack
 local sortbags = core.CommandDecorator(core.SortBags, 'bags')
 local sortbank = core.CommandDecorator(core.SortBags, 'bank')
 
-local makeSortButton = function(frame, callback)
+local makeSortButton = function(frame, callback, label)
 	local sort = CreateFrame("Button", nil, frame) --, "UIPanelButtonTemplate")
 	sort:SetSize(25, 23)
 	sort:RegisterForClicks("anyUp")
@@ -21,7 +21,7 @@ local makeSortButton = function(frame, callback)
 	end)
 	sort:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-		GameTooltip:SetText(BAG_CLEANUP_BAGS, 1, 1, 1)
+		GameTooltip:SetText(label, 1, 1, 1)
 		GameTooltip:Show()
 	end)
 	sort:SetScript("OnLeave", GameTooltip_Hide)
@@ -29,8 +29,8 @@ local makeSortButton = function(frame, callback)
 	return sort
 end
 
-local bags = makeSortButton(ContainerFrame1, sortbags)
+local bags = makeSortButton(ContainerFrame1, sortbags, BAG_CLEANUP_BAGS)
 bags:SetPoint("TOPRIGHT", -4, -26)
 
--- TODO: get to bank to test spacing
--- local bank = makeSortButton(BankFrame, sortbank)
+local bank = makeSortButton(BankFrame, sortbank, BAG_CLEANUP_BANK)
+bank:SetPoint("TOPRIGHT", -60, -44)
