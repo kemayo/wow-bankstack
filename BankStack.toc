@@ -19,10 +19,7 @@
 # ## X-LoadOn-BANKFRAME_OPENED: AddonLoader:LoadAddOn("BankStack"); BankStack.bank_open = true
 # ## X-LoadOn-GUILDBANKFRAME_OPENED: AddonLoader:LoadAddOn("BankStack"); BankStack.guild_bank_open = true
 
-#@no-lib-strip@
 embeds.xml
-#@end-no-lib-strip@
-lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
 
 local.enUS.lua
 local.deDE.lua
