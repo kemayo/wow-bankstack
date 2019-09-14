@@ -4,6 +4,9 @@
 <!--@non-debug@
 <Script file="lib\LibStub\LibStub.lua"/>
 <Include file="lib\CallbackHandler-1.0\CallbackHandler-1.0.xml"/>
+@end-non-debug@-->
+<Script file="lib\LibDataBroker-1.1\LibDataBroker-1.1.lua"/>
+<!--@non-debug@
 <Include file="lib\AceAddon-3.0\AceAddon-3.0.xml"/>
 <Include file="lib\AceEvent-3.0\AceEvent-3.0.xml"/>
 <Include file="lib\AceDB-3.0\AceDB-3.0.xml"/>
