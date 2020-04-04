@@ -54,6 +54,7 @@ read_globals = {
     "LibStub", "tekDebug",
 
     -- API functions
+    "C_AuctionHouse",
     "BankButtonIDToInvSlotID",
     "ContainerIDToInventoryID",
     "ReagentBankButtonIDToInvSlotID",
