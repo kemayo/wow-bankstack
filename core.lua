@@ -475,7 +475,10 @@ end
 
 function core.CommandDecorator(func, groups_defaults, required_count)
 	local bag_groups = {}
-	return function(groups)
+	local decorated
+	local retrying
+	decorated = function(groups, retry)
+		if retrying and not retry then return end
 		Debug("command wrapper", groups, groups_defaults, required_count)
 		if core.running then
 			Debug("abort", "already running")
@@ -501,13 +504,25 @@ function core.CommandDecorator(func, groups_defaults, required_count)
 			return core.announce(0, L.confused, 1, 0, 0)
 		end
 
-		core.ScanBags()
+		if not core.ScanBags() then
+			retrying = (retrying or 0) + 1
+			if retrying > 3 then
+				Debug("abort", "retries exceeded")
+				retrying = false
+				return core.announce(0, L.confused, 1, 0, 0)
+			end
+			Debug("retry", "ScanBags failed")
+			C_Timer.After(2, function() decorated(groups, true) end)
+			return core.announce(0, L.retry, 1, 1, 0)
+		end
+		retrying = false
 		if func(unpack(bag_groups)) == false then
 			return
 		end
 		wipe(bag_groups)
 		core.StartStacking()
 	end
+	return decorated
 end
 
 --Respond to events:
@@ -561,6 +576,7 @@ local function update_location(from, to)
 	end
 end
 function core.ScanBags()
+	local missing_data
 	for _, bag, slot in core.IterateBags(core.has_guild_bank and all_bags_with_guild or all_bags) do
 		local bagslot = encode_bagslot(bag, slot)
 		local itemid = core.GetItemID(bag, slot)
@@ -568,8 +584,12 @@ function core.ScanBags()
 			bag_ids[bagslot] = itemid
 			bag_stacks[bagslot] = select(2, core.GetItemInfo(bag, slot))
 			bag_maxstacks[bagslot] = select(8, GetItemInfo(itemid))
+			if bag_maxstacks[bagslot] == nil then
+				missing_data = true
+			end
 		end
 	end
+	return not missing_data
 end
 function core.AddMove(source, destination)
 	update_location(source, destination)
