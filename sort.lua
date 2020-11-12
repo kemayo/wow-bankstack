@@ -101,7 +101,7 @@ local function build_sort_order()
 		local itype_name = GetItemClassInfo(itype)
 		item_types[itype] = i
 		item_subtypes[itype] = {}
-		for ii, istype in ipairs({C_AuctionHouse.GetAuctionItemSubClasses(itype)}) do
+		for ii, istype in ipairs(C_AuctionHouse.GetAuctionItemSubClasses(itype)) do
 			item_subtypes[itype][istype] = ii
 		end
 	end
