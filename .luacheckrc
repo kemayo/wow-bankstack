@@ -55,10 +55,10 @@ read_globals = {
 
     -- API functions
     "C_AuctionHouse",
+    "C_Timer",
     "BankButtonIDToInvSlotID",
     "ContainerIDToInventoryID",
     "ReagentBankButtonIDToInvSlotID",
-    "GetAuctionItemSubClasses",
     "GetBuildInfo",
     "GetBackpackAutosortDisabled",
     "GetBagSlotFlag",
