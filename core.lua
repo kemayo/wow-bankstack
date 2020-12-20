@@ -274,50 +274,33 @@ core.encode_move = encode_move
 core.decode_move = decode_move
 
 do
-	local bag_role, bagiter_forwards, bagiter_backwards
-	function bagiter_forwards(baglist, i)
-		i = i + 1
+	local bagiter_forwards, bagiter_backwards
+	function bagiter_forwards(baglist, role)
 		local step = 1
-		for _,bag in ipairs(baglist) do
-			local slots = core.GetNumSlots(bag, bag_role)
-			if i > slots + step then
-				step = step + slots
-			else
-				for slot=1, slots do
-					if step == i then
-						return i, bag, slot
-					end
-					step = step + 1
-				end
+		for _, bag in ipairs(baglist) do
+			for slot=1, core.GetNumSlots(bag, role) do
+				coroutine.yield(step, bag, slot)
+				step = step + 1
 			end
 		end
-		bag_role = nil
 	end
-	function bagiter_backwards(baglist, i)
-		i = i + 1
+	function bagiter_backwards(baglist, role)
 		local step = 1
-		for ii=#baglist, 1, -1 do
-			local bag = baglist[ii]
-			local slots = core.GetNumSlots(bag, bag_role)
-			if i > slots + step then
-				step = step + slots
-			else
-				for slot=slots, 1, -1 do
-					if step == i then
-						return i, bag, slot
-					end
-					step = step + 1
-				end
+		for i=#baglist, 1, -1 do
+			local bag = baglist[i]
+			for slot=core.GetNumSlots(bag, role), 1, -1 do
+				coroutine.yield(step, bag, slot)
+				step = step + 1
 			end
 		end
-		bag_role = nil
 	end
 
 	-- Iterate over bags and slots
 	-- e.g. for _, bag, slot in core.IterateBags({1,2,3}) do ... end
 	function core.IterateBags(baglist, reverse, role)
-		bag_role = role
-		return (reverse and bagiter_backwards or bagiter_forwards), baglist, 0
+		return coroutine.wrap(function()
+			return (reverse and bagiter_backwards or bagiter_forwards)(baglist, role)
+		end)
 	end
 end
 
