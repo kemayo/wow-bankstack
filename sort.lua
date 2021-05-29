@@ -77,6 +77,9 @@ local inventory_slots = {
 	INVTYPE_TABARD = 25,
 }
 
+-- Classic compat:
+local GetAuctionItemSubClasses = C_AuctionHouse and C_AuctionHouse.GetAuctionItemSubClasses or function(...) return {GetAuctionItemSubClasses(...)} end
+
 -- Sorting
 local item_types
 local item_subtypes
@@ -101,7 +104,7 @@ local function build_sort_order()
 		local itype_name = GetItemClassInfo(itype)
 		item_types[itype] = i
 		item_subtypes[itype] = {}
-		for ii, istype in ipairs(C_AuctionHouse.GetAuctionItemSubClasses(itype)) do
+		for ii, istype in ipairs(GetAuctionItemSubClasses(itype)) do
 			item_subtypes[itype][istype] = ii
 		end
 	end

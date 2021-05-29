@@ -9,7 +9,8 @@ local function Debug(...) if debugf then debugf:AddMessage(string.join(", ", tos
 core.Debug = Debug
 
 local version, build, date, tocversion = GetBuildInfo()
-core.has_guild_bank = tocversion >= 20300
+-- Used to check TOC, but BCC had a high TOC and no guild bank functions. Just check for the function existing.
+core.has_guild_bank = QueryGuildBankTab
 
 --Bindings locales:
 BINDING_HEADER_BANKSTACK_HEAD = L['BINDING_HEADER_BANKSTACK_HEAD']
