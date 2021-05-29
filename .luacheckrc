@@ -115,6 +115,8 @@ read_globals = {
     "GameTooltip_Hide",
 
     -- FrameXML Constants
+    "WOW_PROJECT_ID",
+    "WOW_PROJECT_MAINLINE",
     "BACKPACK_CONTAINER",
     "BACKPACK_TOOLTIP",
     "BAG_CLEANUP_BAGS",

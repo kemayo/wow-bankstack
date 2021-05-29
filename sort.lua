@@ -78,7 +78,7 @@ local inventory_slots = {
 }
 
 -- Classic compat:
-local GetAuctionItemSubClasses = C_AuctionHouse and C_AuctionHouse.GetAuctionItemSubClasses or function(...) return {GetAuctionItemSubClasses(...)} end
+local GetAuctionItemSubClasses = C_AuctionHouse and C_AuctionHouse.GetAuctionItemSubClasses or function(...) return {_G.GetAuctionItemSubClasses(...)} end
 
 -- Sorting
 local item_types
