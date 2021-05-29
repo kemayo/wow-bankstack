@@ -1,4 +1,6 @@
-## Interface: 90001
+## Interface: 90005
+## Interface-BCC: 20501
+## Interface-Classic: 11307
 ## Title: BankStack
 ## Author: Kemayo
 ## Notes: From bags we came, to bank we return
@@ -11,6 +13,7 @@
 ## X-Website: https://www.wowace.com/projects/bank-stack
 ## X-License: All rights reserved.
 ## X-Curse-Project-ID: 13494
+## X-WoWI-ID: 7761
 
 # ## LoadManagers: AddonLoader
 # ## X-LoadOn-Slash: /bankstack, /sort, /sortbags, /stack, /compress, /compressbags, /fill, /fillbags
