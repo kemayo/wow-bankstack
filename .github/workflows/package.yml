@@ -46,7 +46,7 @@ jobs:
       - name: Create BCC Package
         uses: BigWigsMods/packager@master
         with:
-          args: -w 0 -g bc
+          args: -w 0 -g bcc
         env:
           CF_API_KEY: ${{ secrets.CF_API_KEY }}
           GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
