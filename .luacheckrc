@@ -55,6 +55,7 @@ read_globals = {
 
     -- API functions
     "C_AuctionHouse",
+    "C_Item",
     "C_Timer",
     "BankButtonIDToInvSlotID",
     "ContainerIDToInventoryID",
@@ -86,6 +87,7 @@ read_globals = {
     "IsControlKeyDown",
     "IsShiftKeyDown",
     "IsReagentBankUnlocked",
+    "ItemLocation",
     "PlaySound",
     "PickupContainerItem",
     "PickupGuildBankItem",

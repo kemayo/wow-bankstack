@@ -115,7 +115,8 @@ local bag_stacks = core.bag_stacks
 local bag_maxstacks = core.bag_maxstacks
 local bag_soulbound = setmetatable({}, {__index = function(self, bagslot)
 	local bag, slot = decode_bagslot(bagslot)
-	local is_soulbound = core.CheckTooltipFor(bag, slot, ITEM_SOULBOUND) or core.CheckTooltipFor(bag, slot, ITEM_BNETACCOUNTBOUND)
+	local item = ItemLocation:CreateFromBagAndSlot(bag, slot)
+	local is_soulbound = C_Item.IsBound(item)
 	self[bagslot] = is_soulbound
 	return is_soulbound
 end,})
