@@ -115,6 +115,8 @@ local bag_stacks = core.bag_stacks
 local bag_maxstacks = core.bag_maxstacks
 local bag_soulbound = setmetatable({}, {__index = function(self, bagslot)
 	local bag, slot = decode_bagslot(bagslot)
+	-- can't put soulbound items in a guild bank *and* ItemLocation won't work for it
+	if core.is_guild_bank_bag(bag) then return false end
 	local item = ItemLocation:CreateFromBagAndSlot(bag, slot)
 	local is_soulbound = C_Item.IsBound(item)
 	self[bagslot] = is_soulbound
@@ -122,6 +124,7 @@ local bag_soulbound = setmetatable({}, {__index = function(self, bagslot)
 end,})
 local bag_conjured = setmetatable({}, {__index = function(self, bagslot)
 	local bag, slot = decode_bagslot(bagslot)
+	if core.is_guild_bank_bag(bag) then return false end
 	local is_conjured = core.CheckTooltipFor(bag, slot, ITEM_CONJURED)
 	self[bagslot] = is_conjured
 	return is_conjured
