@@ -214,7 +214,7 @@ local function default_sorter(a, b)
 	end
 
 	-- junk to the back?
-	if core.db.junk == 1 and not (item_rarity[a_id] == item_rarity[b_id]) then
+	if core.db.junk == 1 and item_rarity[a_id] ~= item_rarity[b_id] then
 		if item_rarity[a_id] == 0 then return false end
 		if item_rarity[b_id] == 0 then return true end
 	end

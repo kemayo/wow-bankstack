@@ -68,7 +68,7 @@ function core.Stack(source_bags, target_bags, can_move)
 					bag_ids[source_slot] -- slot hasn't been emptied
 					and bag_ids[target_slot] == itemid -- target is same as source
 					and target_slot ~= source_slot -- target *isn't* source
-					and not (bag_stacks[target_slot] == bag_maxstacks[target_slot]) -- target isn't full
+					and bag_stacks[target_slot] ~= bag_maxstacks[target_slot] -- target isn't full
 					and not source_used[target_slot] -- already moved from slot
 				then
 					-- can't stack to itself, or to a full slot, or to a slot that has already been used as a source:
