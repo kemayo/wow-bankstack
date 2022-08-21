@@ -118,6 +118,7 @@ local bag_soulbound = setmetatable({}, {__index = function(self, bagslot)
 	-- can't put soulbound items in a guild bank *and* ItemLocation won't work for it
 	if core.is_guild_bank_bag(bag) then return false end
 	local item = ItemLocation:CreateFromBagAndSlot(bag, slot)
+	if not item:IsValid() then return false end
 	local is_soulbound = C_Item.IsBound(item)
 	self[bagslot] = is_soulbound
 	return is_soulbound
