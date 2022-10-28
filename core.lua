@@ -12,6 +12,13 @@ local version, build, date, tocversion = GetBuildInfo()
 -- Used to check TOC, but BCC had a high TOC and no guild bank functions. Just check for the function existing.
 core.has_guild_bank = QueryGuildBankTab
 
+local LE_BAG_FILTER_FLAG_IGNORE_CLEANUP = _G.LE_BAG_FILTER_FLAG_IGNORE_CLEANUP or Enum.BagSlotFlags.DisableAutoSort
+local GetBagSlotFlag = C_Container and C_Container.GetBagSlotFlag or GetBagSlotFlag
+local GetBankBagSlotFlag = function(bag, ...)
+	if _G.GetBankBagSlotFlag then return _G.GetBankBagSlotFlag(bag, ...) end
+	return C_Container.GetBagSlotFlag(bag + NUM_BAG_SLOTS, ...)
+end
+
 --Bindings locales:
 BINDING_HEADER_BANKSTACK_HEAD = L['BINDING_HEADER_BANKSTACK_HEAD']
 BINDING_NAME_BANKSTACK = L['BINDING_NAME_BANKSTACK']
