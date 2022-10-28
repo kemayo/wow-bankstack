@@ -55,6 +55,7 @@ read_globals = {
 
     -- API functions
     "C_AuctionHouse",
+    "C_Container",
     "C_Item",
     "C_Timer",
     "BankButtonIDToInvSlotID",
@@ -115,6 +116,7 @@ read_globals = {
     "ScrollingEdit_OnCursorChanged",
     "ScrollingEdit_OnUpdate",
     "GameTooltip_Hide",
+    "Enum",
 
     -- FrameXML Constants
     "WOW_PROJECT_ID",
