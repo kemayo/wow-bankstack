@@ -2,9 +2,10 @@
 if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then return end
 
 local core = BankStack
-local inv = LibStub("AceAddon-3.0"):GetAddon("Inventorian", true)
 
-if inv then
+core:RegisterAddonHook("Inventorian", function()
+	local inv = LibStub("AceAddon-3.0"):GetAddon("Inventorian", true)
+
 	local sortbags = core.CommandDecorator(core.SortBags, 'bags')
 	local sortbank = core.CommandDecorator(core.SortBags, 'bank')
 	local original_FrameCreate = inv.Frame.Create
@@ -40,4 +41,4 @@ if inv then
 
 		return frame
 	end
-end
+end)
