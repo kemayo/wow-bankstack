@@ -555,7 +555,8 @@ core.moves = moves
 local bag_ids = {}
 local bag_stacks = {}
 local bag_maxstacks = {}
-core.bag_ids, core.bag_stacks, core.bag_maxstacks = bag_ids, bag_stacks, bag_maxstacks
+local bag_links = {}
+core.bag_ids, core.bag_stacks, core.bag_maxstacks, core.bag_links = bag_ids, bag_stacks, bag_maxstacks, bag_links
 local function update_location(from, to)
 	-- When I move something from (3,12) to (0,1), the contents of (0,1) are now in (3,12).
 	-- Therefore if I find later that I need to move something from (0,1), I actually need to move whatever wound up in (3,12).
@@ -574,11 +575,13 @@ local function update_location(from, to)
 			bag_stacks[from] = nil
 			bag_ids[from] = nil
 			bag_maxstacks[from] = nil
+			bag_links[from] = nil
 		end
 	else
 		bag_ids[from], bag_ids[to] = bag_ids[to], bag_ids[from]
 		bag_stacks[from], bag_stacks[to] = bag_stacks[to], bag_stacks[from]
 		bag_maxstacks[from], bag_maxstacks[to] = bag_maxstacks[to], bag_maxstacks[from]
+		bag_links[from], bag_links[to] = bag_links[to], bag_links[from]
 	end
 end
 function core.ScanBags()
@@ -590,7 +593,8 @@ function core.ScanBags()
 			bag_ids[bagslot] = itemid
 			bag_stacks[bagslot] = select(2, core.GetItemInfo(bag, slot))
 			bag_maxstacks[bagslot] = select(8, GetItemInfo(itemid))
-			if bag_maxstacks[bagslot] == nil then
+			bag_links[bagslot] = core.GetItemLink(bag, slot)
+			if bag_maxstacks[bagslot] == nil or bag_links[bagslot] == nil then
 				missing_data = true
 			end
 		end
@@ -778,6 +782,7 @@ function core.StartStacking()
 	wipe(bag_maxstacks)
 	wipe(bag_stacks)
 	wipe(bag_ids)
+	wipe(bag_links)
 	wipe(move_tracker)
 
 	if #moves > 0 then

@@ -113,6 +113,7 @@ end
 local bag_ids = core.bag_ids
 local bag_stacks = core.bag_stacks
 local bag_maxstacks = core.bag_maxstacks
+local bag_links = core.bag_links
 local bag_soulbound = setmetatable({}, {__index = function(self, bagslot)
 	local bag, slot = decode_bagslot(bagslot)
 	-- can't put soulbound items in a guild bank *and* ItemLocation won't work for it
@@ -209,16 +210,19 @@ local function default_sorter(a, b)
 		if bag_conjured[b] then return true end
 	end
 
+	local a_link = bag_links[a]
+	local b_link = bag_links[b]
+
 	-- Quick sanity-check to make sure we correctly fetched information about the items
-	if not (item_name[a_id] and item_name[b_id] and item_rarity[a_id] and item_rarity[b_id]) then
+	if not (item_name[a_link] and item_name[b_link] and item_rarity[a_link] and item_rarity[b_link]) then
 		-- preserve the existing order in this case
 		return a_order < b_order
 	end
 
 	-- junk to the back?
-	if core.db.junk == 1 and item_rarity[a_id] ~= item_rarity[b_id] then
-		if item_rarity[a_id] == 0 then return false end
-		if item_rarity[b_id] == 0 then return true end
+	if core.db.junk == 1 and item_rarity[a_link] ~= item_rarity[b_link] then
+		if item_rarity[a_link] == 0 then return false end
+		if item_rarity[b_link] == 0 then return true end
 	end
 
 	-- Soulbound items to the front?
@@ -227,31 +231,31 @@ local function default_sorter(a, b)
 		if bag_soulbound[b] then return false end
 	end
 
-	if item_rarity[a_id] ~= item_rarity[b_id] then
-		return item_rarity[a_id] > item_rarity[b_id]
+	if item_rarity[a_link] ~= item_rarity[b_link] then
+		return item_rarity[a_link] > item_rarity[b_link]
 	end
 
-	if item_class[a_id] ~= item_class[b_id] then
-		return (item_types[item_class[a_id]] or 99) < (item_types[item_class[b_id]] or 99)
+	if item_class[a_link] ~= item_class[b_link] then
+		return (item_types[item_class[a_link]] or 99) < (item_types[item_class[b_link]] or 99)
 	end
 
 	-- are they the same type?
-	if item_class[a_id] == LE_ITEM_CLASS_ARMOR or item_class[a_id] == LE_ITEM_CLASS_WEAPON then
+	if item_class[a_link] == LE_ITEM_CLASS_ARMOR or item_class[a_link] == LE_ITEM_CLASS_WEAPON then
 		-- "or -1" because some things are classified as armor/weapon without being equipable; note Everlasting Underspore Frond
-		local a_equipLoc = inventory_slots[item_equipLoc[a_id]] or -1
-		local b_equipLoc = inventory_slots[item_equipLoc[b_id]] or -1
+		local a_equipLoc = inventory_slots[item_equipLoc[a_link]] or -1
+		local b_equipLoc = inventory_slots[item_equipLoc[b_link]] or -1
 		if a_equipLoc == b_equipLoc then
 			-- sort by level, then name
 			return prime_sort(a, b)
 		end
 		return a_equipLoc < b_equipLoc
 	end
-	if item_subClass[a_id] == item_subClass[b_id] then
+	if item_subClass[a_link] == item_subClass[b_link] then
 		return prime_sort(a, b)
 	end
 
-	if (item_subtypes[item_class[a_id]] or {})[item_subClass[a_id]] ~= (item_subtypes[item_class[b_id]] or {})[item_subClass[b_id]] then
-		return ((item_subtypes[item_class[a_id]] or {})[item_subClass[a_id]] or 99) < ((item_subtypes[item_class[b_id]] or {})[item_subClass[b_id]] or 99)
+	if (item_subtypes[item_class[a_link]] or {})[item_subClass[a_link]] ~= (item_subtypes[item_class[b_link]] or {})[item_subClass[b_link]] then
+		return ((item_subtypes[item_class[a_link]] or {})[item_subClass[a_link]] or 99) < ((item_subtypes[item_class[b_link]] or {})[item_subClass[b_link]] or 99)
 	end
 
 	-- Utter fallback: initial order wins
