@@ -105,9 +105,28 @@ function core:OnInitialize()
 	self:RegisterEvent("BANKFRAME_OPENED")
 	self:RegisterEvent("BANKFRAME_CLOSED")
 	if self.has_guild_bank then
-		self:RegisterEvent("GUILDBANKFRAME_OPENED")
-		self:RegisterEvent("GUILDBANKFRAME_CLOSED")
+		self:RegisterAddonHook("Blizzard_GuildBankUI", function()
+			self.guild_bank_open = GuildBankFrame and GuildBankFrame:IsVisible()
+			GuildBankFrame:HookScript("OnShow", function()
+				self.guild_bank_open = true
+				self.events:Fire("GuildBank_Open")
+			end)
+			GuildBankFrame:HookScript("OnHide", function()
+				self.guild_bank_open = false
+				self.events:Fire("GuildBank_Close")
+			end)
+		end)
 	end
+	self:RegisterEvent("ADDON_LOADED")
+end
+
+local hooks = {}
+function core:RegisterAddonHook(addon, callback)
+    if IsAddOnLoaded(addon) then
+        callback()
+    else
+        hooks[addon] = callback
+    end
 end
 
 local frame = CreateFrame("Frame")
@@ -532,6 +551,13 @@ function core.CommandDecorator(func, groups_defaults, required_count)
 end
 
 --Respond to events:
+function core:ADDON_LOADED(event, addon)
+    if hooks[addon] then
+        hooks[addon]()
+        hooks[addon] = nil
+    end
+end
+
 function core:BANKFRAME_OPENED()
 	self.bank_open = true
 	self.events:Fire("Bank_Open")
@@ -539,14 +565,6 @@ end
 function core:BANKFRAME_CLOSED()
 	self.bank_open = false
 	self.events:Fire("Bank_Close")
-end
-function core:GUILDBANKFRAME_OPENED()
-	self.guild_bank_open = true
-	self.events:Fire("GuildBank_Open")
-end
-function core:GUILDBANKFRAME_CLOSED()
-	self.guild_bank_open = false
-	self.events:Fire("GuildBank_Close")
 end
 
 local moves = {--[[encode_move(encode_bagslot(),encode_bagslot(target)),. ..--]]}

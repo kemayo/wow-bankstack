@@ -84,6 +84,7 @@ read_globals = {
     "GetItemInfoInstant",
     "GetTime",
     "InCombatLockdown",
+    "IsAddOnLoaded",
     "IsAltKeyDown",
     "IsControlKeyDown",
     "IsShiftKeyDown",
@@ -106,6 +107,7 @@ read_globals = {
     "WorldFrame",
     "DEFAULT_CHAT_FRAME",
     "GameFontHighlightSmall",
+    "GuildBankFrame",
 
     -- FrameXML API
     "CreateFrame",
