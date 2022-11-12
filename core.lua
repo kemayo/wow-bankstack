@@ -12,11 +12,24 @@ local version, build, date, tocversion = GetBuildInfo()
 -- Used to check TOC, but BCC had a high TOC and no guild bank functions. Just check for the function existing.
 core.has_guild_bank = QueryGuildBankTab
 
+local ITEM_INVENTORY_BANK_BAG_OFFSET = _G.ITEM_INVENTORY_BANK_BAG_OFFSET
+if not _G.GetBankBagSlotFlag then
+	-- retail: this constant's value is incorrect, because it wasn't updated for the new reagent bag
+	-- TODO: Check this occasionally so we can remove this override
+	ITEM_INVENTORY_BANK_BAG_OFFSET = 5
+end
+-- This will be the bags+reagentbag on retail:
+local EQUIPPED_BAG_SLOTS = _G.NUM_TOTAL_EQUIPPED_BAG_SLOTS or _G.NUM_BAG_SLOTS
+
 local LE_BAG_FILTER_FLAG_IGNORE_CLEANUP = _G.LE_BAG_FILTER_FLAG_IGNORE_CLEANUP or Enum.BagSlotFlags.DisableAutoSort
 local GetBagSlotFlag = C_Container and C_Container.GetBagSlotFlag or GetBagSlotFlag
 local GetBankBagSlotFlag = function(bag, ...)
-	if _G.GetBankBagSlotFlag then return _G.GetBankBagSlotFlag(bag, ...) end
-	return C_Container.GetBagSlotFlag(bag + NUM_BAG_SLOTS, ...)
+	if _G.GetBankBagSlotFlag
+		-- classic
+		then return _G.GetBankBagSlotFlag(bag, ...)
+	end
+	-- retail
+	return C_Container.GetBagSlotFlag(bag + EQUIPPED_BAG_SLOTS, ...)
 end
 
 --Bindings locales:
@@ -122,12 +135,12 @@ end
 
 -- http://wowwiki.com/API_TYPE_bagID
 local bank_bags = {REAGENTBANK_CONTAINER, BANK_CONTAINER}
-for i = NUM_BAG_SLOTS+1, NUM_BAG_SLOTS+NUM_BANKBAGSLOTS do
+for i = ITEM_INVENTORY_BANK_BAG_OFFSET+1, ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS do
 	table.insert(bank_bags, i)
 end
 core.bank_bags = bank_bags
 local player_bags = {}
-for i = 0, NUM_BAG_SLOTS do
+for i = 0, EQUIPPED_BAG_SLOTS do
 	table.insert(player_bags, i)
 end
 core.player_bags = player_bags
@@ -147,11 +160,11 @@ for _,bag in ipairs(guild) do table.insert(all_bags_with_guild, bag) end
 core.all_bags_with_guild = all_bags_with_guild
 
 local function is_valid_bag(bagid)
-	return (bagid == BANK_CONTAINER or ((bagid >= 0) and bagid <= NUM_BAG_SLOTS+NUM_BANKBAGSLOTS))
+	return (bagid == BANK_CONTAINER or ((bagid >= 0) and bagid <= ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS))
 end
 core.is_valid_bag = is_valid_bag
 local function is_bank_bag(bagid)
-	return (bagid == BANK_CONTAINER or bagid == REAGENTBANK_CONTAINER or (bagid > NUM_BAG_SLOTS and bagid <= NUM_BANKBAGSLOTS))
+	return (bagid == BANK_CONTAINER or bagid == REAGENTBANK_CONTAINER or (bagid > EQUIPPED_BAG_SLOTS and bagid <= (ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS)))
 end
 core.is_bank_bag = is_bank_bag
 local function is_guild_bank_bag(bagid)
@@ -452,12 +465,14 @@ function core.IsIgnored(bag, slot)
 		return true
 	end
 	if core.db.ignore_blizzard then
-		if (bag == -1) then
+		if (bag == -1) then --bank
 			return GetBankAutosortDisabled and GetBankAutosortDisabled() or false
-		elseif (bag == 0) then
+		elseif (bag == 0) then --backpack
 			return GetBackpackAutosortDisabled and GetBackpackAutosortDisabled() or false
+		elseif (bag == -3) then --reagentbank
+			return false
 		elseif is_bank_bag(bag) then
-			return GetBankBagSlotFlag(bag - NUM_BAG_SLOTS, LE_BAG_FILTER_FLAG_IGNORE_CLEANUP)
+			return GetBankBagSlotFlag(bag - EQUIPPED_BAG_SLOTS, LE_BAG_FILTER_FLAG_IGNORE_CLEANUP)
 		elseif not is_guild_bank_bag(bag) then
 			return GetBagSlotFlag(bag, LE_BAG_FILTER_FLAG_IGNORE_CLEANUP)
 		end
