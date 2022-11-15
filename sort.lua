@@ -83,25 +83,34 @@ local GetAuctionItemSubClasses = C_AuctionHouse and C_AuctionHouse.GetAuctionIte
 -- Sorting
 local item_types
 local item_subtypes
+local empty = {}
 local function build_sort_order()
 	local auction_classes = {
-		LE_ITEM_CLASS_WEAPON,
-		LE_ITEM_CLASS_ARMOR,
-		LE_ITEM_CLASS_CONTAINER,
-		LE_ITEM_CLASS_GEM,
-		LE_ITEM_CLASS_ITEM_ENHANCEMENT,
-		LE_ITEM_CLASS_CONSUMABLE,
-		LE_ITEM_CLASS_GLYPH,
-		LE_ITEM_CLASS_TRADEGOODS,
-		LE_ITEM_CLASS_RECIPE,
-		LE_ITEM_CLASS_BATTLEPET,
-		LE_ITEM_CLASS_QUESTITEM,
-		LE_ITEM_CLASS_MISCELLANEOUS,
+		-- Enum.ItemClass.WoWToken,
+		Enum.ItemClass.Weapon,
+		Enum.ItemClass.Armor,
+		Enum.ItemClass.Quiver,
+		Enum.ItemClass.Container,
+		Enum.ItemClass.Gem,
+		Enum.ItemClass.ItemEnhancement,
+		Enum.ItemClass.Consumable,
+		Enum.ItemClass.Reagent,
+		Enum.ItemClass.Glyph,
+		Enum.ItemClass.Tradegoods,
+		Enum.ItemClass.Profession,
+		Enum.ItemClass.Recipe,
+		Enum.ItemClass.Battlepet,
+		Enum.ItemClass.Key,
+		Enum.ItemClass.Miscellaneous,
+		Enum.ItemClass.Projectile,
+		Enum.ItemClass.CurrencyTokenObsolete,
+		Enum.ItemClass.PermanentObsolete,
+		Enum.ItemClass.Questitem,
 	}
 	item_types = {}
 	item_subtypes = {}
 	for i, itype in ipairs(auction_classes) do
-		local itype_name = GetItemClassInfo(itype)
+		-- local itype_name = GetItemClassInfo(itype)
 		item_types[itype] = i
 		item_subtypes[itype] = {}
 		for ii, istype in ipairs(GetAuctionItemSubClasses(itype)) do
@@ -223,7 +232,7 @@ local function default_sorter(a, b)
 	end
 
 	-- are they the same type?
-	if item_class[a_link] == LE_ITEM_CLASS_ARMOR or item_class[a_link] == LE_ITEM_CLASS_WEAPON then
+	if item_class[a_link] == Enum.ItemClass.Armor or item_class[a_link] == Enum.ItemClass.Weapon then
 		-- "or -1" because some things are classified as armor/weapon without being equipable; note Everlasting Underspore Frond
 		local a_equipLoc = inventory_slots[item_equipLoc[a_link]] or -1
 		local b_equipLoc = inventory_slots[item_equipLoc[b_link]] or -1
@@ -237,8 +246,8 @@ local function default_sorter(a, b)
 		return prime_sort(a, b)
 	end
 
-	if (item_subtypes[item_class[a_link]] or {})[item_subClass[a_link]] ~= (item_subtypes[item_class[b_link]] or {})[item_subClass[b_link]] then
-		return ((item_subtypes[item_class[a_link]] or {})[item_subClass[a_link]] or 99) < ((item_subtypes[item_class[b_link]] or {})[item_subClass[b_link]] or 99)
+	if (item_subtypes[item_class[a_link]] or empty)[item_subClass[a_link]] ~= (item_subtypes[item_class[b_link]] or empty)[item_subClass[b_link]] then
+		return ((item_subtypes[item_class[a_link]] or empty)[item_subClass[a_link]] or 99) < ((item_subtypes[item_class[b_link]] or empty)[item_subClass[b_link]] or 99)
 	end
 
 	-- Utter fallback: initial order wins
