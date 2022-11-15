@@ -114,25 +114,8 @@ local bag_ids = core.bag_ids
 local bag_stacks = core.bag_stacks
 local bag_maxstacks = core.bag_maxstacks
 local bag_links = core.bag_links
-local bag_soulbound = setmetatable({}, {__index = function(self, bagslot)
-	local bag, slot = decode_bagslot(bagslot)
-	-- can't put soulbound items in a guild bank *and* ItemLocation won't work for it
-	if core.is_guild_bank_bag(bag) then return false end
-	local item = ItemLocation:CreateFromBagAndSlot(bag, slot)
-	-- can't use item:IsValid because it's not present in classic (yet), but it's just a helper for this anyway:
-	if not C_Item.DoesItemExist(item) then return false end
-	local is_soulbound = C_Item.IsBound(item)
-	self[bagslot] = is_soulbound
-	return is_soulbound
-end,})
-local bag_conjured = setmetatable({}, {__index = function(self, bagslot)
-	local bag, slot = decode_bagslot(bagslot)
-	if core.is_guild_bank_bag(bag) then return false end
-	local is_conjured = core.CheckTooltipFor(bag, slot, ITEM_CONJURED)
-	self[bagslot] = is_conjured
-	return is_conjured
-end,})
-
+local bag_soulbound = core.bag_soulbound
+local bag_conjured = core.bag_conjured
 -- Avoid a *lot* of calls to GetItemInfo...
 local item_name, item_rarity, item_level, item_equipLoc, item_price, item_class, item_subClass = {}, {}, {}, {}, {}, {}, {}
 local iteminfo_metatable = {__index = function(self, itemid)

@@ -451,20 +451,21 @@ do
 end
 
 function core.CanItemGoInBag(bag, slot, target_bag)
+	local bagslot = encode_bagslot(bag, slot)
+	local item = core.bag_ids[bagslot]
 	if is_guild_bank_bag(target_bag) then
 		-- almost anything can go in a guild bank... apart from:
 		if
-			core.CheckTooltipFor(bag, slot, ITEM_SOULBOUND)
+			core.bag_soulbound[bagslot]
 			or
-			core.CheckTooltipFor(bag, slot, ITEM_CONJURED)
+			core.bag_conjured[bagslot]
 			or
-			core.CheckTooltipFor(bag, slot, ITEM_BIND_QUEST)
+			select(14, GetItemInfo(item)) == LE_ITEM_BIND_QUEST
 		then
 			return false
 		end
 		return true
 	end
-	local item = core.bag_ids[encode_bagslot(bag, slot)]
 	-- since we now know this isn't a guild bank we can just use the bag id provided
 	local item_family = GetItemFamily(item)
 	if not item_family then
@@ -814,6 +815,8 @@ function core.StartStacking()
 	wipe(bag_stacks)
 	wipe(bag_ids)
 	wipe(bag_links)
+	wipe(core.bag_soulbound)
+	wipe(core.bag_conjured)
 	wipe(move_tracker)
 
 	if #moves > 0 then
@@ -840,3 +843,23 @@ function core.StopStacking(message, r, g, b)
 	end
 	core.events:Fire("Stacking_Stopped", message)
 end
+
+-- These are helpers, which aren't kept up to date with moves like the other bag_ tables are:
+core.bag_soulbound = setmetatable({}, {__index = function(self, bagslot)
+	local bag, slot = decode_bagslot(bagslot)
+	-- can't put soulbound items in a guild bank *and* ItemLocation won't work for it
+	if core.is_guild_bank_bag(bag) then return false end
+	local item = ItemLocation:CreateFromBagAndSlot(bag, slot)
+	-- can't use item:IsValid because it's not present in classic (yet), but it's just a helper for this anyway:
+	if not C_Item.DoesItemExist(item) then return false end
+	local is_soulbound = C_Item.IsBound(item)
+	self[bagslot] = is_soulbound
+	return is_soulbound
+end,})
+core.bag_conjured = setmetatable({}, {__index = function(self, bagslot)
+	local bag, slot = decode_bagslot(bagslot)
+	if core.is_guild_bank_bag(bag) then return false end
+	local is_conjured = core.CheckTooltipFor(bag, slot, ITEM_CONJURED)
+	self[bagslot] = is_conjured
+	return is_conjured
+end,})
