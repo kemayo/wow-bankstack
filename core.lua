@@ -21,6 +21,19 @@ end
 -- This will be the bags+reagentbag on retail:
 local EQUIPPED_BAG_SLOTS = _G.NUM_TOTAL_EQUIPPED_BAG_SLOTS or _G.NUM_BAG_SLOTS
 
+-- compat:
+local PickupContainerItem = _G.PickupContainerItem or C_Container.PickupContainerItem
+local UseContainerItem = _G.UseContainerItem or C_Container.UseContainerItem
+local GetContainerNumSlots = _G.GetContainerNumSlots or C_Container.GetContainerNumSlots
+local GetContainerItemLink = _G.GetContainerItemLink or C_Container.GetContainerItemLink
+local GetContainerItemID = _G.GetContainerItemID or C_Container.GetContainerItemID
+local ContainerIDToInventoryID = _G.ContainerIDToInventoryID or C_Container.ContainerIDToInventoryID
+local GetContainerItemInfo = _G.GetContainerItemInfo or function(...)
+	local info = C_Container.GetContainerItemInfo(...)
+	if info then
+		return info.iconFileID, info.stackCount, info.isLocked, info.quality, info.isReadable, info.hasLoot, info.hyperlink, info.isFiltered, info.hasNoValue, info.itemID, info.isBound
+	end
+end
 local LE_BAG_FILTER_FLAG_IGNORE_CLEANUP = _G.LE_BAG_FILTER_FLAG_IGNORE_CLEANUP or Enum.BagSlotFlags.DisableAutoSort
 local GetBagSlotFlag = C_Container and C_Container.GetBagSlotFlag or GetBagSlotFlag
 local GetBankBagSlotFlag = function(bag, ...)
