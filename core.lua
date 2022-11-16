@@ -25,9 +25,11 @@ local EQUIPPED_BAG_SLOTS = _G.NUM_TOTAL_EQUIPPED_BAG_SLOTS or _G.NUM_BAG_SLOTS
 local PickupContainerItem = _G.PickupContainerItem or C_Container.PickupContainerItem
 local UseContainerItem = _G.UseContainerItem or C_Container.UseContainerItem
 local GetContainerNumSlots = _G.GetContainerNumSlots or C_Container.GetContainerNumSlots
+local GetContainerNumFreeSlots = _G.GetContainerNumFreeSlots or C_Container.GetContainerNumFreeSlots
 local GetContainerItemLink = _G.GetContainerItemLink or C_Container.GetContainerItemLink
 local GetContainerItemID = _G.GetContainerItemID or C_Container.GetContainerItemID
 local ContainerIDToInventoryID = _G.ContainerIDToInventoryID or C_Container.ContainerIDToInventoryID
+local SplitContainerItem = _G.SplitContainerItem or C_Container.SplitContainerItem
 local GetContainerItemInfo = _G.GetContainerItemInfo or function(...)
 	local info = C_Container.GetContainerItemInfo(...)
 	if info then
