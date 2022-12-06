@@ -12,8 +12,10 @@ local version, build, date, tocversion = GetBuildInfo()
 -- Used to check TOC, but BCC had a high TOC and no guild bank functions. Just check for the function existing.
 core.has_guild_bank = QueryGuildBankTab
 
+local NUM_REAGENTBAG_SLOTS = _G.NUM_REAGENTBAG_SLOTS or 0
+local REAGENTBAG_CONTAINER = Enum.BagIndex and Enum.BagIndex.ReagentBag
 local ITEM_INVENTORY_BANK_BAG_OFFSET = _G.ITEM_INVENTORY_BANK_BAG_OFFSET
-if not _G.GetBankBagSlotFlag then
+if NUM_REAGENTBAG_SLOTS > 0 then
 	-- retail: this constant's value is incorrect, because it wasn't updated for the new reagent bag
 	-- TODO: Check this occasionally so we can remove this override
 	ITEM_INVENTORY_BANK_BAG_OFFSET = 5
@@ -174,7 +176,10 @@ for i = ITEM_INVENTORY_BANK_BAG_OFFSET+1, ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BAN
 end
 core.bank_bags = bank_bags
 local player_bags = {}
-for i = 0, EQUIPPED_BAG_SLOTS do
+if NUM_REAGENTBAG_SLOTS > 0 then
+	table.insert(player_bags, REAGENTBAG_CONTAINER)
+end
+for i = 0, NUM_BAG_SLOTS do
 	table.insert(player_bags, i)
 end
 core.player_bags = player_bags
@@ -214,6 +219,7 @@ local core_groups = {
 	bags = player_bags,
 	all = all_bags,
 	reagents = {REAGENTBANK_CONTAINER},
+	bags_without_reagents = {select(2, unpack(player_bags))},
 	bank_without_reagents = {select(2, unpack(bank_bags))},
 	guild = guild,
 	guild1 = {51,},
@@ -442,6 +448,7 @@ do
 	function core.IsSpecialtyBag(bagid)
 		if safe[bagid] or is_guild_bank_bag(bagid) then return false end
 		if bagid == REAGENTBANK_CONTAINER then return true end
+		if bagid == REAGENTBAG_CONTAINER then return true end
 		local invslot = ContainerIDToInventoryID(bagid)
 		if not invslot then return false end
 		local bag = GetInventoryItemLink("player", invslot)
@@ -485,6 +492,9 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 			return false
 		end
 		-- 7.1.5 finally added an "is crafting reagent" return
+		return select(17, GetItemInfo(item))
+	end
+	if target_bag == REAGENTBAG_CONTAINER then
 		return select(17, GetItemInfo(item))
 	end
 
