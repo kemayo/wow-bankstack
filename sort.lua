@@ -161,7 +161,10 @@ local function prime_sort(a, b)
 	if item_price[a_id] ~= item_price[b_id] then
 		return item_price[a_id] > item_price[b_id]
 	end
-	return item_name[a_id] < item_name[b_id]
+	if item_name[a_id] ~= item_name[b_id] then
+		return item_name[a_id] < item_name[b_id]
+	end
+	return a_id < b_id
 end
 local initial_order = {}
 local function default_sorter(a, b)
