@@ -58,6 +58,8 @@ read_globals = {
     "C_Container",
     "C_Item",
     "C_Timer",
+    "C_TooltipInfo",
+    "TooltipUtil",
     "BankButtonIDToInvSlotID",
     "ContainerIDToInventoryID",
     "ReagentBankButtonIDToInvSlotID",
