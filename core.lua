@@ -303,6 +303,7 @@ do
 					info = C_TooltipInfo.GetBagItem(bag, slot)
 				end
 			end
+			if not info then return false end -- got reports of this, but haven't been able to reproduce it
 			TooltipUtil.SurfaceArgs(info)
 			for _, line in ipairs(info.lines) do
 				TooltipUtil.SurfaceArgs(line)
