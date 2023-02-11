@@ -119,20 +119,40 @@ function core:OnInitialize()
 		self.setup_config()
 	end
 
-	self:RegisterEvent("BANKFRAME_OPENED")
-	self:RegisterEvent("BANKFRAME_CLOSED")
-	if self.has_guild_bank then
-		self:RegisterAddonHook("Blizzard_GuildBankUI", function()
-			self.guild_bank_open = GuildBankFrame and GuildBankFrame:IsVisible()
-			GuildBankFrame:HookScript("OnShow", function()
+	if Enum.PlayerInteractionType then
+		-- Retail and Wrath
+		function core.PLAYER_INTERACTION_MANAGER_FRAME_SHOW(_, event, id)
+			if id == Enum.PlayerInteractionType.Banker then
+				self.bank_open = true
+				self.events:Fire("Bank_Open")
+			elseif id == Enum.PlayerInteractionType.GuildBanker then
 				self.guild_bank_open = true
 				self.events:Fire("GuildBank_Open")
-			end)
-			GuildBankFrame:HookScript("OnHide", function()
+			end
+		end
+		function core.PLAYER_INTERACTION_MANAGER_FRAME_HIDE(_, event, id)
+			if id == Enum.PlayerInteractionType.Banker then
+				self.bank_open = false
+				self.events:Fire("Bank_Close")
+			elseif id == Enum.PlayerInteractionType.GuildBanker then
 				self.guild_bank_open = false
 				self.events:Fire("GuildBank_Close")
-			end)
-		end)
+			end
+		end
+		self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW")
+		self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE")
+	else
+		-- Classic Era (doesn't include guild bank)
+		function core.BANKFRAME_OPENED()
+			self.bank_open = true
+			self.events:Fire("Bank_Open")
+		end
+		function core.BANKFRAME_CLOSED()
+			self.bank_open = false
+			self.events:Fire("Bank_Close")
+		end
+		self:RegisterEvent("BANKFRAME_OPENED")
+		self:RegisterEvent("BANKFRAME_CLOSED")
 	end
 	self:RegisterEvent("ADDON_LOADED")
 end
@@ -613,15 +633,6 @@ function core:ADDON_LOADED(event, addon)
         hooks[addon]()
         hooks[addon] = nil
     end
-end
-
-function core:BANKFRAME_OPENED()
-	self.bank_open = true
-	self.events:Fire("Bank_Open")
-end
-function core:BANKFRAME_CLOSED()
-	self.bank_open = false
-	self.events:Fire("Bank_Close")
 end
 
 local moves = {--[[encode_move(encode_bagslot(),encode_bagslot(target)),. ..--]]}
