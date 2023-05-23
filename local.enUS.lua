@@ -36,3 +36,25 @@ L['BINDING_HEADER_BANKSTACK_HEAD'] = "BankStack"
 L['BINDING_NAME_BANKSTACK'] = "Stack to bank"
 L['BINDING_NAME_COMPRESS'] = "Compress bags"
 L['BINDING_NAME_BAGSORT'] = "Sorts bags"
+
+-- ldb:
+L['ACTION_ABORT'] = "Abort"
+L['ACTION_COMPRESSBAGS'] = "Compress stacks in bags"
+L['ACTION_COMPRESSBANK'] = "Compress stacks in bank"
+L['ACTION_SORTBAGS'] = "Sort Bags"
+L['ACTION_SORTBANK'] = "Sort Bank"
+L['ACTION_STACKBAGS'] = "Stack from bank to bags"
+L['ACTION_STACKBANK'] = "Stack from bags to bank"
+
+L['KEYBIND_CLICK'] = "Click"
+L['KEYBIND_CLICK_WHILE_STACKING'] = "Click while stacking"
+L['KEYBIND_NONE'] = "None"
+L['KEYBIND_PREFIX_ALT'] = "Alt-"
+L['KEYBIND_PREFIX_CTRL'] = "Ctrl-"
+L['KEYBIND_PREFIX_SHIFT'] = "Shift-"
+
+L['CHAT_MSG_ABORTED'] = "BankStack: Aborted."
+L['CHAT_MSG_TO_MOVE_NOPREFIX'] = "%d moves to make."
+
+L['OPTIONS_SHOW_MINIMAP_ICON'] = "Show minimap icon"
+L['OPTIONS_SHOW_MINIMAP_ICON_DESCRIPTION'] = "Toggle showing or hiding the minimap icon."

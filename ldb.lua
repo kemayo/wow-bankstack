@@ -10,14 +10,6 @@ local click_actions = {
 	compressbags = core.CommandDecorator(core.Compress, 'bags'),
 	compressbank = core.CommandDecorator(core.Compress, 'bank'),
 }
-local name_map = {
-	sortbags = "Sort Bags",
-	sortbank = "Sort Bank",
-	stackbags = "Stack from bank to bags",
-	stackbank = "Stack from bags to bank",
-	compressbags = "Compress stacks in bags",
-	compressbank = "Compress stacks in bank",
-}
 local binding_order = {
 	'sortbags', 'sortbank', 'stackbags', 'stackbank', 'compressbags', 'compressbank',
 	--'BUTTON1', 'ALT-BUTTON1', 'CTRL-BUTTON1', 'ALT-CTRL-BUTTON1', 'SHIFT-BUTTON1',
@@ -41,10 +33,10 @@ local function build_current_keybind()
 end
 local function pretty_keybind(keybind)
 	-- Again, assumes left mouse button
-	return keybind and ((string.match(keybind, "ALT-") and "Alt-" or '') ..
-		(string.match(keybind, "CTRL-") and "Ctrl-" or '') ..
-		(string.match(keybind, "SHIFT-") and "Shift-" or '') ..
-		"Click") or 'None'
+	return keybind and ((string.match(keybind, "ALT-") and core.L["KEYBIND_PREFIX_ALT"] or '') ..
+		(string.match(keybind, "CTRL-") and core.L["KEYBIND_PREFIX_CTRL"] or '') ..
+		(string.match(keybind, "SHIFT-") and core.L["KEYBIND_PREFIX_SHIFT"] or '') ..
+		core.L["KEYBIND_CLICK"]) or core.L['KEYBIND_NONE']
 end
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
@@ -59,7 +51,7 @@ dataobject.OnClick = function(frame, button)
 		return Settings.OpenToCategory(LibStub("AceConfigDialog-3.0").BlizOptions.BankStack.BankStack.frame)
 	end
 	if #(core.moves) > 0 then
-		return core.StopStacking("BankStack: Aborted.")
+		return core.StopStacking(core.L['CHAT_MSG_ABORTED'])
 	end
 	--Build the keybind that triggered this.  There might be a better way to do this.
 	local keybind = build_current_keybind()
@@ -71,9 +63,9 @@ end
 dataobject.OnTooltipShow = function(tooltip)
 	tooltip:AddLine("BankStack")
 	for _, action in ipairs(binding_order) do
-		tooltip:AddDoubleLine(pretty_keybind(get_binding_for_action(action)), name_map[action], 0, 1, 0, 1, 1, 1)
+		tooltip:AddDoubleLine(pretty_keybind(get_binding_for_action(action)), core.L['ACTION_' .. action:upper()], 0, 1, 0, 1, 1, 1)
 	end
-	tooltip:AddDoubleLine("Click while stacking", "Abort", 1, 0, 0, 1, 0, 0)
+	tooltip:AddDoubleLine(core.L['KEYBIND_CLICK_WHILE_STACKING'], core.L['ACTION_ABORT'], 1, 0, 0, 1, 0, 0)
 end
 
 local db
@@ -91,8 +83,8 @@ function module:OnInitialize()
 		core.options.plugins.ldb = {
 			minimap = {
 				type = "toggle",
-				name = "Show minimap icon",
-				desc = "Toggle showing or hiding the minimap icon.",
+				name = core.L['OPTIONS_SHOW_MINIMAP_ICON'],
+				desc = core.L['OPTIONS_SHOW_MINIMAP_ICON_DESCRIPTION'],
 				get = function() return not db.profile.minimap.hide end,
 				set = function(info, v)
 					local hide = not v
@@ -112,7 +104,7 @@ function module:OnInitialize()
 end
 
 core.RegisterCallback("LDB", "Doing_Moves", function(callback, num_moves)
-	dataobject.text = num_moves .. " moves to go"
+	dataobject.text = core.L['CHAT_MSG_TO_MOVE_NOPREFIX'].format(num_moves)
 end)
 
 core.RegisterCallback("LDB", "Stacking_Stopped", function(callback, message)
