@@ -200,7 +200,7 @@ local function default_sorter(a, b)
 	end
 
 	-- Conjured items to the back?
-	if core.db.conjured and not bag_conjured[a] == bag_conjured[b] then
+	if core.db.conjured and bag_conjured[a] ~= bag_conjured[b] then
 		if bag_conjured[a] then return false end
 		if bag_conjured[b] then return true end
 	end
