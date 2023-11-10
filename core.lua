@@ -15,11 +15,6 @@ core.has_guild_bank = QueryGuildBankTab
 local NUM_REAGENTBAG_SLOTS = _G.NUM_REAGENTBAG_SLOTS or 0
 local REAGENTBAG_CONTAINER = Enum.BagIndex and Enum.BagIndex.ReagentBag
 local ITEM_INVENTORY_BANK_BAG_OFFSET = _G.ITEM_INVENTORY_BANK_BAG_OFFSET
-if NUM_REAGENTBAG_SLOTS > 0 then
-	-- retail: this constant's value is incorrect, because it wasn't updated for the new reagent bag
-	-- TODO: Check this occasionally so we can remove this override
-	ITEM_INVENTORY_BANK_BAG_OFFSET = 5
-end
 -- This will be the bags+reagentbag on retail:
 local EQUIPPED_BAG_SLOTS = _G.NUM_TOTAL_EQUIPPED_BAG_SLOTS or _G.NUM_BAG_SLOTS
 
