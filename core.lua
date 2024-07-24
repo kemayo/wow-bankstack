@@ -154,7 +154,7 @@ end
 
 local hooks = {}
 function core:RegisterAddonHook(addon, callback)
-    if IsAddOnLoaded(addon) then
+    if C_AddOns.IsAddOnLoaded(addon) then
         callback()
     else
         hooks[addon] = callback
@@ -319,9 +319,7 @@ do
 				end
 			end
 			if not info then return false end -- got reports of this, but haven't been able to reproduce it
-			TooltipUtil.SurfaceArgs(info)
 			for _, line in ipairs(info.lines) do
-				TooltipUtil.SurfaceArgs(line)
 				if line.leftText and string.match(line.leftText, text) then
 					return true
 				end
