@@ -14,6 +14,7 @@ core.has_guild_bank = QueryGuildBankTab
 
 local NUM_REAGENTBAG_SLOTS = _G.NUM_REAGENTBAG_SLOTS or 0
 local REAGENTBAG_CONTAINER = Enum.BagIndex and Enum.BagIndex.ReagentBag
+local ACCOUNTBANK_CONTAINER = Enum.BagIndex and Enum.BagIndex.Accountbanktab
 local ITEM_INVENTORY_BANK_BAG_OFFSET = _G.ITEM_INVENTORY_BANK_BAG_OFFSET
 -- This will be the bags+reagentbag on retail:
 local EQUIPPED_BAG_SLOTS = _G.NUM_TOTAL_EQUIPPED_BAG_SLOTS or _G.NUM_BAG_SLOTS
@@ -189,6 +190,9 @@ local bank_bags = {REAGENTBANK_CONTAINER, BANK_CONTAINER}
 for i = ITEM_INVENTORY_BANK_BAG_OFFSET+1, ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS do
 	table.insert(bank_bags, i)
 end
+for _,i in ipairs(C_Bank.FetchPurchasedBankTabIDs(2, ACCOUNTBANK_CONTAINER)) do
+	table.insert(bank_bags, i)
+end
 core.bank_bags = bank_bags
 local player_bags = {}
 if NUM_REAGENTBAG_SLOTS > 0 then
@@ -218,7 +222,7 @@ local function is_valid_bag(bagid)
 end
 core.is_valid_bag = is_valid_bag
 local function is_bank_bag(bagid)
-	return (bagid == BANK_CONTAINER or bagid == REAGENTBANK_CONTAINER or (bagid > EQUIPPED_BAG_SLOTS and bagid <= (ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS)))
+	return (bagid == BANK_CONTAINER or bagid == REAGENTBANK_CONTAINER or bagid == ACCOUNTBANK_CONTAINER or (bagid > EQUIPPED_BAG_SLOTS and bagid <= (Enum.BagIndex.AccountBankTab_5)))
 end
 core.is_bank_bag = is_bank_bag
 local function is_guild_bank_bag(bagid)
@@ -493,6 +497,7 @@ do
 		if safe[bagid] or is_guild_bank_bag(bagid) then return false end
 		if bagid == REAGENTBANK_CONTAINER then return true end
 		if bagid == REAGENTBAG_CONTAINER then return true end
+		if bagid == ACCOUNTBANK_CONTAINER then return true end
 		local invslot = ContainerIDToInventoryID(bagid)
 		if not invslot then return false end
 		local bag = GetInventoryItemLink("player", invslot)
