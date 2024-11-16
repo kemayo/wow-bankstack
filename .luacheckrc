@@ -54,6 +54,7 @@ read_globals = {
     "LibStub", "tekDebug",
 
     -- API functions
+    "C_AddOns",
     "C_AuctionHouse",
     "C_Container",
     "C_Item",
@@ -86,7 +87,6 @@ read_globals = {
     "GetItemInfoInstant",
     "GetTime",
     "InCombatLockdown",
-    "IsAddOnLoaded",
     "IsAltKeyDown",
     "IsControlKeyDown",
     "IsShiftKeyDown",
@@ -121,6 +121,7 @@ read_globals = {
     "ScrollingEdit_OnUpdate",
     "GameTooltip_Hide",
     "Enum",
+    "Settings",
 
     -- FrameXML Constants
     "WOW_PROJECT_ID",
