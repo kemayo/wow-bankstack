@@ -128,7 +128,7 @@ local bag_conjured = core.bag_conjured
 -- Avoid a *lot* of calls to GetItemInfo...
 local item_name, item_rarity, item_level, item_equipLoc, item_price, item_class, item_subClass = {}, {}, {}, {}, {}, {}, {}
 local iteminfo_metatable = {__index = function(self, itemid)
-	local name, _, rarity, level, _, _, _, _, equipLoc, _, price, class, subClass = GetItemInfo(itemid)
+	local name, _, rarity, level, _, _, _, _, equipLoc, _, price, class, subClass = C_Item.GetItemInfo(itemid)
 
 	if not name then
 		return false
@@ -137,8 +137,8 @@ local iteminfo_metatable = {__index = function(self, itemid)
 	item_name[itemid] = name
 	item_rarity[itemid] = rarity
 	item_level[itemid] = level
-	item_equipLoc[itemid] = item_equipLoc
-	item_price[itemid] = item_price
+	item_equipLoc[itemid] = equipLoc
+	item_price[itemid] = price
 	item_class[itemid] = class
 	item_subClass[itemid] = subClass
 
