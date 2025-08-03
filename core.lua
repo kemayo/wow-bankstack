@@ -190,8 +190,11 @@ local bank_bags = {REAGENTBANK_CONTAINER, BANK_CONTAINER}
 for i = ITEM_INVENTORY_BANK_BAG_OFFSET+1, ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS do
 	table.insert(bank_bags, i)
 end
-for _,i in ipairs(C_Bank.FetchPurchasedBankTabIDs(2, ACCOUNTBANK_CONTAINER)) do
-	table.insert(bank_bags, i)
+if C_Bank and C_Bank.FetchPurchasedBankTabIDs then
+	-- Classic doesn't have this yet
+	for _,i in ipairs(C_Bank.FetchPurchasedBankTabIDs(2, ACCOUNTBANK_CONTAINER)) do
+		table.insert(bank_bags, i)
+	end
 end
 core.bank_bags = bank_bags
 local player_bags = {}
