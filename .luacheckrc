@@ -47,6 +47,8 @@ read_globals = {
     "tinsert",
     "wipe", "copy",
     "string", "tostringall",
+    "tContains",
+    "Constants",
 
     -- our own globals
 

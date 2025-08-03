@@ -16,11 +16,14 @@ core.has_guild_bank = QueryGuildBankTab and LE_EXPANSION_LEVEL_CURRENT > LE_EXPA
 -- C_Container.GetContainerItemID(Enum.BagIndex.Accountbanktab, 1) onload?
 core.has_account = LE_EXPANSION_LEVEL_CURRENT >= LE_EXPANSION_WAR_WITHIN
 
+local NEW_BANK_SYSTEM = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE and Enum.BagIndex.Characterbanktab
+
 local NUM_REAGENTBAG_SLOTS = _G.NUM_REAGENTBAG_SLOTS or 0
 local REAGENTBAG_CONTAINER = Enum.BagIndex and Enum.BagIndex.ReagentBag
 local ITEM_INVENTORY_BANK_BAG_OFFSET = _G.ITEM_INVENTORY_BANK_BAG_OFFSET
 -- This will be the bags+reagentbag on retail:
 local EQUIPPED_BAG_SLOTS = _G.NUM_TOTAL_EQUIPPED_BAG_SLOTS or _G.NUM_BAG_SLOTS
+local NUM_BANKBAGSLOTS = _G.NUM_BANKBAGSLOTS or Constants.InventoryConstants.NumCharacterBankSlots
 
 -- compat:
 local PickupContainerItem = _G.PickupContainerItem or C_Container.PickupContainerItem
@@ -196,7 +199,7 @@ function core.announce(level, message, r, g, b)
 end
 
 -- https://warcraft.wiki.gg/wiki/BagID
-local bank_bags = {REAGENTBANK_CONTAINER, BANK_CONTAINER}
+local bank_bags = NEW_BANK_SYSTEM and {} or {REAGENTBANK_CONTAINER, BANK_CONTAINER}
 for i = ITEM_INVENTORY_BANK_BAG_OFFSET+1, ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS do
 	table.insert(bank_bags, i)
 end
@@ -235,18 +238,15 @@ core.all_bags_with_guild = all_bags_with_guild
 
 
 local function is_valid_bag(bagid)
-	return (bagid == BANK_CONTAINER or ((bagid >= 0) and bagid <= ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS))
+	return tContains(all_bags_with_guild, bagid)
 end
 core.is_valid_bag = is_valid_bag
 local function is_account_bag(bagid)
-	return core.has_account and bagid >= Enum.BagIndex.AccountBankTab_1 and bagid <= Enum.BagIndex.AccountBankTab_5
+	return tContains(account_bags, bagid)
 end
 core.is_account_bag = is_account_bag
 local function is_bank_bag(bagid)
-	return bagid == BANK_CONTAINER
-		or bagid == REAGENTBANK_CONTAINER
-		or (bagid > BACKPACK_CONTAINER+ITEM_INVENTORY_BANK_BAG_OFFSET and bagid < BACKPACK_CONTAINER+ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS)
-		or is_account_bag(bagid)
+	return tContains(bank_bags, bagid) or is_account_bag(bagid)
 end
 core.is_bank_bag = is_bank_bag
 local function is_guild_bank_bag(bagid)
@@ -261,9 +261,8 @@ local core_groups = {
 	bank = bank_bags,
 	bags = player_bags,
 	all = all_bags,
-	reagents = {REAGENTBANK_CONTAINER},
 	bags_without_reagents = {select(2, unpack(player_bags))},
-	bank_without_reagents = {select(2, unpack(bank_bags))},
+	bank_without_reagents = NEW_BANK_SYSTEM and bank_bags or {select(2, unpack(bank_bags))},
 	account = account_bags,
 	guild = guild,
 	guild1 = {51,},
@@ -275,6 +274,9 @@ local core_groups = {
 	guild7 = {57,},
 	guild8 = {58,},
 }
+if not NEW_BANK_SYSTEM then
+	core_groups.reagents = {REAGENTBANK_CONTAINER}
+end
 core.groups = core_groups
 function core.get_group(id)
 	Debug ("get_group", id)
@@ -522,9 +524,11 @@ end
 
 do
 	local safe = {
-		[BANK_CONTAINER]=true,
-		[0]=true,
+		[BACKPACK_CONTAINER] = true,
 	}
+	if not NEW_BANK_SYSTEM then
+		safe[BANK_CONTAINER] = true
+	end
 	function core.IsSpecialtyBag(bagid)
 		if safe[bagid] or is_guild_bank_bag(bagid) then return false end
 		if bagid == REAGENTBANK_CONTAINER then return true end
