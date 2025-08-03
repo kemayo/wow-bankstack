@@ -30,7 +30,7 @@ local function getFrame()
 
         frame:Hide()
 
-        frame.title:SetText(myname)
+        frame.Title:SetText(myname)
 
         local titlebg = _G[name .. 'TitleBG']
         local titlebutton = CreateFrame("Frame", nil, frame)
