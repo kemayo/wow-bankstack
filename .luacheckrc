@@ -102,6 +102,7 @@ read_globals = {
     "UnitName",
 
     -- FrameXML frames
+    "AccountBankPanel",
     "ContainerFrame1",
     "BankFrame",
     "GameTooltip",
@@ -143,6 +144,9 @@ read_globals = {
     "ITEM_SOULBOUND",
     "LE_BAG_FILTER_FLAG_EQUIPMENT",
     "LE_BAG_FILTER_FLAG_IGNORE_CLEANUP",
+    "LE_EXPANSION_LEVEL_CURRENT",
+    "LE_EXPANSION_BURNING_CRUSADE",
+    "LE_EXPANSION_WAR_WITHIN",
     "LE_ITEM_BIND_QUEST",
     "LE_ITEM_CLASS_WEAPON",
     "LE_ITEM_CLASS_ARMOR",

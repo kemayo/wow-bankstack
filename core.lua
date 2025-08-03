@@ -8,13 +8,16 @@ local debugf = tekDebug and tekDebug:GetFrame("BankStack")
 local function Debug(...) if debugf then debugf:AddMessage(string.join(", ", tostringall(...))) end end
 core.Debug = Debug
 
-local version, build, date, tocversion = GetBuildInfo()
--- Used to check TOC, but BCC had a high TOC and no guild bank functions. Just check for the function existing.
-core.has_guild_bank = QueryGuildBankTab
+-- If pre-guild-bank BC servers ever show up again this will need to be fixed:
+core.has_guild_bank = QueryGuildBankTab and LE_EXPANSION_LEVEL_CURRENT > LE_EXPANSION_BURNING_CRUSADE
+
+-- C_Bank.FetchViewableBankTypes looks promising once that's available:
+-- ContainerNumSlots on Enum.BagIndex.Accountbanktab?
+-- C_Container.GetContainerItemID(Enum.BagIndex.Accountbanktab, 1) onload?
+core.has_account = LE_EXPANSION_LEVEL_CURRENT >= LE_EXPANSION_WAR_WITHIN
 
 local NUM_REAGENTBAG_SLOTS = _G.NUM_REAGENTBAG_SLOTS or 0
 local REAGENTBAG_CONTAINER = Enum.BagIndex and Enum.BagIndex.ReagentBag
-local ACCOUNTBANK_CONTAINER = Enum.BagIndex and Enum.BagIndex.Accountbanktab
 local ITEM_INVENTORY_BANK_BAG_OFFSET = _G.ITEM_INVENTORY_BANK_BAG_OFFSET
 -- This will be the bags+reagentbag on retail:
 local EQUIPPED_BAG_SLOTS = _G.NUM_TOTAL_EQUIPPED_BAG_SLOTS or _G.NUM_BAG_SLOTS
@@ -120,7 +123,11 @@ function core:OnInitialize()
 		function core.PLAYER_INTERACTION_MANAGER_FRAME_SHOW(_, event, id)
 			if id == Enum.PlayerInteractionType.Banker then
 				self.bank_open = true
+				self.account_bank_open = false
 				self.events:Fire("Bank_Open")
+			elseif id == Enum.PlayerInteractionType.AccountBanker then
+				self.account_bank_open = true
+				self.events:Fire("AccountBank_Open")
 			elseif id == Enum.PlayerInteractionType.GuildBanker then
 				self.guild_bank_open = true
 				self.events:Fire("GuildBank_Open")
@@ -130,6 +137,9 @@ function core:OnInitialize()
 			if id == Enum.PlayerInteractionType.Banker then
 				self.bank_open = false
 				self.events:Fire("Bank_Close")
+			elseif id == Enum.PlayerInteractionType.AccountBanker then
+				self.account_bank_open = false
+				self.events:Fire("AccountBank_Close")
 			elseif id == Enum.PlayerInteractionType.GuildBanker then
 				self.guild_bank_open = false
 				self.events:Fire("GuildBank_Close")
@@ -185,16 +195,10 @@ function core.announce(level, message, r, g, b)
 	DEFAULT_CHAT_FRAME:AddMessage(message, r, g, b)
 end
 
--- http://wowwiki.com/API_TYPE_bagID
+-- https://warcraft.wiki.gg/wiki/BagID
 local bank_bags = {REAGENTBANK_CONTAINER, BANK_CONTAINER}
 for i = ITEM_INVENTORY_BANK_BAG_OFFSET+1, ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS do
 	table.insert(bank_bags, i)
-end
-if C_Bank and C_Bank.FetchPurchasedBankTabIDs then
-	-- Classic doesn't have this yet
-	for _,i in ipairs(C_Bank.FetchPurchasedBankTabIDs(2, ACCOUNTBANK_CONTAINER)) do
-		table.insert(bank_bags, i)
-	end
 end
 core.bank_bags = bank_bags
 local player_bags = {}
@@ -212,6 +216,15 @@ end
 for _,i in ipairs(bank_bags) do
 	table.insert(all_bags, i)
 end
+local account_bags = {}
+if core.has_account then
+	-- Accountbanktab itself is a weird 5-slot container that only contains 5x item:208392 "Bank Tab Bag (DNT)"
+	account_bags = {Enum.BagIndex.AccountBankTab_1, Enum.BagIndex.AccountBankTab_2, Enum.BagIndex.AccountBankTab_3, Enum.BagIndex.AccountBankTab_4, Enum.BagIndex.AccountBankTab_5}
+	for _,i in ipairs(account_bags) do
+		table.insert(all_bags, i)
+	end
+end
+core.account_bags = account_bags
 core.all_bags = all_bags
 local guild = {51,52,53,54,55,56,57,58}
 core.guild = guild
@@ -220,12 +233,20 @@ for _,bag in ipairs(all_bags) do table.insert(all_bags_with_guild, bag) end
 for _,bag in ipairs(guild) do table.insert(all_bags_with_guild, bag) end
 core.all_bags_with_guild = all_bags_with_guild
 
+
 local function is_valid_bag(bagid)
 	return (bagid == BANK_CONTAINER or ((bagid >= 0) and bagid <= ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS))
 end
 core.is_valid_bag = is_valid_bag
+local function is_account_bag(bagid)
+	return core.has_account and bagid >= Enum.BagIndex.AccountBankTab_1 and bagid <= Enum.BagIndex.AccountBankTab_5
+end
+core.is_account_bag = is_account_bag
 local function is_bank_bag(bagid)
-	return (bagid == BANK_CONTAINER or bagid == REAGENTBANK_CONTAINER or bagid == ACCOUNTBANK_CONTAINER or (bagid > EQUIPPED_BAG_SLOTS and bagid <= (Enum.BagIndex.AccountBankTab_5)))
+	return bagid == BANK_CONTAINER
+		or bagid == REAGENTBANK_CONTAINER
+		or (bagid > BACKPACK_CONTAINER+ITEM_INVENTORY_BANK_BAG_OFFSET and bagid < BACKPACK_CONTAINER+ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS)
+		or is_account_bag(bagid)
 end
 core.is_bank_bag = is_bank_bag
 local function is_guild_bank_bag(bagid)
@@ -243,6 +264,7 @@ local core_groups = {
 	reagents = {REAGENTBANK_CONTAINER},
 	bags_without_reagents = {select(2, unpack(player_bags))},
 	bank_without_reagents = {select(2, unpack(bank_bags))},
+	account = account_bags,
 	guild = guild,
 	guild1 = {51,},
 	guild2 = {52,},
@@ -260,6 +282,12 @@ function core.get_group(id)
 		local tab = GetCurrentGuildBankTab()
 		if tab then
 			return core_groups["guild" .. tab]
+		end
+	end
+	if id == "bank" and AccountBankPanel and AccountBankPanel:IsVisible() then
+		local tab = AccountBankPanel:GetSelectedTabID()
+		if tab and core.is_account_bag(tab) then
+			return {tab}
 		end
 	end
 	if not core.db.groups[id] and string.match(id, "^[-%d,]+$") then
@@ -291,6 +319,7 @@ function core.check_for_banks(bags)
 			core.announce(0, L.at_bank, 1, 0, 0)
 			return true
 		end
+		-- TODO: cope with being at a summoned AccountBanker here:
 		core.bankrequired = true
 	end
 	if core.contains_guild_bank_bag(bags) then
@@ -500,7 +529,6 @@ do
 		if safe[bagid] or is_guild_bank_bag(bagid) then return false end
 		if bagid == REAGENTBANK_CONTAINER then return true end
 		if bagid == REAGENTBAG_CONTAINER then return true end
-		if bagid == ACCOUNTBANK_CONTAINER then return true end
 		local invslot = ContainerIDToInventoryID(bagid)
 		if not invslot then return false end
 		local bag = GetInventoryItemLink("player", invslot)
@@ -514,14 +542,14 @@ end
 function core.CanItemGoInBag(bag, slot, target_bag)
 	local bagslot = encode_bagslot(bag, slot)
 	local item = core.bag_ids[bagslot]
-	if is_guild_bank_bag(target_bag) then
-		-- almost anything can go in a guild bank... apart from:
+
+	if is_account_bag(bag) or is_guild_bank_bag(target_bag) then
+		-- TODO: respect restrictions on the account tabs set in the blizzard UI
+		-- Almost anything can go in a guild bank or the account bank... apart from:
 		if
 			core.bag_soulbound[bagslot]
-			or
-			core.bag_conjured[bagslot]
-			or
-			select(14, GetItemInfo(item)) == LE_ITEM_BIND_QUEST
+			or core.bag_conjured[bagslot]
+			or select(14, GetItemInfo(item)) == LE_ITEM_BIND_QUEST
 		then
 			return false
 		end
