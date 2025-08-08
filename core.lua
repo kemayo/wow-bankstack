@@ -619,6 +619,11 @@ function core.IsIgnored(bag, slot)
 		elseif (bag == -3) then --reagentbank
 			return false
 		elseif is_bank_bag(bag) then
+			if NEW_BANK_SYSTEM then
+				local bankType = is_account_bag(bag) and Enum.BankType.Account or Enum.BankType.Character
+				local data = BTSI:GetTabData(bankType, bag)
+				return data and data.depositFlags and FlagsUtil.IsSet(data.depositFlags, Enum.BagSlotFlags.DisableAutoSort)
+			end
 			return GetBankBagSlotFlag(bag - EQUIPPED_BAG_SLOTS, LE_BAG_FILTER_FLAG_IGNORE_CLEANUP)
 		elseif not is_guild_bank_bag(bag) then
 			return GetBagSlotFlag(bag, LE_BAG_FILTER_FLAG_IGNORE_CLEANUP)
