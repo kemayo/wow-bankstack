@@ -536,8 +536,7 @@ do
 		if bagid == REAGENTBANK_CONTAINER then return true end
 		if bagid == REAGENTBAG_CONTAINER then return true end
 		if NEW_BANK_SYSTEM and BTSI and core.db.ignore_blizzard and is_bank_bag(bagid) then
-			local bankType = is_account_bag(bagid) and Enum.BankType.Account or Enum.BankType.Character
-			local key, numFlags = BTSI:BuildKeyForTab(bankType, bagid)
+			local key, numFlags = BTSI:BuildKeyForTab(bagid)
 			if numFlags == 0 then
 				return "Normal"
 			end
@@ -569,12 +568,13 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 		end
 		return true
 	end
-	if NEW_BANK_SYSTEM and is_bank_bag(target_bag) then
-		local bankType = is_account_bag(target_bag) and Enum.BankType.Account or Enum.BankType.Character
+	if NEW_BANK_SYSTEM and BTSI and is_bank_bag(target_bag) then
 		if core.db.ignore_blizzard and BTSI then
-			return BTSI:IsItemLocationSuitableForTab(core.bag_itemlocation[bagslot], bankType, target_bag)
+			return BTSI:IsItemLocationSuitableForTab(core.bag_itemlocation[bagslot], target_bag)
 		end
-		return C_Bank.CanViewBank(bankType) and C_Bank.IsItemAllowedInBankType(bankType, core.bag_itemlocation[bagslot])
+		-- This is filtering out the actually-impossible, not just preference-based:
+		local bankType = BTSI:GetBankTypeForTab(target_bag)
+		return bankType and C_Bank.CanViewBank(bankType) and C_Bank.IsItemAllowedInBankType(bankType, core.bag_itemlocation[bagslot])
 	end
 	-- This is either a pre-11.2.0 bank-bag or a player-bag
 	-- since we now know this isn't a guild bank we can just use the bag id provided
@@ -619,9 +619,8 @@ function core.IsIgnored(bag, slot)
 		elseif (bag == -3) then --reagentbank
 			return false
 		elseif is_bank_bag(bag) then
-			if NEW_BANK_SYSTEM then
-				local bankType = is_account_bag(bag) and Enum.BankType.Account or Enum.BankType.Character
-				local data = BTSI:GetTabData(bankType, bag)
+			if NEW_BANK_SYSTEM and BTSI then
+				local data = BTSI:GetTabData(bag)
 				return data and data.depositFlags and FlagsUtil.IsSet(data.depositFlags, Enum.BagSlotFlags.DisableAutoSort)
 			end
 			return GetBankBagSlotFlag(bag - EQUIPPED_BAG_SLOTS, LE_BAG_FILTER_FLAG_IGNORE_CLEANUP)
