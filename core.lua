@@ -4,6 +4,8 @@ local L = LibStub("AceLocale-3.0"):GetLocale("BankStack")
 core.L = L
 core.events = LibStub("CallbackHandler-1.0"):New(core)
 
+local BTSI = LibStub("LibBankTabSuitableItems-1.0", true)
+
 local debugf = tekDebug and tekDebug:GetFrame("BankStack")
 local function Debug(...) if debugf then debugf:AddMessage(string.join(", ", tostringall(...))) end end
 core.Debug = Debug
@@ -533,6 +535,14 @@ do
 		if safe[bagid] or is_guild_bank_bag(bagid) then return false end
 		if bagid == REAGENTBANK_CONTAINER then return true end
 		if bagid == REAGENTBAG_CONTAINER then return true end
+		if NEW_BANK_SYSTEM and BTSI and core.db.ignore_blizzard and is_bank_bag(bagid) then
+			local bankType = is_account_bag(bagid) and Enum.BankType.Account or Enum.BankType.Character
+			local key, numFlags = BTSI:BuildKeyForTab(bankType, bagid)
+			if numFlags == 0 then
+				return "Normal"
+			end
+			return key
+		end
 		local invslot = ContainerIDToInventoryID(bagid)
 		if not invslot then return false end
 		local bag = GetInventoryItemLink("player", invslot)
@@ -547,7 +557,7 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 	local bagslot = encode_bagslot(bag, slot)
 	local item = core.bag_ids[bagslot]
 
-	if is_account_bag(bag) or is_guild_bank_bag(target_bag) then
+	if is_guild_bank_bag(target_bag) then
 		-- TODO: respect restrictions on the account tabs set in the blizzard UI
 		-- Almost anything can go in a guild bank or the account bank... apart from:
 		if
@@ -559,6 +569,14 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 		end
 		return true
 	end
+	if NEW_BANK_SYSTEM and is_bank_bag(target_bag) then
+		local bankType = is_account_bag(target_bag) and Enum.BankType.Account or Enum.BankType.Character
+		if core.db.ignore_blizzard and BTSI then
+			return BTSI:IsItemLocationSuitableForTab(core.bag_itemlocation[bagslot], bankType, target_bag)
+		end
+		return C_Bank.CanViewBank(bankType) and C_Bank.IsItemAllowedInBankType(bankType, core.bag_itemlocation[bagslot])
+	end
+	-- This is either a pre-11.2.0 bank-bag or a player-bag
 	-- since we now know this isn't a guild bank we can just use the bag id provided
 	local item_family = GetItemFamily(item)
 	if not item_family then
@@ -936,7 +954,7 @@ core.bag_soulbound = setmetatable({}, {__index = function(self, bagslot)
 	local bag, slot = decode_bagslot(bagslot)
 	-- can't put soulbound items in a guild bank *and* ItemLocation won't work for it
 	if core.is_guild_bank_bag(bag) then return false end
-	local item = ItemLocation:CreateFromBagAndSlot(bag, slot)
+	local item = core.bag_itemlocation[bagslot]
 	-- can't use item:IsValid because it's not present in classic (yet), but it's just a helper for this anyway:
 	if not C_Item.DoesItemExist(item) then return false end
 	local is_soulbound = C_Item.IsBound(item)
@@ -949,4 +967,11 @@ core.bag_conjured = setmetatable({}, {__index = function(self, bagslot)
 	local is_conjured = core.CheckTooltipFor(bag, slot, ITEM_CONJURED)
 	self[bagslot] = is_conjured
 	return is_conjured
+end,})
+core.bag_itemlocation = setmetatable({}, {__index = function(self, bagslot)
+	local bag, slot = decode_bagslot(bagslot)
+	if core.is_guild_bank_bag(bag) then return false end
+	local itemLocation = ItemLocation:CreateFromBagAndSlot(bag, slot)
+	self[bagslot] = itemLocation
+	return itemLocation
 end,})

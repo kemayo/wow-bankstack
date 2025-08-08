@@ -6,7 +6,7 @@
 ## Version: @project-version@
 ## X-Category: Inventory
 ## LoadOnDemand: 0
-## OptionalDeps: Ace3, LibDBIcon-1.0, tekDebug
+## OptionalDeps: Ace3, LibDBIcon-1.0, LibBankTabSuitableItems-1.0, tekDebug
 ## SavedVariables: BankStackDB
 
 ## Category-enUS: Inventory

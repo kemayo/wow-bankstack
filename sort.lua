@@ -328,7 +328,7 @@ function core.Sort(bags, sorter)
 	end
 
 	table.sort(bag_sorted, sorter)
-	for i,s in ipairs(bag_sorted) do Debug("SORTED", i, core.GetItemLink(decode_bagslot(s))) end
+	-- for i,s in ipairs(bag_sorted) do Debug("SORTED", i, core.GetItemLink(decode_bagslot(s))) end
 
 	-- We now have bag_sorted, which is a table containing all slots that contain items, in the order
 	-- that they need to be moved into.

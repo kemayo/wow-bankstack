@@ -58,6 +58,7 @@ read_globals = {
     -- API functions
     "C_AddOns",
     "C_AuctionHouse",
+    "C_Bank",
     "C_Container",
     "C_Item",
     "C_Timer",
@@ -125,6 +126,7 @@ read_globals = {
     "GameTooltip_Hide",
     "Enum",
     "Settings",
+    "FlagsUtil",
 
     -- FrameXML Constants
     "WOW_PROJECT_ID",

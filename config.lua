@@ -49,6 +49,14 @@ local options = {
 			name = "Backfill", desc = "Fill starting at the back of your bags", type = "toggle",
 			descStyle = "inline",
 		},
+		respect = {
+			name = "Respect Blizzard",
+			desc = "Respect \"ignore this bag\" and item-type assignments from the default UI",
+			descStyle = "inline",
+			type = "toggle",
+			get = function() return core.db.ignore_blizzard end,
+			set = function(info, value) core.db.ignore_blizzard = value end,
+		},
 	},
 	plugins = {},
 }
@@ -59,13 +67,6 @@ local bag_slot_pattern = "^(-?[%d]+)%s*(%d*)$"
 local ignore_options = {
 	name = "Ignore", desc = "Slots to ignore", type = "group", order = 20,
 	args = {
-		inherit = {
-			name = "Inherit Blizzard",
-			desc = "Respect the built-in \"ignore this bag\" checkboxes from the default UI",
-			type = "toggle",
-			get = function() return core.db.ignore_blizzard end,
-			set = function(info, value) core.db.ignore_blizzard = value end,
-		},
 		list = {
 			name = "List", desc = "List all ignored slots", type = "execute", order = 1,
 			func = function()
