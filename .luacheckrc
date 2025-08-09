@@ -47,7 +47,7 @@ read_globals = {
     "tinsert",
     "wipe", "copy",
     "string", "tostringall",
-    "tContains",
+    "tContains", "tAppendAll",
     "Constants",
 
     -- our own globals
@@ -131,6 +131,7 @@ read_globals = {
     -- FrameXML Constants
     "WOW_PROJECT_ID",
     "WOW_PROJECT_MAINLINE",
+    "WOW_PROJECT_CLASSIC",
     "BACKPACK_CONTAINER",
     "BACKPACK_TOOLTIP",
     "BAG_CLEANUP_BAGS",
@@ -145,6 +146,7 @@ read_globals = {
     "ITEM_BIND_QUEST",
     "ITEM_BNETACCOUNTBOUND",
     "ITEM_CONJURED",
+    "ITEM_INVENTORY_BANK_BAG_OFFSET",
     "ITEM_SOULBOUND",
     "LE_BAG_FILTER_FLAG_EQUIPMENT",
     "LE_BAG_FILTER_FLAG_IGNORE_CLEANUP",

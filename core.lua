@@ -10,20 +10,19 @@ local debugf = tekDebug and tekDebug:GetFrame("BankStack")
 local function Debug(...) if debugf then debugf:AddMessage(string.join(", ", tostringall(...))) end end
 core.Debug = Debug
 
+core.CLASSIC = WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE -- rolls forward
+core.CLASSICERA = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC -- forever vanilla
+
+core.has_new_bank = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE and C_Bank and Enum.BagIndex.Characterbanktab
+
 -- If pre-guild-bank BC servers ever show up again this will need to be fixed:
 core.has_guild_bank = QueryGuildBankTab and LE_EXPANSION_LEVEL_CURRENT > LE_EXPANSION_BURNING_CRUSADE
 
 -- TODO: if this ever gets backported to classic for some reason...
 core.has_account_bank = LE_EXPANSION_LEVEL_CURRENT >= LE_EXPANSION_WAR_WITHIN
 
-local NEW_BANK_SYSTEM = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE and Enum.BagIndex.Characterbanktab
-
-local NUM_REAGENTBAG_SLOTS = _G.NUM_REAGENTBAG_SLOTS or 0
-local REAGENTBAG_CONTAINER = Enum.BagIndex and Enum.BagIndex.ReagentBag
-local ITEM_INVENTORY_BANK_BAG_OFFSET = _G.ITEM_INVENTORY_BANK_BAG_OFFSET
--- This will be the bags+reagentbag on retail:
-local EQUIPPED_BAG_SLOTS = _G.NUM_TOTAL_EQUIPPED_BAG_SLOTS or _G.NUM_BAG_SLOTS
-local NUM_BANKBAGSLOTS = _G.NUM_BANKBAGSLOTS or Constants.InventoryConstants.NumCharacterBankSlots
+core.has_reagent_bag = (Constants.InventoryConstants.NumReagentBagSlots or 0) > 0
+core.has_reagent_bank = not core.has_new_bank and _G.ReagentBankButtonIDToInvSlotID -- TODO: this is mostly in case Warlords Classic brings this back...
 
 -- compat:
 local GetContainerItemInfo = _G.GetContainerItemInfo or function(...)
@@ -138,47 +137,47 @@ frame:Hide() -- stops OnUpdate from running
 core.frame = frame
 
 --Inner workings:
-function core.announce(level, message, r, g, b)
-	if level > core.db.verbosity then return end
-	DEFAULT_CHAT_FRAME:AddMessage(message, r, g, b)
-end
 
+--Set up groups:
 -- https://warcraft.wiki.gg/wiki/BagID
-local bank_bags = NEW_BANK_SYSTEM and {} or {REAGENTBANK_CONTAINER, BANK_CONTAINER}
-for i = ITEM_INVENTORY_BANK_BAG_OFFSET+1, ITEM_INVENTORY_BANK_BAG_OFFSET+NUM_BANKBAGSLOTS do
-	table.insert(bank_bags, i)
+
+local bank_bags = core.has_new_bank and {} or {BANK_CONTAINER}
+do
+	local NUM_BANKBAGSLOTS = core.has_new_bank and Constants.InventoryConstants.NumCharacterBankSlots or _G.NUM_BANKBAGSLOTS
+	for i = (BACKPACK_CONTAINER + ITEM_INVENTORY_BANK_BAG_OFFSET + 1), (ITEM_INVENTORY_BANK_BAG_OFFSET + NUM_BANKBAGSLOTS) do
+		table.insert(bank_bags, i)
+	end
 end
 core.bank_bags = bank_bags
+
 local player_bags = {}
-if NUM_REAGENTBAG_SLOTS > 0 then
-	table.insert(player_bags, REAGENTBAG_CONTAINER)
+if core.has_reagent_bag then
+	table.insert(player_bags, Enum.BagIndex.ReagentBag)
 end
-for i = 0, NUM_BAG_SLOTS do
+for i = BACKPACK_CONTAINER, NUM_BAG_SLOTS do
 	table.insert(player_bags, i)
 end
 core.player_bags = player_bags
-local all_bags = {}
-for _,i in ipairs(player_bags) do
-	table.insert(all_bags, i)
-end
-for _,i in ipairs(bank_bags) do
-	table.insert(all_bags, i)
-end
+
 local account_bags = {}
 if core.has_account_bank then
 	-- Accountbanktab itself is a weird 5-slot container that only contains 5x item:208392 "Bank Tab Bag (DNT)"
 	account_bags = {Enum.BagIndex.AccountBankTab_1, Enum.BagIndex.AccountBankTab_2, Enum.BagIndex.AccountBankTab_3, Enum.BagIndex.AccountBankTab_4, Enum.BagIndex.AccountBankTab_5}
-	for _,i in ipairs(account_bags) do
-		table.insert(all_bags, i)
-	end
 end
 core.account_bags = account_bags
+
+local all_bags = {}
+tAppendAll(all_bags, player_bags)
+tAppendAll(all_bags, bank_bags)
+tAppendAll(all_bags, account_bags)
 core.all_bags = all_bags
+
 local guild = {51,52,53,54,55,56,57,58}
 core.guild = guild
+
 local all_bags_with_guild = {}
-for _,bag in ipairs(all_bags) do table.insert(all_bags_with_guild, bag) end
-for _,bag in ipairs(guild) do table.insert(all_bags_with_guild, bag) end
+tAppendAll(all_bags_with_guild, all_bags)
+tAppendAll(all_bags_with_guild, guild)
 core.all_bags_with_guild = all_bags_with_guild
 
 
@@ -206,9 +205,8 @@ local core_groups = {
 	bank = bank_bags,
 	bags = player_bags,
 	all = all_bags,
-	bags_without_reagents = {select(2, unpack(player_bags))},
-	bank_without_reagents = NEW_BANK_SYSTEM and bank_bags or {select(2, unpack(bank_bags))},
 	account = account_bags,
+	bank_without_reagents = core.has_reagent_bank and {select(2, unpack(bank_bags))} or bank_bags,
 	guild = guild,
 	guild1 = {51,},
 	guild2 = {52,},
@@ -219,7 +217,10 @@ local core_groups = {
 	guild7 = {57,},
 	guild8 = {58,},
 }
-if not NEW_BANK_SYSTEM then
+if core.has_reagent_bag then
+	core_groups.bags_without_reagents = {select(2, unpack(player_bags))}
+end
+if core.has_reagent_bank then
 	core_groups.reagents = {REAGENTBANK_CONTAINER}
 end
 core.groups = core_groups
@@ -295,7 +296,7 @@ do
 			else
 				if bag == BANK_CONTAINER then
 					info = C_TooltipInfo.GetInventoryItem("player", BankButtonIDToInvSlotID(slot, nil))
-				elseif bag == REAGENTBANK_CONTAINER then
+				elseif core.has_reagent_bank and bag == REAGENTBANK_CONTAINER then
 					info = C_TooltipInfo.GetInventoryItem("player", ReagentBankButtonIDToInvSlotID(slot))
 				else
 					info = C_TooltipInfo.GetBagItem(bag, slot)
@@ -329,7 +330,7 @@ do
 				-- bank slot or the keyring since they're not real bags.
 				if bag == BANK_CONTAINER then
 					tooltip:SetInventoryItem("player", BankButtonIDToInvSlotID(slot, nil))
-				elseif bag == REAGENTBANK_CONTAINER then
+				elseif core.has_reagent_bank and bag == REAGENTBANK_CONTAINER then
 					tooltip:SetInventoryItem("player", ReagentBankButtonIDToInvSlotID(slot))
 				else
 					tooltip:SetBagItem(bag, slot)
@@ -468,22 +469,31 @@ function core.SplitItem(bag, slot, amount)
 end
 
 do
-	local safe = {
-		[BACKPACK_CONTAINER] = true,
+	local known = {
+		[BACKPACK_CONTAINER] = false,
 	}
-	if not NEW_BANK_SYSTEM then
-		safe[BANK_CONTAINER] = true
+	if core.has_reagent_bag then
+		known[Enum.BagIndex.ReagentBag] = true
 	end
+	if core.has_reagent_bank then
+		known[REAGENTBANK_CONTAINER] = true
+	end
+	if not core.has_new_bank then
+		known[BANK_CONTAINER] = false
+	end
+	local always = {}
 	function core.IsSpecialtyBag(bagid)
-		if safe[bagid] or is_guild_bank_bag(bagid) then return false end
-		if bagid == REAGENTBANK_CONTAINER then return true end
-		if bagid == REAGENTBAG_CONTAINER then return true end
-		if NEW_BANK_SYSTEM and BTSI and core.db.ignore_blizzard and is_bank_bag(bagid) then
-			local key, numFlags = BTSI:BuildKeyForTab(bagid)
-			if numFlags == 0 then
-				return "Normal"
+		if known[bagid] ~= nil then return known[bagid] end
+		if is_guild_bank_bag(bagid) then return false end
+		if core.has_new_bank and is_bank_bag(bagid) then
+			if BTSI and core.db.ignore_blizzard then
+				local key, numFlags = BTSI:BuildKeyForTab(bagid)
+				if numFlags == 0 then
+					return "Normal"
+				end
+				return key
 			end
-			return key
+			return false
 		end
 		local invslot = C_Container.ContainerIDToInventoryID(bagid)
 		if not invslot then return false end
@@ -511,7 +521,7 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 		end
 		return true
 	end
-	if NEW_BANK_SYSTEM and BTSI and is_bank_bag(target_bag) then
+	if core.has_new_bank and BTSI and is_bank_bag(target_bag) then
 		if core.db.ignore_blizzard and BTSI then
 			return BTSI:IsItemLocationSuitableForTab(core.bag_itemlocation[bagslot], target_bag)
 		end
@@ -532,14 +542,14 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 			item_family = 0
 		end
 	end
-	if target_bag == REAGENTBANK_CONTAINER then
+	if core.has_reagent_bank and target_bag == REAGENTBANK_CONTAINER then
 		if not IsReagentBankUnlocked() then
 			return false
 		end
 		-- 7.1.5 finally added an "is crafting reagent" return
 		return select(17, GetItemInfo(item))
 	end
-	if target_bag == REAGENTBAG_CONTAINER then
+	if core.has_reagent_bag and target_bag == Enum.BagIndex.ReagentBag then
 		return select(17, GetItemInfo(item))
 	end
 
@@ -562,7 +572,7 @@ function core.IsIgnored(bag, slot)
 		elseif (bag == -3) then --reagentbank
 			return false
 		elseif is_bank_bag(bag) then
-			if NEW_BANK_SYSTEM and BTSI then
+			if core.has_new_bank and BTSI then
 				local data = BTSI:GetTabData(bag)
 				return data and data.depositFlags and FlagsUtil.IsSet(data.depositFlags, Enum.BagSlotFlags.DisableAutoSort)
 			end
@@ -922,3 +932,8 @@ core.bag_itemlocation = setmetatable({}, {__index = function(self, bagslot)
 	self[bagslot] = itemLocation
 	return itemLocation
 end,})
+
+function core.announce(level, message, ...)
+	if level > core.db.verbosity then return end
+	DEFAULT_CHAT_FRAME:AddMessage(message, ...)
+end
