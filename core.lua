@@ -205,7 +205,6 @@ local core_groups = {
 	bank = bank_bags,
 	bags = player_bags,
 	all = all_bags,
-	bank_without_reagents = core.has_reagent_bank and {select(2, unpack(bank_bags))} or bank_bags,
 	guild = guild,
 	guild1 = {51,},
 	guild2 = {52,},
@@ -221,6 +220,7 @@ if core.has_reagent_bag then
 end
 if core.has_reagent_bank then
 	core_groups.reagents = {REAGENTBANK_CONTAINER}
+	core_groups.bank_without_reagents = {select(2, unpack(bank_bags))}
 end
 if core.has_account_bank then
 	core_groups.account = account_bags
