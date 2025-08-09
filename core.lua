@@ -40,13 +40,6 @@ BINDING_NAME_COMPRESS = L['BINDING_NAME_COMPRESS']
 BINDING_NAME_BAGSORT = L['BINDING_NAME_BAGSORT']
 
 function core:OnInitialize()
-	local oldDB
-	if BankStackDB and not BankStackDB.profileKeys then
-		-- upgrade the database!
-		oldDB = BankStackDB
-		BankStackDB = nil
-	end
-
 	self.db_object = LibStub("AceDB-3.0"):New("BankStackDB", {
 		profile = {
 			verbosity = 1,
@@ -80,20 +73,6 @@ function core:OnInitialize()
 	self.db_object.RegisterCallback(self, "OnProfileChanged", function()
 		self.db = self.db_object.profile
 	end)
-
-	if oldDB then
-		local copy = function(from, to)
-			for k,v in pairs(from) do
-				if type(v) == 'table' then
-					to[k] = copy(v, type(to[k]) == 'table' and to[k] or {})
-				else
-					to[k] = v
-				end
-			end
-			return to
-		end
-		copy(oldDB, self.db)
-	end
 
 	if type(self.db.junk) == "boolean" then
 		self.db.junk = self.db.junk and 1 or 0
