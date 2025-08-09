@@ -20,38 +20,61 @@ local options = {
 	get = function(info) return core.db[info[#info]] end,
 	set = function(info, value) core.db[info[#info]] = value end,
 	args = {
-		junk = {
-			name = "Junk", desc = "Move junk to the end", type = "select",
-			descStyle = "inline",
-			values = {
-				[0] = "No",
-				[1] = "End of your items",
-				[2] = "Back of your bags",
+		sorting = {
+			name = "Sorting",
+			type = "group",
+			inline = true,
+			order = 10,
+			args = {
+				junk = {
+					name = "Junk", desc = "Move junk to the end", type = "select",
+					descStyle = "inline",
+					values = {
+						[0] = "No",
+						[1] = "End of your items",
+						[2] = "Back of your bags",
+					},
+					order = 10,
+				},
+				conjured = {
+					name = "Conjured", desc = "Move conjured items to the end", type = "toggle",
+					descStyle = "inline",
+					order = 20,
+				},
+				soulbound = {
+					name = "Soulbound", desc = "Move soulbound items to the front", type = "toggle",
+					descStyle = "inline",
+					order = 30,
+				},
+				reverse = {
+					name = "Reverse", desc = "Reverse the sort", type = "toggle",
+					descStyle = "inline",
+					order = 40,
+				},
+				backfill = {
+					name = "Backfill", desc = "Fill starting at the back of your bags", type = "toggle",
+					descStyle = "inline",
+					order = 50,
+				},
 			},
 		},
-		conjured = {
-			name = "Conjured", desc = "Move conjured items to the end", type = "toggle",
-			descStyle = "inline",
-		},
-		soulbound = {
-			name = "Soulbound", desc = "Move soulbound items to the front", type = "toggle",
-			descStyle = "inline",
-		},
-		reverse = {
-			name = "Reverse", desc = "Reverse the sort", type = "toggle",
-			descStyle = "inline",
-		},
-		backfill = {
-			name = "Backfill", desc = "Fill starting at the back of your bags", type = "toggle",
-			descStyle = "inline",
-		},
-		respect = {
-			name = "Respect Blizzard",
-			desc = "Respect \"ignore this bag\" and item-type assignments from the default UI",
-			descStyle = "inline",
-			type = "toggle",
-			get = function() return core.db.ignore_blizzard end,
-			set = function(info, value) core.db.ignore_blizzard = value end,
+		blizzard = {
+			name = "Blizzard",
+			type = "group",
+			inline = true,
+			order = 20,
+			args = {
+				respect = {
+					name = "Respect Blizzard settings",
+					desc = "Respect \"ignore this bag\" and item-type assignments from the default UI",
+					descStyle = "inline", width="full",
+					type = "toggle",
+					get = function() return core.db.ignore_blizzard end,
+					set = function(info, value) core.db.ignore_blizzard = value end,
+					order = 10,
+				},
+			},
+			plugins = {},
 		},
 	},
 	plugins = {},

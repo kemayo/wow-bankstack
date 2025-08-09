@@ -95,7 +95,7 @@ function module:OnInitialize()
 						icon:Show("BankStack")
 					end
 				end,
-				order = 30,
+				order = 0,
 				width = "full",
 				hidden = function() return not icon or not dataobject or not icon:IsRegistered("BankStack") end,
 			},
