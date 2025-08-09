@@ -20,10 +20,6 @@ local options = {
 	get = function(info) return core.db[info[#info]] end,
 	set = function(info, value) core.db[info[#info]] = value end,
 	args = {
-		verbosity = {
-			name = "Verbosity", desc = "Talkativitinessism", type = "range", min = 0, max = 2, step = 1,
-			descStyle = "inline",
-		},
 		junk = {
 			name = "Junk", desc = "Move junk to the end", type = "select",
 			descStyle = "inline",
@@ -247,6 +243,10 @@ local advanced_options = {
 	get = function(info) return core.db[info[#info]] end,
 	set = function(info, value) core.db[info[#info]] = value end,
 	args = {
+		verbosity = {
+			name = "Verbosity", desc = "Talkativitinessism", type = "range", min = 0, max = 2, step = 1,
+			descStyle = "inline",
+		},
 		conservative_guild = {
 			name = "Cautious guild",
 			desc = "If this option is enabled, only one move at a time will be made. This is slower, but is nearly certain to work. If you turn this off, I make no promises.",
