@@ -13,10 +13,8 @@ core.Debug = Debug
 -- If pre-guild-bank BC servers ever show up again this will need to be fixed:
 core.has_guild_bank = QueryGuildBankTab and LE_EXPANSION_LEVEL_CURRENT > LE_EXPANSION_BURNING_CRUSADE
 
--- C_Bank.FetchViewableBankTypes looks promising once that's available:
--- ContainerNumSlots on Enum.BagIndex.Accountbanktab?
--- C_Container.GetContainerItemID(Enum.BagIndex.Accountbanktab, 1) onload?
-core.has_account = LE_EXPANSION_LEVEL_CURRENT >= LE_EXPANSION_WAR_WITHIN
+-- TODO: if this ever gets backported to classic for some reason...
+core.has_account_bank = LE_EXPANSION_LEVEL_CURRENT >= LE_EXPANSION_WAR_WITHIN
 
 local NEW_BANK_SYSTEM = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE and Enum.BagIndex.Characterbanktab
 
@@ -28,29 +26,11 @@ local EQUIPPED_BAG_SLOTS = _G.NUM_TOTAL_EQUIPPED_BAG_SLOTS or _G.NUM_BAG_SLOTS
 local NUM_BANKBAGSLOTS = _G.NUM_BANKBAGSLOTS or Constants.InventoryConstants.NumCharacterBankSlots
 
 -- compat:
-local PickupContainerItem = _G.PickupContainerItem or C_Container.PickupContainerItem
-local UseContainerItem = _G.UseContainerItem or C_Container.UseContainerItem
-local GetContainerNumSlots = _G.GetContainerNumSlots or C_Container.GetContainerNumSlots
-local GetContainerNumFreeSlots = _G.GetContainerNumFreeSlots or C_Container.GetContainerNumFreeSlots
-local GetContainerItemLink = _G.GetContainerItemLink or C_Container.GetContainerItemLink
-local GetContainerItemID = _G.GetContainerItemID or C_Container.GetContainerItemID
-local ContainerIDToInventoryID = _G.ContainerIDToInventoryID or C_Container.ContainerIDToInventoryID
-local SplitContainerItem = _G.SplitContainerItem or C_Container.SplitContainerItem
 local GetContainerItemInfo = _G.GetContainerItemInfo or function(...)
 	local info = C_Container.GetContainerItemInfo(...)
 	if info then
 		return info.iconFileID, info.stackCount, info.isLocked, info.quality, info.isReadable, info.hasLoot, info.hyperlink, info.isFiltered, info.hasNoValue, info.itemID, info.isBound
 	end
-end
-local LE_BAG_FILTER_FLAG_IGNORE_CLEANUP = _G.LE_BAG_FILTER_FLAG_IGNORE_CLEANUP or Enum.BagSlotFlags.DisableAutoSort
-local GetBagSlotFlag = C_Container and C_Container.GetBagSlotFlag or GetBagSlotFlag
-local GetBankBagSlotFlag = function(bag, ...)
-	if _G.GetBankBagSlotFlag
-		-- classic
-		then return _G.GetBankBagSlotFlag(bag, ...)
-	end
-	-- retail
-	return C_Container.GetBagSlotFlag(bag + EQUIPPED_BAG_SLOTS, ...)
 end
 
 --Bindings locales:
@@ -123,49 +103,33 @@ function core:OnInitialize()
 		self.setup_config()
 	end
 
-	if Enum.PlayerInteractionType then
-		-- Retail and Wrath
-		function core.PLAYER_INTERACTION_MANAGER_FRAME_SHOW(_, event, id)
-			if id == Enum.PlayerInteractionType.Banker then
-				self.bank_open = true
-				self.account_bank_open = false
-				self.events:Fire("Bank_Open")
-			elseif id == Enum.PlayerInteractionType.AccountBanker then
-				self.account_bank_open = true
-				self.events:Fire("AccountBank_Open")
-			elseif id == Enum.PlayerInteractionType.GuildBanker then
-				self.guild_bank_open = true
-				self.events:Fire("GuildBank_Open")
-			end
-		end
-		function core.PLAYER_INTERACTION_MANAGER_FRAME_HIDE(_, event, id)
-			if id == Enum.PlayerInteractionType.Banker then
-				self.bank_open = false
-				self.events:Fire("Bank_Close")
-			elseif id == Enum.PlayerInteractionType.AccountBanker then
-				self.account_bank_open = false
-				self.events:Fire("AccountBank_Close")
-			elseif id == Enum.PlayerInteractionType.GuildBanker then
-				self.guild_bank_open = false
-				self.events:Fire("GuildBank_Close")
-			end
-		end
-		self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW")
-		self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE")
-	else
-		-- Classic Era (doesn't include guild bank)
-		function core.BANKFRAME_OPENED()
+	function core.PLAYER_INTERACTION_MANAGER_FRAME_SHOW(_, event, id)
+		if id == Enum.PlayerInteractionType.Banker then
 			self.bank_open = true
+			self.account_bank_open = false
 			self.events:Fire("Bank_Open")
+		elseif id == Enum.PlayerInteractionType.AccountBanker then
+			self.account_bank_open = true
+			self.events:Fire("AccountBank_Open")
+		elseif id == Enum.PlayerInteractionType.GuildBanker then
+			self.guild_bank_open = true
+			self.events:Fire("GuildBank_Open")
 		end
-		function core.BANKFRAME_CLOSED()
+	end
+	function core.PLAYER_INTERACTION_MANAGER_FRAME_HIDE(_, event, id)
+		if id == Enum.PlayerInteractionType.Banker then
 			self.bank_open = false
 			self.events:Fire("Bank_Close")
+		elseif id == Enum.PlayerInteractionType.AccountBanker then
+			self.account_bank_open = false
+			self.events:Fire("AccountBank_Close")
+		elseif id == Enum.PlayerInteractionType.GuildBanker then
+			self.guild_bank_open = false
+			self.events:Fire("GuildBank_Close")
 		end
-		self:RegisterEvent("BANKFRAME_OPENED")
-		self:RegisterEvent("BANKFRAME_CLOSED")
 	end
-	self:RegisterEvent("ADDON_LOADED")
+	self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW")
+	self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE")
 end
 
 local hooks = {}
@@ -222,7 +186,7 @@ for _,i in ipairs(bank_bags) do
 	table.insert(all_bags, i)
 end
 local account_bags = {}
-if core.has_account then
+if core.has_account_bank then
 	-- Accountbanktab itself is a weird 5-slot container that only contains 5x item:208392 "Bank Tab Bag (DNT)"
 	account_bags = {Enum.BagIndex.AccountBankTab_1, Enum.BagIndex.AccountBankTab_2, Enum.BagIndex.AccountBankTab_3, Enum.BagIndex.AccountBankTab_4, Enum.BagIndex.AccountBankTab_5}
 	for _,i in ipairs(account_bags) do
@@ -472,7 +436,7 @@ function core.GetNumSlots(bag, role)
 			return 98 -- MAX_GUILDBANK_SLOTS_PER_TAB (some bag addons stop Blizzard_GuildBankUI from loading, making the constant unavailable)
 		end
 	else
-		return GetContainerNumSlots(bag)
+		return C_Container.GetContainerNumSlots(bag)
 	end
 	return 0
 end
@@ -493,7 +457,7 @@ function core.GetItemLink(bag, slot)
 		QueryGuildBankTabIfNeeded(tab)
 		return GetGuildBankItemLink(tab, slot)
 	else
-		return GetContainerItemLink(bag, slot)
+		return C_Container.GetContainerItemLink(bag, slot)
 	end
 end
 
@@ -502,7 +466,7 @@ function core.GetItemID(bag, slot)
 		local link = core.GetItemLink(bag, slot)
 		return link and tonumber(string.match(link, "item:(%d+)"))
 	else
-		return GetContainerItemID(bag, slot)
+		return C_Container.GetContainerItemID(bag, slot)
 	end
 end
 
@@ -511,7 +475,7 @@ function core.PickupItem(bag, slot)
 		local tab = bag - 50
 		return PickupGuildBankItem(tab, slot)
 	else
-		return PickupContainerItem(bag, slot)
+		return C_Container.PickupContainerItem(bag, slot)
 	end
 end
 
@@ -520,7 +484,7 @@ function core.SplitItem(bag, slot, amount)
 		local tab = bag - 50
 		return SplitGuildBankItem(tab, slot, amount)
 	else
-		return SplitContainerItem(bag, slot, amount)
+		return C_Container.SplitContainerItem(bag, slot, amount)
 	end
 end
 
@@ -542,7 +506,7 @@ do
 			end
 			return key
 		end
-		local invslot = ContainerIDToInventoryID(bagid)
+		local invslot = C_Container.ContainerIDToInventoryID(bagid)
 		if not invslot then return false end
 		local bag = GetInventoryItemLink("player", invslot)
 		if not bag then return false end
@@ -600,7 +564,7 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 		return select(17, GetItemInfo(item))
 	end
 
-	local bag_family = select(2, GetContainerNumFreeSlots(target_bag))
+	local bag_family = select(2, C_Container.GetContainerNumFreeSlots(target_bag))
 	return bag_family == 0 or bit.band(item_family, bag_family) > 0
 end
 
@@ -623,9 +587,9 @@ function core.IsIgnored(bag, slot)
 				local data = BTSI:GetTabData(bag)
 				return data and data.depositFlags and FlagsUtil.IsSet(data.depositFlags, Enum.BagSlotFlags.DisableAutoSort)
 			end
-			return GetBankBagSlotFlag(bag - EQUIPPED_BAG_SLOTS, LE_BAG_FILTER_FLAG_IGNORE_CLEANUP)
+			return C_Container.GetBagSlotFlag(bag, Enum.BagSlotFlags.DisableAutoSort)
 		elseif not is_guild_bank_bag(bag) then
-			return GetBagSlotFlag(bag, LE_BAG_FILTER_FLAG_IGNORE_CLEANUP)
+			return C_Container.GetBagSlotFlag(bag, Enum.BagSlotFlags.DisableAutoSort)
 		end
 	end
 end
