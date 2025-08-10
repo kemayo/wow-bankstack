@@ -591,11 +591,19 @@ function core.CommandDecorator(func, groups_defaults, required_count)
 	local retrying
 	decorated = function(groups, retry)
 		if retrying and not retry then return end
-		Debug("command wrapper", groups, groups_defaults, required_count)
+		local modgroups, target = SecureCmdOptionParse(groups)
+		Debug("command wrapper", groups, modgroups, groups_defaults, required_count)
 		if core.running then
 			Debug("abort", "already running")
 			return core.announce(0, L.already_running, 1, 0, 0)
 		end
+		if not modgroups then
+			-- A command with no matched clause was run, and we don't want to
+			-- fall back to default arguments in this case
+			Debug("abort", "conditional not met")
+			return
+		end
+		groups = modgroups
 		wipe(bag_groups)
 		if not groups or #groups == 0 then
 			groups = groups_defaults

@@ -99,6 +99,7 @@ read_globals = {
     "PickupContainerItem",
     "PickupGuildBankItem",
     "QueryGuildBankTab",
+    "SecureCmdOptionParse",
     "SplitContainerItem",
     "SplitGuildBankItem",
     "UnitIsAFK",
