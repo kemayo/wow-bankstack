@@ -591,7 +591,7 @@ function core.CommandDecorator(func, groups_defaults, required_count)
 	local retrying
 	decorated = function(groups, retry)
 		if retrying and not retry then return end
-		local modgroups, target = SecureCmdOptionParse(groups)
+		local modgroups, target = SecureCmdOptionParse(groups or "")
 		Debug("command wrapper", groups, modgroups, groups_defaults, required_count)
 		if core.running then
 			Debug("abort", "already running")
