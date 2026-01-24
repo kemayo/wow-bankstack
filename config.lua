@@ -1,3 +1,5 @@
+local myname, ns = ...
+
 local core = BankStack
 local Debug = core.Debug
 
@@ -312,29 +314,29 @@ local advanced_options = {
 	},
 }
 
+local categoryID
 core.setup_config = function()
 	local acreg = LibStub("AceConfigRegistry-3.0")
-	acreg:RegisterOptionsTable("BankStack", options)
-	acreg:RegisterOptionsTable("BankStack Profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(core.db_object))
-	acreg:RegisterOptionsTable("BankStack Help", help_options)
-	acreg:RegisterOptionsTable("BankStack Launcher", launcher_options)
-	acreg:RegisterOptionsTable("BankStack Advanced", advanced_options)
-	acreg:RegisterOptionsTable("BankStack Groups", group_options)
-	acreg:RegisterOptionsTable("BankStack Ignore", ignore_options)
+	acreg:RegisterOptionsTable(myname, options)
+	acreg:RegisterOptionsTable(myname .. "Profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(core.db_object))
+	acreg:RegisterOptionsTable(myname .. "Help", help_options)
+	acreg:RegisterOptionsTable(myname .. "Launcher", launcher_options)
+	acreg:RegisterOptionsTable(myname .. "Advanced", advanced_options)
+	acreg:RegisterOptionsTable(myname .. "Groups", group_options)
+	acreg:RegisterOptionsTable(myname .. "Ignore", ignore_options)
 
 	local acdia = LibStub("AceConfigDialog-3.0")
-	acdia:AddToBlizOptions("BankStack", "BankStack")
-	acdia:AddToBlizOptions("BankStack Ignore", "Ignore", "BankStack")
-	acdia:AddToBlizOptions("BankStack Groups", "Groups", "BankStack")
-	acdia:AddToBlizOptions("BankStack Launcher", "Launcher", "BankStack")
-	acdia:AddToBlizOptions("BankStack Advanced", "Advanced", "BankStack")
-	acdia:AddToBlizOptions("BankStack Profiles", "Profiles", "BankStack")
-	acdia:AddToBlizOptions("BankStack Help", "Help", "BankStack")
+	categoryID = select(2, acdia:AddToBlizOptions(myname, myname))
+	acdia:AddToBlizOptions(myname .. "Ignore", "Ignore", myname)
+	acdia:AddToBlizOptions(myname .. "Groups", "Groups", myname)
+	acdia:AddToBlizOptions(myname .. "Launcher", "Launcher", myname)
+	acdia:AddToBlizOptions(myname .. "Advanced", "Advanced", myname)
+	acdia:AddToBlizOptions(myname .. "Profiles", "Profiles", myname)
+	acdia:AddToBlizOptions(myname .. "Help", "Help", myname)
 end
 
 SLASH_BANKSTACKCONFIG1 = "/bankstack"
 SlashCmdList["BANKSTACKCONFIG"] = function(arg)
-	-- I'm not sure why the doubled-"BankStack" is necessary here...
-	Settings.OpenToCategory("BankStack")
-	--LibStub("AceConfigDialog-3.0"):Open("BankStack")
+	Settings.OpenToCategory(categoryID)
+	--LibStub("AceConfigDialog-3.0"):Open(myname)
 end
