@@ -335,8 +335,13 @@ core.setup_config = function()
 	acdia:AddToBlizOptions(myname .. "Help", "Help", myname)
 end
 
-SLASH_BANKSTACKCONFIG1 = "/bankstack"
-SlashCmdList["BANKSTACKCONFIG"] = function(arg)
+core.open_config = function()
+	if not categoryID then return end
 	Settings.OpenToCategory(categoryID)
 	--LibStub("AceConfigDialog-3.0"):Open(myname)
+end
+
+SLASH_BANKSTACKCONFIG1 = "/bankstack"
+SlashCmdList["BANKSTACKCONFIG"] = function(arg)
+	core.open_config()
 end

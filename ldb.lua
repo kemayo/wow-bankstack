@@ -48,7 +48,7 @@ local dataobject = ldb:GetDataObjectByName("BankStack") or ldb:NewDataObject("Ba
 dataobject.OnClick = function(frame, button)
 	if button == "RightButton" then
 		-- open up the config
-		return Settings.OpenToCategory("BankStack")
+		return core.open_config()
 	end
 	if #(core.moves) > 0 then
 		return core.StopStacking(core.L['CHAT_MSG_ABORTED'])
