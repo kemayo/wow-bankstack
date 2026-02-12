@@ -37,7 +37,7 @@ local target_slots = {}
 local summary = {}
 
 local function default_can_move() return true end
-function core.Stack(source_bags, target_bags, can_move)
+local function stack_once(source_bags, target_bags, can_move, summary_out)
 	-- Fill incomplete stacks in target_bags with items from source_bags.
 	-- source_bags: table, e.g. {1,2,3,4}
 	-- target_bags: table, e.g. {1,2,3,4}
@@ -45,7 +45,8 @@ function core.Stack(source_bags, target_bags, can_move)
 	--   for any slot in source that is not empty and contains an item that
 	--   could be moved to target.  If it returns false then ignore the slot.
 	if not can_move then can_move = default_can_move end
-	wipe(summary)
+	local summary_table = summary_out or summary
+	wipe(summary_table)
 	-- Model the target bags.
 	for _, bag, slot in core.IterateBags(target_bags, nil, "deposit") do
 		local bagslot = encode_bagslot(bag, slot)
@@ -74,7 +75,7 @@ function core.Stack(source_bags, target_bags, can_move)
 					-- can't stack to itself, or to a full slot, or to a slot that has already been used as a source:
 
 					-- record a summary of the move (has to happen before AddMove, since that updates bag_stacks)
-					summary[itemid] = (summary[itemid] or 0) + bag_stacks[source_slot]
+					summary_table[itemid] = (summary_table[itemid] or 0) + bag_stacks[source_slot]
 
 					-- Schedule moving from this slot to the bank slot.
 					core.AddMove(source_slot, target_slot)
@@ -97,16 +98,76 @@ function core.Stack(source_bags, target_bags, can_move)
 	wipe(target_items)
 	wipe(target_slots)
 	wipe(source_used)
+	return summary_table
+end
+
+local function resolve_stack_targets(target_bags)
+	if target_bags ~= core.bank_bags then
+		return { { bags = target_bags } }
+	end
+	local targets = {}
+	local bank_target = core.db.bank_target or "both"
+	local account_bags = core.account_bags or {}
+	local has_account = #account_bags > 0
+
+	local function add(label, bags)
+		if bags and #bags > 0 then
+			table.insert(targets, { label = label, bags = bags })
+		end
+	end
+
+	if bank_target == "warband" then
+		if has_account then
+			add("Warband bank", account_bags)
+		else
+			add("Character bank", target_bags)
+		end
+	elseif bank_target == "character" then
+		add("Character bank", target_bags)
+	else
+		if has_account then
+			add("Warband bank", account_bags)
+		end
+		add("Character bank", target_bags)
+	end
+
+	if #targets == 0 then
+		table.insert(targets, { bags = target_bags })
+	end
+	return targets
+end
+
+local function build_summary_text(summary_table)
+	local summary_text = {}
+	for itemid, count in pairs(summary_table) do
+		table.insert(summary_text, select(2, C_Item.GetItemInfo(itemid)) .. 'x' .. count)
+	end
+	if #summary_text > 0 then
+		return string.join(", ", unpack(summary_text))
+	end
+end
+
+function core.Stack(source_bags, target_bags, can_move)
+	local targets = resolve_stack_targets(target_bags)
+	for _, target in ipairs(targets) do
+		stack_once(source_bags, target.bags, can_move)
+	end
 end
 
 function core.StackSummary(...)
-	core.Stack(...)
-	local summary_text = {}
-	for itemid, count in pairs(summary) do
-		table.insert(summary_text, select(2, GetItemInfo(itemid)) .. 'x' .. count)
-	end
-	if #summary_text > 0 then
-		core.announce(1, "Stacking items: " .. string.join(", ", unpack(summary_text)))
+	local source_bags, target_bags, can_move = ...
+	local targets = resolve_stack_targets(target_bags)
+	for _, target in ipairs(targets) do
+		local target_summary = {}
+		stack_once(source_bags, target.bags, can_move, target_summary)
+		local summary_text = build_summary_text(target_summary)
+		if summary_text then
+			local prefix = "Stacking items"
+			if #targets > 1 and target.label then
+				prefix = prefix .. " (" .. target.label .. ")"
+			end
+			core.announce(1, prefix .. ": " .. summary_text)
+		end
 	end
 end
 

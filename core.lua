@@ -47,6 +47,7 @@ function core:OnInitialize()
 			soulbound = true,
 			reverse = false,
 			backfill = false,
+			bank_target = "both",
 			ignore = {},
 			ignore_bags = {},
 			ignore_blizzard = true,
