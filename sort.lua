@@ -9,6 +9,79 @@ local moves = core.moves
 
 local bagcache = {}
 local bag_groups = {}
+
+local function item_fits_bag(bag, slot, target_bag)
+	return core.CanItemGoInBag(bag, slot, target_bag)
+end
+
+local function item_fits_own_bag(bag, slot)
+	return item_fits_bag(bag, slot, bag)
+end
+
+local function move_into_group(source_bags, target_bags, only_misplaced)
+	local before = #moves
+	local function can_move(itemid, bag, slot)
+		if only_misplaced and item_fits_own_bag(bag, slot) then
+			return false
+		end
+		return item_fits_bag(bag, slot, target_bags[1])
+	end
+
+	core.Stack(source_bags, target_bags, can_move)
+	core.Fill(source_bags, target_bags, core.db.reverse, can_move)
+
+	return #moves > before
+end
+
+local function swap_into_group(source_bags, target_bags, only_misplaced)
+	for _, source_bag, source_slot in core.IterateBags(source_bags, true, "withdraw") do
+		local source = encode_bagslot(source_bag, source_slot)
+		if not core.IsIgnored(source_bag, source_slot) and core.bag_ids[source] then
+			if (not only_misplaced or not item_fits_own_bag(source_bag, source_slot)) and item_fits_bag(source_bag, source_slot, target_bags[1]) then
+				for _, target_bag, target_slot in core.IterateBags(target_bags, false, "deposit") do
+					local target = encode_bagslot(target_bag, target_slot)
+					if
+						source ~= target
+						and not core.IsIgnored(target_bag, target_slot)
+						and core.bag_ids[target]
+						and not item_fits_own_bag(target_bag, target_slot)
+						and item_fits_bag(target_bag, target_slot, source_bag)
+					then
+						core.AddMove(source, target)
+						return true
+					end
+				end
+			end
+		end
+	end
+
+	return false
+end
+
+local function route_items_between_groups()
+	local changed = true
+	local passes = 0
+
+	while changed and passes < 20 do
+		changed = false
+		passes = passes + 1
+
+		for source_type, source_bags in pairs(bagcache) do
+			local only_misplaced = source_type ~= 'Normal'
+			for target_type, target_bags in pairs(bagcache) do
+				if source_type ~= target_type then
+					if move_into_group(source_bags, target_bags, only_misplaced) then
+						changed = true
+					end
+					if swap_into_group(source_bags, target_bags, only_misplaced) then
+						changed = true
+					end
+				end
+			end
+		end
+	end
+end
+
 function core.SortBags(...)
 	local start = 1
 	local sorter
@@ -26,6 +99,9 @@ function core.SortBags(...)
 			table.insert(bagcache[bagtype], bag)
 			Debug(" went with", bag, bagtype)
 		end
+
+		route_items_between_groups()
+
 		for bagtype, sorted_bags in pairs(bagcache) do
 			if bagtype ~= 'Normal' then
 				Debug("Moving to normal from", bagtype)

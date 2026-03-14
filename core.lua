@@ -525,6 +525,9 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 	end
 	if core.has_new_bank and BTSI and is_bank_bag(target_bag) then
 		if core.db.ignore_blizzard and BTSI then
+			if is_bank_bag(bag) then
+				return BTSI:IsItemSuitableForTab(item, target_bag)
+			end
 			return BTSI:IsItemLocationSuitableForTab(core.bag_itemlocation[bagslot], target_bag)
 		end
 		-- This is filtering out the actually-impossible, not just preference-based:
