@@ -22,6 +22,26 @@ local options = {
 	get = function(info) return core.db[info[#info]] end,
 	set = function(info, value) core.db[info[#info]] = value end,
 	args = {
+		bank = {
+			name = "Bank",
+			type = "group",
+			inline = true,
+			order = 15,
+			args = {
+				bank_target = {
+					name = "Stack bank location",
+					desc = "Choose where to stack when targeting bank",
+					type = "select",
+					descStyle = "inline",
+					values = {
+						warband = "Warband bank",
+						character = "Character bank",
+						both = "Both",
+					},
+					order = 10,
+				},
+			},
+		},
 		sorting = {
 			name = "Sorting",
 			type = "group",
