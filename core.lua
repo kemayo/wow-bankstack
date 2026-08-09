@@ -518,7 +518,7 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 		if
 			core.bag_soulbound[bagslot]
 			or core.bag_conjured[bagslot]
-			or select(14, GetItemInfo(item)) == LE_ITEM_BIND_QUEST
+			or select(14, GetItemInfo(item)) == Enum.ItemBind.Quest
 		then
 			return false
 		end
