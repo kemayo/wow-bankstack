@@ -108,6 +108,7 @@ function core:OnInitialize()
 	end
 	self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW")
 	self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE")
+	self:RegisterEvent("ADDON_LOADED")
 end
 
 local hooks = {}
