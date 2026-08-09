@@ -607,6 +607,10 @@ function core.CommandDecorator(func, groups_defaults, required_count)
 		end
 		groups = modgroups
 		wipe(bag_groups)
+		-- check_for_banks sets these, and only StopStacking clears them. Any of the
+		-- aborts below would leave them set, and the next command would then be
+		-- killed by the frame's OnUpdate for a bank it doesn't even use.
+		core.bankrequired, core.guildbankrequired = false, false
 		if not groups or #groups == 0 then
 			groups = groups_defaults
 		end
