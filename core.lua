@@ -235,8 +235,8 @@ function core.get_group(id)
 			return core_groups["guild" .. tab]
 		end
 	end
-	if id == "bank" and AccountBankPanel and AccountBankPanel:IsVisible() then
-		local tab = AccountBankPanel:GetSelectedTabID()
+	if id == "bank" and BankPanel and BankPanel:IsVisible() then
+		local tab = BankPanel:GetSelectedTabID()
 		if tab and core.is_account_bag(tab) then
 			return {tab}
 		end
