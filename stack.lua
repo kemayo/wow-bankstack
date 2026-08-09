@@ -83,9 +83,8 @@ function core.Stack(source_bags, target_bags, can_move)
 					if bag_stacks[target_slot] == bag_maxstacks[target_slot] then
 						target_items[itemid] = (target_items[itemid] > 1) and (target_items[itemid] - 1) or nil
 					end
-					if bag_stacks[source_slot] == 0 then
+					if not bag_ids[source_slot] then
 						-- This bag slot is emptied, move on.
-						target_items[itemid] = (target_items[itemid] > 1) and (target_items[itemid] - 1) or nil
 						break
 					end
 					if not target_items[itemid] then break end
