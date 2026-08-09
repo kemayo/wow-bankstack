@@ -16,6 +16,7 @@ L['opt_set'] = "BankStack: %s set to %s."
 L['options'] = "BankStack options:"
 L['perfect'] = "BankStack: Perfection already exists."
 L['to_move'] = "BankStack: %d moves to make."
+L['stacking'] = "BankStack: Stacking items: %s."
 
 -- Item types and subtypes:
 L['ARMOR'] = "Armor"

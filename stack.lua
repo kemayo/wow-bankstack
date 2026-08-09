@@ -105,7 +105,7 @@ function core.StackSummary(...)
 		table.insert(summary_text, select(2, GetItemInfo(itemid)) .. 'x' .. count)
 	end
 	if #summary_text > 0 then
-		core.announce(1, "Stacking items: " .. string.join(", ", unpack(summary_text)))
+		core.announce(1, L['stacking']:format(string.join(", ", unpack(summary_text))))
 	end
 end
 
