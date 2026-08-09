@@ -104,7 +104,7 @@ function module:OnInitialize()
 end
 
 core.RegisterCallback("LDB", "Doing_Moves", function(callback, num_moves)
-	dataobject.text = core.L['CHAT_MSG_TO_MOVE_NOPREFIX'].format(num_moves)
+	dataobject.text = core.L['CHAT_MSG_TO_MOVE_NOPREFIX']:format(num_moves)
 end)
 
 core.RegisterCallback("LDB", "Stacking_Stopped", function(callback, message)
