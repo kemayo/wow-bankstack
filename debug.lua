@@ -95,5 +95,7 @@ SlashCmdList["BANKSTACKDEBUG"] = core.CommandDecorator(function(bags)
     frame.scrollframe:SetVerticalScroll(0)
     frame.editbox:HighlightText(0)
     frame.editbox:SetCursorPosition(0)
+
+    return false
 end, 'bags', 1)
 SLASH_BANKSTACKDEBUG1 = "/bankstackdebug"
