@@ -568,10 +568,11 @@ function core.IsIgnored(bag, slot)
 		return true
 	end
 	if core.db.ignore_blizzard then
+		-- (these two only exist on retail, hence the guards)
 		if (bag == -1) then --bank
-			return GetBankAutosortDisabled and GetBankAutosortDisabled() or false
+			return C_Container.GetBankAutosortDisabled and C_Container.GetBankAutosortDisabled() or false
 		elseif (bag == 0) then --backpack
-			return GetBackpackAutosortDisabled and GetBackpackAutosortDisabled() or false
+			return C_Container.GetBackpackAutosortDisabled and C_Container.GetBackpackAutosortDisabled() or false
 		elseif (bag == -3) then --reagentbank
 			return false
 		elseif is_bank_bag(bag) then
