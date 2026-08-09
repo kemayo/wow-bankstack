@@ -74,7 +74,9 @@ function core.Stack(source_bags, target_bags, can_move)
 					-- can't stack to itself, or to a full slot, or to a slot that has already been used as a source:
 
 					-- record a summary of the move (has to happen before AddMove, since that updates bag_stacks)
-					summary[itemid] = (summary[itemid] or 0) + bag_stacks[source_slot]
+					-- only as much as the target has room for actually moves
+					local room = bag_maxstacks[target_slot] - bag_stacks[target_slot]
+					summary[itemid] = (summary[itemid] or 0) + math.min(bag_stacks[source_slot], room)
 
 					-- Schedule moving from this slot to the bank slot.
 					core.AddMove(source_slot, target_slot)
