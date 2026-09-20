@@ -69,8 +69,10 @@ function core:OnInitialize()
 		},
 	}, "Default")
 	self.db = self.db_object.profile
+	core.MigrateBagSlots(self.db)
 	self.db_object.RegisterCallback(self, "OnProfileChanged", function()
 		self.db = self.db_object.profile
+		core.MigrateBagSlots(self.db)
 	end)
 
 	if type(self.db.junk) == "boolean" then
@@ -350,20 +352,36 @@ do
 	end
 end
 
-local function encode_bagslot(bag, slot) return (bag*100) + slot end
-local function decode_bagslot(int) return math.floor(int/100), int % 100 end
-local function encode_move(source, target) return (source*10000)+target end
+local function encode_bagslot(bag, slot) return (bag*1000) + slot end
+local function decode_bagslot(int) return math.floor(int/1000), int % 1000 end
+local function encode_move(source, target) return (source*100000)+target end
 local function decode_move(move)
-	local source = math.floor(move/10000)
-	local target = move%10000
-	source = (target>9000) and (source+1) or source
-	target = (target>9000) and (target-10000) or target
+	local source = math.floor(move/100000)
+	local target = move%100000
+	source = (target>90000) and (source+1) or source
+	target = (target>90000) and (target-100000) or target
 	return source, target
 end
 core.encode_bagslot = encode_bagslot
 core.decode_bagslot = decode_bagslot
 core.encode_move = encode_move
 core.decode_move = decode_move
+
+do
+	-- bagslots used to be bag*100+slot; bank tabs creeping up to 98 slots
+	-- suggest we might run out of room soon, so switched to bag*1000+slot.
+	local function old_decode_bagslot(int) return math.floor(int/100), int % 100 end
+	function core.MigrateBagSlots(db)
+		if db.bagslot_version and db.bagslot_version >= 2 then return end
+		local migrated = {}
+		for key, value in pairs(db.ignore) do
+			local bag, slot = old_decode_bagslot(key)
+			migrated[encode_bagslot(bag, slot)] = value
+		end
+		db.ignore = migrated
+		db.bagslot_version = 2
+	end
+end
 
 do
 	local bagiter_forwards, bagiter_backwards
