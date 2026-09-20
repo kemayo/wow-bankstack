@@ -520,7 +520,7 @@ do
 		if not invslot then return false end
 		local bag = GetInventoryItemLink("player", invslot)
 		if not bag then return false end
-		local family = GetItemFamily(bag)
+		local family = C_Item.GetItemFamily(bag)
 		if family == 0 then return false end
 		return family
 	end
@@ -536,7 +536,7 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 		if
 			core.bag_soulbound[bagslot]
 			or core.bag_conjured[bagslot]
-			or select(14, GetItemInfo(item)) == Enum.ItemBind.Quest
+			or select(14, C_Item.GetItemInfo(item)) == Enum.ItemBind.Quest
 		then
 			return false
 		end
@@ -552,14 +552,14 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 	end
 	-- This is either a pre-11.2.0 bank-bag or a player-bag
 	-- since we now know this isn't a guild bank we can just use the bag id provided
-	local item_family = GetItemFamily(item)
+	local item_family = C_Item.GetItemFamily(item)
 	if not item_family then
 		Debug("Item without family", item, bag, slot)
 		return false
 	end
 	if item_family > 0 then
 		-- if the item is a profession bag, this will actually be the bag_family, and it should be zero
-		if select(4, GetItemInfoInstant(item)) == "INVTYPE_BAG" then
+		if select(4, C_Item.GetItemInfoInstant(item)) == "INVTYPE_BAG" then
 			item_family = 0
 		end
 	end
@@ -568,10 +568,10 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 			return false
 		end
 		-- 7.1.5 finally added an "is crafting reagent" return
-		return select(17, GetItemInfo(item))
+		return select(17, C_Item.GetItemInfo(item))
 	end
 	if core.has_reagent_bag and target_bag == Enum.BagIndex.ReagentBag then
-		return select(17, GetItemInfo(item))
+		return select(17, C_Item.GetItemInfo(item))
 	end
 
 	local bag_family = select(2, C_Container.GetContainerNumFreeSlots(target_bag))
@@ -720,7 +720,7 @@ function core.ScanBags()
 		if itemid then
 			bag_ids[bagslot] = itemid
 			bag_stacks[bagslot] = select(2, core.GetItemInfo(bag, slot))
-			bag_maxstacks[bagslot] = select(8, GetItemInfo(itemid))
+			bag_maxstacks[bagslot] = select(8, C_Item.GetItemInfo(itemid))
 			bag_links[bagslot] = core.GetItemLink(bag, slot)
 			if bag_maxstacks[bagslot] == nil or bag_links[bagslot] == nil then
 				missing_data = true
@@ -863,7 +863,7 @@ function core.DoMove(move)
 			return core.StopStacking(L.confused)
 		end
 	end
-	local stack_size = select(8, GetItemInfo(source_itemid))
+	local stack_size = select(8, C_Item.GetItemInfo(source_itemid))
 
 	core.announce(2, string.format(L.moving, source_link), 1,1,1)
 

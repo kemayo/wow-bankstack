@@ -80,7 +80,7 @@ SlashCmdList["BANKSTACKDEBUG"] = core.CommandDecorator(function(bags)
         local bagslot = encode_bagslot(bag, slot)
         local itemid = bag_ids[bagslot]
         if itemid then
-            local name, _, rarity, level, _, _, _, _, equipLoc, _, price, class, subClass = GetItemInfo(itemid)
+            local name, _, rarity, level, _, _, _, _, equipLoc, _, price, class, subClass = C_Item.GetItemInfo(itemid)
 
             frame.editbox:Insert(("%d | %d.%d | %d | %s | %d/%d | %d | %d | %s | %d | %d.%d\n"):format(i, bag, slot, itemid, name, bag_stacks[bagslot], bag_maxstacks[bagslot], rarity, level, equipLoc, price, class, subClass))
         else

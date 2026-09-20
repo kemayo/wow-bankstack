@@ -104,7 +104,7 @@ function core.StackSummary(...)
 	core.Stack(...)
 	local summary_text = {}
 	for itemid, count in pairs(summary) do
-		table.insert(summary_text, select(2, GetItemInfo(itemid)) .. 'x' .. count)
+		table.insert(summary_text, select(2, C_Item.GetItemInfo(itemid)) .. 'x' .. count)
 	end
 	if #summary_text > 0 then
 		core.announce(1, L['stacking']:format(string.join(", ", unpack(summary_text))))
