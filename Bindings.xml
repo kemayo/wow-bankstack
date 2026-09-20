@@ -1,11 +1,11 @@
 <Bindings>
-	<Binding name="BANKSTACK" description="Fill incomplete stacks in your bank from your bags" header="BANKSTACK_HEAD">
+	<Binding name="BANKSTACK" category="BINDING_HEADER_BANKSTACK">
 		SlashCmdList["BANKSTACK"]("bags bank")
 	</Binding>
-	<Binding name="COMPRESS" description="Merge stacks in your bags">
+	<Binding name="COMPRESS" category="BINDING_HEADER_BANKSTACK">
 		SlashCmdList["COMPRESSBAGS"]("bags")
 	</Binding>
-	<Binding name="BAGSORT" description="Sort your bags">
+	<Binding name="BAGSORT" category="BINDING_HEADER_BANKSTACK">
 		SlashCmdList["SORT"]("bags")
 	</Binding>
 </Bindings>

@@ -16,7 +16,7 @@ ignore = {
 globals = {
     "BankStack",
     "BankStackDB",
-    "BINDING_HEADER_BANKSTACK_HEAD",
+    "BINDING_HEADER_BANKSTACK",
     "BINDING_NAME_BANKSTACK",
     "BINDING_NAME_COMPRESS",
     "BINDING_NAME_BAGSORT",
