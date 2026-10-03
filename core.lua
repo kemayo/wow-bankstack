@@ -13,13 +13,12 @@ core.Debug = Debug
 core.CLASSIC = WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE -- rolls forward
 core.CLASSICERA = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC -- forever vanilla
 
-core.has_new_bank = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE and C_Bank and Enum.BagIndex.Characterbanktab
+core.has_new_bank = C_Bank and Enum.BagIndex.Characterbanktab and true
 
 -- If pre-guild-bank BC servers ever show up again this will need to be fixed:
 core.has_guild_bank = QueryGuildBankTab and LE_EXPANSION_LEVEL_CURRENT > LE_EXPANSION_BURNING_CRUSADE
 
--- TODO: if this ever gets backported to classic for some reason...
-core.has_account_bank = LE_EXPANSION_LEVEL_CURRENT >= LE_EXPANSION_WAR_WITHIN
+core.has_account_bank = C_Bank and Enum.BagIndex.AccountBankTab_1 and true
 
 core.has_reagent_bag = (Constants.InventoryConstants.NumReagentBagSlots or 0) > 0
 core.has_reagent_bank = not core.has_new_bank and _G.ReagentBankButtonIDToInvSlotID -- TODO: this is mostly in case Warlords Classic brings this back...
@@ -165,7 +164,11 @@ core.player_bags = player_bags
 local account_bags = {}
 if core.has_account_bank then
 	-- Accountbanktab itself is a weird 5-slot container that only contains 5x item:208392 "Bank Tab Bag (DNT)"
-	account_bags = {Enum.BagIndex.AccountBankTab_1, Enum.BagIndex.AccountBankTab_2, Enum.BagIndex.AccountBankTab_3, Enum.BagIndex.AccountBankTab_4, Enum.BagIndex.AccountBankTab_5}
+	local i = 1
+	while Enum.BagIndex["AccountBankTab_" .. i] do
+		table.insert(account_bags, Enum.BagIndex["AccountBankTab_" .. i])
+		i = i + 1
+	end
 end
 core.account_bags = account_bags
 
