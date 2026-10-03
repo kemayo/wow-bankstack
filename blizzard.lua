@@ -6,13 +6,13 @@ local module = core:NewModule("Blizzard", "AceEvent-3.0")
 function module:OnInitialize()
 	self.db = core.db_object:RegisterNamespace("Blizzard", {
 		profile = {
-			hijack = core.CLASSIC,
+			hijack = not core.has_new_bank,
 		},
 	})
 	if core.options then
 		core.options.args.blizzard.plugins.hijack = {
 			hijack = {
-				name = core.CLASSIC and "Show on bag and bank" or "Take over Blizzard sort buttons",
+				name = not core.has_new_bank and "Show on bag and bank" or "Take over Blizzard sort buttons",
 				desc = "Click sort buttons in your bags and bank(s)",
 				descStyle = "inline", width="full",
 				type = "toggle",
@@ -42,7 +42,7 @@ function module:UpdateButtons()
 end
 
 function module:SetupButtons()
-	if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
+	if core.has_new_bank then
 		-- Retail, where we just need to take over the built-in buttons
 		local sortbags = core.CommandDecorator(core.SortBags, 'bags')
 		local bags = self:MakeButton(BagItemAutoSortButton, sortbags, BAG_CLEANUP_BAGS, BAG_CLEANUP_BAGS_DESCRIPTION)
