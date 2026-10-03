@@ -15,8 +15,15 @@ core.CLASSICERA = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC -- forever vanilla
 
 core.has_new_bank = C_Bank and Enum.BagIndex.Characterbanktab and true
 
--- If pre-guild-bank BC servers ever show up again this will need to be fixed:
-core.has_guild_bank = QueryGuildBankTab and LE_EXPANSION_LEVEL_CURRENT > LE_EXPANSION_BURNING_CRUSADE
+-- Checked lazily, as the enabled state may not be available at load time:
+function core.has_guild_bank()
+	if not QueryGuildBankTab then return false end
+	if C_GuildBank and C_GuildBank.IsGuildBankEnabled then
+		return C_GuildBank.IsGuildBankEnabled()
+	end
+	-- If pre-guild-bank BC servers ever show up again this will need to be fixed:
+	return LE_EXPANSION_LEVEL_CURRENT > LE_EXPANSION_BURNING_CRUSADE
+end
 
 core.has_account_bank = C_Bank and Enum.BagIndex.AccountBankTab_1 and true
 
@@ -717,7 +724,7 @@ local function update_location(from, to)
 end
 function core.ScanBags()
 	local missing_data
-	for _, bag, slot in core.IterateBags(core.has_guild_bank and all_bags_with_guild or all_bags) do
+	for _, bag, slot in core.IterateBags(core.has_guild_bank() and all_bags_with_guild or all_bags) do
 		local bagslot = encode_bagslot(bag, slot)
 		local itemid = core.GetItemID(bag, slot)
 		if itemid then

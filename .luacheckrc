@@ -60,6 +60,7 @@ read_globals = {
     "C_AuctionHouse",
     "C_Bank",
     "C_Container",
+    "C_GuildBank",
     "C_Item",
     "C_Timer",
     "C_TooltipInfo",
