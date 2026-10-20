@@ -69,6 +69,7 @@ read_globals = {
     "ContainerIDToInventoryID",
     "ReagentBankButtonIDToInvSlotID",
     "GetBuildInfo",
+    "GetLocale",
     "GetBackpackAutosortDisabled",
     "GetBagSlotFlag",
     "GetBankAutosortDisabled",

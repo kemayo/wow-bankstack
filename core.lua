@@ -1,6 +1,8 @@
+local myname, ns = ...
+
 BankStack = LibStub("AceAddon-3.0"):NewAddon("BankStack", "AceEvent-3.0")
 local core = BankStack
-local L = LibStub("AceLocale-3.0"):GetLocale("BankStack")
+local L = ns.L
 core.L = L
 core.events = LibStub("CallbackHandler-1.0"):New(core)
 

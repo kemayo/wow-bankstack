@@ -36,14 +36,7 @@
 
 embeds.xml
 
-local.enUS.lua
-local.deDE.lua
-local.esES.lua
-local.frFR.lua
-local.koKR.lua
-local.ruRU.lua
-local.zhCN.lua
-local.zhTW.lua
+locale/locale.xml
 
 core.lua
 
