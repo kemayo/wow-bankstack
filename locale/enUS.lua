@@ -17,6 +17,7 @@ L["options"] = "BankStack options:"
 L["perfect"] = "BankStack: Perfection already exists."
 L["to_move"] = "BankStack: %d moves to make."
 L["stacking"] = "BankStack: Stacking items: %s."
+L["stacking_bank"] = "BankStack: Stacking items (%s): %s."
 
 -- Item types and subtypes:
 L["ARMOR"] = "Armor"
@@ -59,3 +60,7 @@ L["CHAT_MSG_TO_MOVE_NOPREFIX"] = "%d moves to make."
 
 L["OPTIONS_SHOW_MINIMAP_ICON"] = "Show minimap icon"
 L["OPTIONS_SHOW_MINIMAP_ICON_DESCRIPTION"] = "Toggle showing or hiding the minimap icon."
+
+L["OPTIONS_BANK_TARGET"] = "Stack bank location"
+L["OPTIONS_BANK_TARGET_DESCRIPTION"] = "Choose where to stack when targeting bank"
+L["OPTIONS_BANK_TARGET_BOTH"] = "Both"

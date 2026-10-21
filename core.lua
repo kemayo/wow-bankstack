@@ -55,6 +55,7 @@ function core:OnInitialize()
 			soulbound = true,
 			reverse = false,
 			backfill = false,
+			bank_target = "both",
 			ignore = {},
 			ignore_bags = {},
 			ignore_blizzard = true,
@@ -645,7 +646,12 @@ function core.CommandDecorator(func, groups_defaults, required_count)
 			groups = groups_defaults
 		end
 		for bags in (groups or ""):gmatch("[^%s]+") do
-			bags = core.get_group(bags)
+			if bags == "bank" and func == core.StackSummary and #bag_groups == 1 and not core.guild_bank_open then
+				-- Stack destinations use the bank preference, not the selected account tab.
+				bags = bank_bags
+			else
+				bags = core.get_group(bags)
+			end
 			if bags then
 				if core.check_for_banks(bags) then
 					Debug("abort", "bank needed", bags)

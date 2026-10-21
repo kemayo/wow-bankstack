@@ -1,6 +1,7 @@
 local myname, ns = ...
 
 local core = BankStack
+local L = core.L
 local Debug = core.Debug
 
 local announce = core.announce
@@ -22,6 +23,27 @@ local options = {
 	get = function(info) return core.db[info[#info]] end,
 	set = function(info, value) core.db[info[#info]] = value end,
 	args = {
+		bank = {
+			name = BANK,
+			type = "group",
+			inline = true,
+			hidden = not core.has_account_bank,
+			order = 15,
+			args = {
+				bank_target = {
+					name = L['OPTIONS_BANK_TARGET'],
+					desc = L['OPTIONS_BANK_TARGET_DESCRIPTION'],
+					type = "select",
+					descStyle = "inline",
+					values = {
+						warband = ACCOUNT_BANK_PANEL_TITLE,
+						character = BANK,
+						both = L['OPTIONS_BANK_TARGET_BOTH'],
+					},
+					order = 10,
+				},
+			},
+		},
 		sorting = {
 			name = "Sorting",
 			type = "group",
