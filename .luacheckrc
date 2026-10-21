@@ -134,6 +134,7 @@ read_globals = {
     "FlagsUtil",
 
     -- FrameXML Constants
+    "ACCOUNT_BANK_PANEL_TITLE",
     "WOW_PROJECT_ID",
     "WOW_PROJECT_MAINLINE",
     "WOW_PROJECT_CLASSIC",
