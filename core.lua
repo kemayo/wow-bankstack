@@ -242,15 +242,16 @@ if core.has_account_bank then
 	core_groups.account = account_bags
 end
 core.groups = core_groups
-function core.get_group(id)
-	Debug ("get_group", id)
+function core.get_group(id, ignore_selected_tab)
+	Debug ("get_group", id, ignore_selected_tab)
 	if id == "bank" and core.guild_bank_open then
 		local tab = GetCurrentGuildBankTab()
 		if tab then
 			return core_groups["guild" .. tab]
 		end
 	end
-	if id == "bank" and BankPanel and BankPanel:IsVisible() then
+	-- Stacking follows the bank_target preference, not the selected tab.
+	if id == "bank" and not ignore_selected_tab and BankPanel and BankPanel:IsVisible() then
 		local tab = BankPanel:GetSelectedTabID()
 		if tab and core.is_account_bag(tab) then
 			return {tab}
@@ -618,7 +619,11 @@ function core.IsIgnored(bag, slot)
 	end
 end
 
-function core.CommandDecorator(func, groups_defaults, required_count)
+-- Wrap func as a command that takes bag groups, e.g. "bags bank", as arguments.
+-- groups_defaults: groups to use when the command is given none
+-- required_count: how many groups must resolve before func is called (default 1)
+-- ignore_selected_tab: resolve "bank" without regard to the selected bank tab
+function core.CommandDecorator(func, groups_defaults, required_count, ignore_selected_tab)
 	local bag_groups = {}
 	local decorated
 	local retrying
@@ -646,12 +651,7 @@ function core.CommandDecorator(func, groups_defaults, required_count)
 			groups = groups_defaults
 		end
 		for bags in (groups or ""):gmatch("[^%s]+") do
-			if bags == "bank" and func == core.StackSummary and #bag_groups == 1 and not core.guild_bank_open then
-				-- Stack destinations use the bank preference, not the selected account tab.
-				bags = bank_bags
-			else
-				bags = core.get_group(bags)
-			end
+			bags = core.get_group(bags, ignore_selected_tab)
 			if bags then
 				if core.check_for_banks(bags) then
 					Debug("abort", "bank needed", bags)

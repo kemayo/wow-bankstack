@@ -172,7 +172,7 @@ function core.StackSummary(...)
 	end
 end
 
-SlashCmdList["BANKSTACK"] = core.CommandDecorator(core.StackSummary, "bags bank", 2)
+SlashCmdList["BANKSTACK"] = core.CommandDecorator(core.StackSummary, "bags bank", 2, true)
 SLASH_BANKSTACK1 = "/stack"
 SlashCmdList["COMPRESSBAGS"] = core.CommandDecorator(core.Compress, "bags")
 SLASH_COMPRESSBAGS1 = "/compress"
