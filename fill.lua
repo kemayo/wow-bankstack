@@ -90,8 +90,11 @@ end
 
 function core.Squash(bags, reverse, can_move)
 	-- bags: table, e.g. {1,2,3,4}
+	if reverse == nil then
+		reverse = core.db.backfill
+	end
 	return core.Fill(bags, bags, reverse, can_move, function(itemid, bag, slot)
-		if is_squashed(bags) then
+		if is_squashed(bags, reverse) then
 			return true
 		end
 		return default_should_halt(itemid, bag, slot)
