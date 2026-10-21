@@ -730,7 +730,17 @@ local function update_location(from, to)
 		bag_links[from], bag_links[to] = bag_links[to], bag_links[from]
 	end
 end
+local function wipe_bag_caches()
+	wipe(bag_maxstacks)
+	wipe(bag_stacks)
+	wipe(bag_ids)
+	wipe(bag_links)
+	wipe(core.bag_soulbound)
+	wipe(core.bag_conjured)
+end
 function core.ScanBags()
+	-- Start clean, or slots emptied since an aborted run would keep their old items.
+	wipe_bag_caches()
 	local missing_data
 	for _, bag, slot in core.IterateBags(core.has_guild_bank() and all_bags_with_guild or all_bags) do
 		local bagslot = encode_bagslot(bag, slot)
@@ -925,12 +935,7 @@ function core.DoMove(move)
 end
 
 function core.StartStacking()
-	wipe(bag_maxstacks)
-	wipe(bag_stacks)
-	wipe(bag_ids)
-	wipe(bag_links)
-	wipe(core.bag_soulbound)
-	wipe(core.bag_conjured)
+	wipe_bag_caches()
 	wipe(move_tracker)
 
 	if #moves > 0 then
