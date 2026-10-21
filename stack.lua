@@ -34,10 +34,10 @@ end
 local target_items = {--[[link = available_slots--]]}
 local source_used = {}
 local target_slots = {}
-local summary = {}
 
 local function default_can_move() return true end
-local function stack_once(source_bags, target_bags, can_move, summary_out)
+-- Returns a table of itemid -> count moved.
+function core.Stack(source_bags, target_bags, can_move)
 	-- Fill incomplete stacks in target_bags with items from source_bags.
 	-- source_bags: table, e.g. {1,2,3,4}
 	-- target_bags: table, e.g. {1,2,3,4}
@@ -45,8 +45,7 @@ local function stack_once(source_bags, target_bags, can_move, summary_out)
 	--   for any slot in source that is not empty and contains an item that
 	--   could be moved to target.  If it returns false then ignore the slot.
 	if not can_move then can_move = default_can_move end
-	local summary_table = summary_out or summary
-	wipe(summary_table)
+	local summary_table = {}
 	-- Model the target bags.
 	for _, bag, slot in core.IterateBags(target_bags, nil, "deposit") do
 		local bagslot = encode_bagslot(bag, slot)
@@ -102,40 +101,21 @@ local function stack_once(source_bags, target_bags, can_move, summary_out)
 	return summary_table
 end
 
-local function resolve_stack_targets(source_bags, target_bags)
-	if source_bags == target_bags or target_bags ~= core.bank_bags then
-		return { { bags = target_bags } }
+-- The banks that "bank" stands for in a stack, per the bank_target option.
+local function expand_bank(bags)
+	if bags ~= core.bank_bags then
+		return { { bags = bags } }
 	end
-	local targets = {}
-	local bank_target = core.db.bank_target or "both"
-	local account_bags = core.account_bags or {}
-	local has_account = #account_bags > 0
-
-	local function add(label, bags)
-		if bags and #bags > 0 then
-			table.insert(targets, { label = label, bags = bags })
-		end
+	local bank_target = core.db.bank_target
+	local has_account = #core.account_bags > 0
+	local banks = {}
+	if has_account and bank_target ~= "character" then
+		table.insert(banks, { label = ACCOUNT_BANK_PANEL_TITLE, bags = core.account_bags })
 	end
-
-	if bank_target == "warband" then
-		if has_account then
-			add(ACCOUNT_BANK_PANEL_TITLE, account_bags)
-		else
-			add(BANK, target_bags)
-		end
-	elseif bank_target == "character" then
-		add(BANK, target_bags)
-	else
-		if has_account then
-			add(ACCOUNT_BANK_PANEL_TITLE, account_bags)
-		end
-		add(BANK, target_bags)
+	if bank_target ~= "warband" or not has_account then
+		table.insert(banks, { label = BANK, bags = bags })
 	end
-
-	if #targets == 0 then
-		table.insert(targets, { bags = target_bags })
-	end
-	return targets
+	return banks
 end
 
 local function build_summary_text(summary_table)
@@ -148,23 +128,22 @@ local function build_summary_text(summary_table)
 	end
 end
 
-function core.Stack(source_bags, target_bags, can_move)
-	local targets = resolve_stack_targets(source_bags, target_bags)
-	for _, target in ipairs(targets) do
-		stack_once(source_bags, target.bags, can_move)
+function core.StackSummary(source_bags, target_bags, can_move)
+	local passes = {}
+	if source_bags == target_bags then
+		passes[1] = { source = source_bags, target = target_bags }
+	else
+		for _, source in ipairs(expand_bank(source_bags)) do
+			for _, target in ipairs(expand_bank(target_bags)) do
+				table.insert(passes, { source = source.bags, target = target.bags, label = source.label or target.label })
+			end
+		end
 	end
-end
-
-function core.StackSummary(...)
-	local source_bags, target_bags, can_move = ...
-	local targets = resolve_stack_targets(source_bags, target_bags)
-	for _, target in ipairs(targets) do
-		local target_summary = {}
-		stack_once(source_bags, target.bags, can_move, target_summary)
-		local summary_text = build_summary_text(target_summary)
+	for _, pass in ipairs(passes) do
+		local summary_text = build_summary_text(core.Stack(pass.source, pass.target, can_move))
 		if summary_text then
-			if #targets > 1 and target.label then
-				core.announce(1, L['stacking_bank']:format(target.label, summary_text))
+			if #passes > 1 then
+				core.announce(1, L['stacking_bank']:format(pass.label, summary_text))
 			else
 				core.announce(1, L['stacking']:format(summary_text))
 			end
