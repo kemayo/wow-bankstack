@@ -1,11 +1,7 @@
 local core = BankStack
 local L = core.L
-local Debug = core.Debug
 
 local encode_bagslot = core.encode_bagslot
-local decode_bagslot = core.decode_bagslot
-local encode_move = core.encode_move
-local moves = core.moves
 
 local bag_ids = core.bag_ids
 local bag_stacks = core.bag_stacks
@@ -20,7 +16,6 @@ do
 		return ((bag_maxstacks[bagslot] or 0) - (bag_stacks[bagslot] or 0)) > 0
 	end
 	core.is_partial = is_partial
-	local bag_groups = {}
 	function core.Compress(...)
 		for i=1, select("#", ...) do
 			local bags = select(i, ...)

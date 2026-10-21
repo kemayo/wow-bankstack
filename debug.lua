@@ -1,19 +1,11 @@
 local myname, ns = ...
 
 local core = BankStack
-local Debug = core.Debug
 
 local encode_bagslot = core.encode_bagslot
 local bag_ids = core.bag_ids
 local bag_stacks = core.bag_stacks
 local bag_maxstacks = core.bag_maxstacks
-
-local function createtex(parent, layer, w, h, ...)
-    local tex = parent:CreateTexture(nil, layer)
-    tex:SetWidth(w) tex:SetHeight(h)
-    tex:SetPoint(...)
-    return tex
-end
 
 local frame
 local function getFrame()

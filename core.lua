@@ -516,7 +516,6 @@ do
 	if not core.has_new_bank then
 		known[BANK_CONTAINER] = false
 	end
-	local always = {}
 	function core.IsSpecialtyBag(bagid)
 		if known[bagid] ~= nil then return known[bagid] end
 		if is_guild_bank_bag(bagid) then return false end
@@ -557,7 +556,7 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 		return true
 	end
 	if core.has_new_bank and BTSI and is_bank_bag(target_bag) then
-		if core.db.ignore_blizzard and BTSI then
+		if core.db.ignore_blizzard then
 			return BTSI:IsItemLocationSuitableForTab(core.bag_itemlocation[bagslot], target_bag)
 		end
 		-- This is filtering out the actually-impossible, not just preference-based:
@@ -601,11 +600,11 @@ function core.IsIgnored(bag, slot)
 	end
 	if core.db.ignore_blizzard then
 		-- (these two only exist on retail, hence the guards)
-		if (bag == -1) then --bank
+		if bag == BANK_CONTAINER then
 			return C_Container.GetBankAutosortDisabled and C_Container.GetBankAutosortDisabled() or false
-		elseif (bag == 0) then --backpack
+		elseif bag == BACKPACK_CONTAINER then
 			return C_Container.GetBackpackAutosortDisabled and C_Container.GetBackpackAutosortDisabled() or false
-		elseif (bag == -3) then --reagentbank
+		elseif bag == REAGENTBANK_CONTAINER then
 			return false
 		elseif is_bank_bag(bag) then
 			if core.has_new_bank and BTSI then
@@ -762,7 +761,7 @@ function core.AddMove(source, destination)
 	table.insert(moves, 1, encode_move(source, destination))
 end
 
-local moves_underway, last_itemid, last_destination, lock_stop, last_move, move_retries
+local last_itemid, last_destination, lock_stop, last_move, move_retries
 local move_tracker = {}
 
 local function debugtime(start, ...) Debug("took", GetTime() - start, ...) end

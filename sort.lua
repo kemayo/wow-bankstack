@@ -1,14 +1,9 @@
 local core = BankStack
-local L = core.L
 local Debug = core.Debug
 
 local encode_bagslot = core.encode_bagslot
-local decode_bagslot = core.decode_bagslot
-local encode_move = core.encode_move
-local moves = core.moves
 
 local bagcache = {}
-local bag_groups = {}
 function core.SortBags(...)
 	local start = 1
 	local sorter
@@ -131,7 +126,6 @@ end
 
 local bag_ids = core.bag_ids
 local bag_stacks = core.bag_stacks
-local bag_maxstacks = core.bag_maxstacks
 local bag_links = core.bag_links
 local bag_soulbound = core.bag_soulbound
 local bag_conjured = core.bag_conjured

@@ -1,14 +1,9 @@
 local core = BankStack
-local L = core.L
 
 local encode_bagslot = core.encode_bagslot
 local decode_bagslot = core.decode_bagslot
-local encode_move = core.encode_move
-local moves = core.moves
 
 local bag_ids = core.bag_ids
-local bag_stacks = core.bag_stacks
-local bag_maxstacks = core.bag_maxstacks
 
 local specialty_bags = {}
 function core.FillBags(from, to)

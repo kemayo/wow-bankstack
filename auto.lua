@@ -1,6 +1,5 @@
 local core = BankStack
 local module = core:NewModule("Auto", "AceEvent-3.0")
-local Debug = core.Debug
 
 local issecretvalue = _G.issecretvalue or function() return false end
 

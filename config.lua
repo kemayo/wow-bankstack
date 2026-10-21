@@ -2,7 +2,6 @@ local myname, ns = ...
 
 local core = BankStack
 local L = core.L
-local Debug = core.Debug
 
 local announce = core.announce
 
