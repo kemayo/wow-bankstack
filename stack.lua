@@ -34,11 +34,27 @@ end
 local target_items = {--[[link = available_slots--]]}
 local source_used = {}
 local target_slots = {}
+local stored_items = {}
+local stored_quality_items = {}
+local empty_slots = {}
+
+local function crafting_quality_key(itemid)
+	if not itemid or not C_TradeSkillUI then return end
+	local reagent_quality = C_TradeSkillUI.GetItemReagentQualityByItemInfo
+	local crafted_quality = C_TradeSkillUI.GetItemCraftedQualityByItemInfo
+	local quality = (reagent_quality and reagent_quality(itemid)) or (crafted_quality and crafted_quality(itemid))
+	if not quality or quality < 1 then return end
+	-- Quality ranks have different item IDs but share their name and category.
+	local name, _, _, _, _, _, _, _, _, _, _, class, subclass, _, expansion = C_Item.GetItemInfo(itemid)
+	if name then
+		return string.format("%s:%d:%d:%d", name, class, subclass, expansion)
+	end
+end
 
 local function default_can_move() return true end
 -- Returns a table of itemid -> count moved.
 function core.Stack(source_bags, target_bags, can_move)
-	-- Fill incomplete stacks in target_bags with items from source_bags.
+	-- Fill incomplete stacks, optionally creating new stacks for stored items.
 	-- source_bags: table, e.g. {1,2,3,4}
 	-- target_bags: table, e.g. {1,2,3,4}
 	-- can_move: function or nil.  Called as can_move(itemid, bag, slot)
@@ -46,22 +62,42 @@ function core.Stack(source_bags, target_bags, can_move)
 	--   could be moved to target.  If it returns false then ignore the slot.
 	if not can_move then can_move = default_can_move end
 	local summary_table = {}
+	local target_is_bank, target_is_bags = true, true
+	for _, bag in ipairs(target_bags) do
+		target_is_bank = target_is_bank and core.is_bank_bag(bag)
+		target_is_bags = target_is_bags and tContains(core.player_bags, bag)
+	end
+	local fill_existing = core.db.stack_bank_existing and source_bags ~= target_bags and (target_is_bank or target_is_bags)
+	local match_quality = fill_existing and core.db.stack_bank_quality
 	-- Model the target bags.
 	for _, bag, slot in core.IterateBags(target_bags, nil, "deposit") do
 		local bagslot = encode_bagslot(bag, slot)
 		local itemid = bag_ids[bagslot]
-		if not core.IsIgnored(bag, slot) and itemid and (bag_stacks[bagslot] ~= bag_maxstacks[bagslot]) then
-			-- This is an item type that we'll want to bother moving.
-			target_items[itemid] = (target_items[itemid] or 0) + 1
-			table.insert(target_slots, bagslot)
+		if not core.IsIgnored(bag, slot) then
+			if itemid and (bag_stacks[bagslot] ~= bag_maxstacks[bagslot]) then
+				-- This is an item type that we'll want to bother moving.
+				target_items[itemid] = (target_items[itemid] or 0) + 1
+				table.insert(target_slots, bagslot)
+			end
+			if fill_existing then
+				if itemid then
+					stored_items[itemid] = true
+					local quality_key = match_quality and crafting_quality_key(itemid)
+					if quality_key then stored_quality_items[quality_key] = true end
+				else
+					table.insert(empty_slots, bagslot)
+				end
+			end
 		end
 	end
 	-- Now go through the source bags... in reverse.
 	for _, bag, slot in core.IterateBags(source_bags, true, "withdraw") do
 		local source_slot = encode_bagslot(bag, slot)
 		local itemid = bag_ids[source_slot]
-		if not core.IsIgnored(bag, slot) and itemid and target_items[itemid] and can_move(itemid, bag, slot) then
-			--there's an item in this slot *and* we have room for more of it in the bank somewhere
+		local quality_key = match_quality and crafting_quality_key(itemid)
+		local can_fill = (stored_items[itemid] or stored_quality_items[quality_key])
+			and ((target_is_bank and tContains(core.player_bags, bag)) or (target_is_bags and core.is_bank_bag(bag)))
+		if not core.IsIgnored(bag, slot) and itemid and (target_items[itemid] or can_fill) and can_move(itemid, bag, slot) then
 			for i=#target_slots, 1, -1 do
 				local target_slot = target_slots[i]
 				if
@@ -92,12 +128,33 @@ function core.Stack(source_bags, target_bags, can_move)
 					if not target_items[itemid] then break end
 				end
 			end
+			if can_fill and bag_ids[source_slot] then
+				for i=1, #empty_slots do
+					local index = core.db.backfill and (#empty_slots - i + 1) or i
+					local target_slot = empty_slots[index]
+					local target_bag = decode_bagslot(target_slot)
+					if core.CanItemGoInBag(bag, slot, target_bag) then
+						summary_table[itemid] = (summary_table[itemid] or 0) + bag_stacks[source_slot]
+						core.AddMove(source_slot, target_slot)
+						source_used[source_slot] = true
+						table.remove(empty_slots, index)
+						if bag_stacks[target_slot] < bag_maxstacks[target_slot] then
+							target_items[itemid] = (target_items[itemid] or 0) + 1
+							table.insert(target_slots, target_slot)
+						end
+						break
+					end
+				end
+			end
 		end
 	end
 	-- clean up the various cache tables
 	wipe(target_items)
 	wipe(target_slots)
 	wipe(source_used)
+	wipe(stored_items)
+	wipe(stored_quality_items)
+	wipe(empty_slots)
 	return summary_table
 end
 

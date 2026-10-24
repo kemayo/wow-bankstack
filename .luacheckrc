@@ -63,6 +63,7 @@ read_globals = {
     "C_GuildBank",
     "C_Item",
     "C_Timer",
+    "C_TradeSkillUI",
     "C_TooltipInfo",
     "TooltipUtil",
     "BankButtonIDToInvSlotID",

@@ -56,6 +56,8 @@ function core:OnInitialize()
 			reverse = false,
 			backfill = false,
 			bank_target = "both",
+			stack_bank_existing = false,
+			stack_bank_quality = false,
 			ignore = {},
 			ignore_bags = {},
 			ignore_blizzard = true,

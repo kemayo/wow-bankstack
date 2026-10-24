@@ -64,3 +64,7 @@ L["OPTIONS_SHOW_MINIMAP_ICON_DESCRIPTION"] = "Toggle showing or hiding the minim
 L["OPTIONS_BANK_TARGET"] = "Stack bank location"
 L["OPTIONS_BANK_TARGET_DESCRIPTION"] = "Choose where to stack when targeting bank"
 L["OPTIONS_BANK_TARGET_BOTH"] = "Both"
+L["OPTIONS_STACK_BANK_EXISTING"] = "Create new stacks for existing items"
+L["OPTIONS_STACK_BANK_EXISTING_DESCRIPTION"] = "When stacking between bags and bank in either direction, use empty destination slots for items already stored there, when their existing stacks are full."
+L["OPTIONS_STACK_BANK_QUALITY"] = "Match crafting-quality ranks"
+L["OPTIONS_STACK_BANK_QUALITY_DESCRIPTION"] = "In either direction, also create new stacks when the same item is already in the destination at another crafting-quality rank. Requires creating new stacks for existing items."
