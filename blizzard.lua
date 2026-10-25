@@ -1,6 +1,7 @@
 local myname = ...
 
 local core = BankStack
+local L = core.L
 local module = core:NewModule("Blizzard", "AceEvent-3.0")
 
 function module:OnInitialize()
@@ -12,8 +13,8 @@ function module:OnInitialize()
 	if core.options then
 		core.options.args.blizzard.plugins.hijack = {
 			hijack = {
-				name = not core.has_new_bank and "Show on bag and bank" or "Take over Blizzard sort buttons",
-				desc = "Click sort buttons in your bags and bank(s)",
+				name = not core.has_new_bank and L['OPTIONS_BLIZZARD_SHOW_BUTTONS'] or L['OPTIONS_BLIZZARD_REPLACE_BUTTONS'],
+				desc = L['OPTIONS_BLIZZARD_BUTTONS_DESCRIPTION'],
 				descStyle = "inline", width="full",
 				type = "toggle",
 				get = function() return self.db.profile.hijack end,
@@ -60,7 +61,7 @@ function module:SetupButtons()
 				return
 			end
 			sortbank(tostring(BankPanel:GetSelectedTabID()))
-		end, BAG_CLEANUP_BANK, "Click to sort the current tab; alt-click to sort the entire bank")
+		end, BAG_CLEANUP_BANK, L['TOOLTIP_SORT_BANK'])
 		bank:SetAllPoints(BankPanel.AutoSortButton)
 	else
 		-- Classic

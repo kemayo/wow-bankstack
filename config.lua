@@ -19,7 +19,7 @@ local function print_groups(groups)
 end
 
 local options = {
-	name = "Config", desc = "Basic settings", type = "group", order = 10,
+	name = OPTIONS, desc = L['OPTIONS_CONFIG_DESCRIPTION'], type = "group", order = 10,
 	get = function(info) return core.db[info[#info]] end,
 	set = function(info, value) core.db[info[#info]] = value end,
 	args = {
@@ -45,38 +45,38 @@ local options = {
 			},
 		},
 		sorting = {
-			name = "Sorting",
+			name = L['OPTIONS_SORTING'],
 			type = "group",
 			inline = true,
 			order = 10,
 			args = {
 				junk = {
-					name = "Junk", desc = "Move junk to the end", type = "select",
+					name = BAG_FILTER_JUNK, desc = L['OPTIONS_JUNK_DESCRIPTION'], type = "select",
 					descStyle = "inline",
 					values = {
-						[0] = "No",
-						[1] = "End of your items",
-						[2] = "Back of your bags",
+						[0] = NO,
+						[1] = L['OPTIONS_JUNK_END'],
+						[2] = L['OPTIONS_JUNK_BACK'],
 					},
 					order = 10,
 				},
 				conjured = {
-					name = "Conjured", desc = "Move conjured items to the end", type = "toggle",
+					name = ITEM_CONJURED, desc = L['OPTIONS_CONJURED_DESCRIPTION'], type = "toggle",
 					descStyle = "inline",
 					order = 20,
 				},
 				soulbound = {
-					name = "Soulbound", desc = "Move soulbound items to the front", type = "toggle",
+					name = ITEM_SOULBOUND, desc = L['OPTIONS_SOULBOUND_DESCRIPTION'], type = "toggle",
 					descStyle = "inline",
 					order = 30,
 				},
 				reverse = {
-					name = "Reverse", desc = "Reverse the sort", type = "toggle",
+					name = L['OPTIONS_REVERSE'], desc = L['OPTIONS_REVERSE_DESCRIPTION'], type = "toggle",
 					descStyle = "inline",
 					order = 40,
 				},
 				backfill = {
-					name = "Backfill", desc = "Fill starting at the back of your bags", type = "toggle",
+					name = L['OPTIONS_BACKFILL'], desc = L['OPTIONS_BACKFILL_DESCRIPTION'], type = "toggle",
 					descStyle = "inline",
 					order = 50,
 				},
@@ -89,8 +89,8 @@ local options = {
 			order = 20,
 			args = {
 				respect = {
-					name = "Respect Blizzard settings",
-					desc = "Respect \"ignore this bag\" and item-type assignments from the default UI",
+					name = L['OPTIONS_RESPECT_BLIZZARD'],
+					desc = L['OPTIONS_RESPECT_BLIZZARD_DESCRIPTION'],
 					descStyle = "inline", width="full",
 					type = "toggle",
 					get = function() return core.db.ignore_blizzard end,
@@ -108,22 +108,22 @@ core.options = options
 local bag_slot_pattern = "^(-?[%d]+)%s*(%d*)$"
 
 local ignore_options = {
-	name = "Ignore", desc = "Slots to ignore", type = "group", order = 20,
+	name = IGNORE, desc = L['OPTIONS_IGNORE_DESCRIPTION'], type = "group", order = 20,
 	args = {
 		list = {
-			name = "List", desc = "List all ignored slots", type = "execute", order = 1,
+			name = L['OPTIONS_LIST'], desc = L['OPTIONS_IGNORE_LIST_DESCRIPTION'], type = "execute", order = 1,
 			func = function()
 				for ignored,_ in pairs(core.db.ignore_bags) do
-					core.announce(0, "Ignoring bag: "..ignored, 1, 1, 1)
+					core.announce(0, L['CHAT_MSG_IGNORING_BAG']:format(ignored), 1, 1, 1)
 				end
 				for ignored,_ in pairs(core.db.ignore) do
 					local bag, slot = core.decode_bagslot(ignored)
-					core.announce(0, "Ignoring: "..bag.." "..slot, 1, 1, 1)
+					core.announce(0, L['CHAT_MSG_IGNORING_SLOT']:format(bag, slot), 1, 1, 1)
 				end
 			end,
 		},
 		add = {
-			name = "Add", desc = "Add an ignore", type = "input", order = 2,
+			name = ADD, desc = L['OPTIONS_IGNORE_ADD_DESCRIPTION'], type = "input", order = 2,
 			get = false,
 			set = function(info, v)
 				local bag, slot = v:match(bag_slot_pattern)
@@ -132,20 +132,20 @@ local ignore_options = {
 				if bag and slot then
 					local bagslot = core.encode_bagslot(bag, slot)
 					core.db.ignore[bagslot] = true
-					core.announce(0, "bag:"..bag.." slot:"..slot.." ignored.", 1, 1, 1)
+					core.announce(0, L['CHAT_MSG_SLOT_IGNORED']:format(bag, slot), 1, 1, 1)
 				elseif bag then
 					core.db.ignore_bags[bag] = true
-					core.announce(0, "bag:"..bag.." ignored.", 1, 1, 1)
+					core.announce(0, L['CHAT_MSG_BAG_IGNORED']:format(bag), 1, 1, 1)
 				end
 			end,
-			usage = "[bag] [slot] (see http://wowwiki.com/BagID)",
+			usage = L['USAGE_BAG_SLOT'],
 			validate = function(info, v)
 				-- "and true or false" because returning a string counts as false
 				return v:match(bag_slot_pattern) and true or false
 			end,
 		},
 		remove = {
-			name = "Remove", desc = "Remove an ignore", type = "input", order = 3,
+			name = REMOVE, desc = L['OPTIONS_IGNORE_REMOVE_DESCRIPTION'], type = "input", order = 3,
 			get = false,
 			set = function(info, v)
 				local bag, slot = v:match(bag_slot_pattern)
@@ -154,13 +154,13 @@ local ignore_options = {
 				if bag and slot then
 					local bagslot = core.encode_bagslot(bag, slot)
 					core.db.ignore[bagslot] = nil
-					announce(0, "bag:"..bag.." slot:"..slot.." no longer ignored.", 1, 1, 1)
+					announce(0, L['CHAT_MSG_SLOT_UNIGNORED']:format(bag, slot), 1, 1, 1)
 				elseif bag then
 					core.db.ignore_bags[bag] = nil
-					announce(0, "bag:"..bag.." no longer ignored.", 1, 1, 1)
+					announce(0, L['CHAT_MSG_BAG_UNIGNORED']:format(bag), 1, 1, 1)
 				end
 			end,
-			usage = "[bag] [slot] (see http://wowwiki.com/BagID)",
+			usage = L['USAGE_BAG_SLOT'],
 			validate = function(info, v)
 				-- "and true or false" because returning a string counts as false
 				return v:match(bag_slot_pattern) and true or false
@@ -169,19 +169,19 @@ local ignore_options = {
 	},
 }
 local group_options = {
-	name = "Groups", desc = "Bag groups", type = "group", order = 30,
+	name = GROUPS, desc = L['OPTIONS_GROUPS_DESCRIPTION'], type = "group", order = 30,
 	args = {
 		list = {
-			name = "List", desc = "List all groups", type = "execute", order = 1,
+			name = L['OPTIONS_LIST'], desc = L['OPTIONS_GROUPS_LIST_DESCRIPTION'], type = "execute", order = 1,
 			func = function()
-				announce(0, "Built in groups:", 1, 1, 1)
+				announce(0, L['CHAT_MSG_BUILT_IN_GROUPS'], 1, 1, 1)
 				print_groups(core.groups)
-				announce(0, "Custom groups:", 1, 1, 1)
+				announce(0, L['CHAT_MSG_CUSTOM_GROUPS'], 1, 1, 1)
 				print_groups(core.db.groups)
 			end,
 		},
 		add = {
-			name = "Add", desc = "Add a group (see http://wowwiki.com/BagID)", type = "input", order = 2,
+			name = ADD, desc = L['OPTIONS_GROUPS_ADD_DESCRIPTION'], type = "input", order = 2,
 			get = false,
 			set = function(info, v)
 				local group, action = string.match(v, "^([^%s]+) (.*)$")
@@ -195,57 +195,50 @@ local group_options = {
 					if core.is_valid_bag(bag) or core.is_guild_bank_bag(bag) then
 						table.insert(bags, bag)
 					else
-						announce(0, maybe_bagid.." was not a valid bag id.", 1, 0, 0)
+						announce(0, L['CHAT_MSG_INVALID_BAG_ID']:format(maybe_bagid), 1, 0, 0)
 					end
 				end
-				announce(0, "Added group: "..group.." ("..string.join(", ", unpack(bags))..")", 1, 1, 1)
+				announce(0, L['CHAT_MSG_GROUP_ADDED']:format(group, string.join(", ", unpack(bags))), 1, 1, 1)
 			end,
-			usage = "[name] [bagid],[bagid],[bagid]",
+			usage = L['USAGE_GROUP_ADD'],
 			validate = function(_, v) return string.match(v, "^[^%s]+ [-%d%s,]+$") and true or false end,
 		},
 		remove = {
-			name = "Remove", desc = "Remove a group", type = "input", order = 3,
+			name = REMOVE, desc = L['OPTIONS_GROUPS_REMOVE_DESCRIPTION'], type = "input", order = 3,
 			get = false,
 			set = function(info, v)
 				core.db.groups[v] = nil
-				announce(0, v .. " removed.", 1, 1, 1)
+				announce(0, L['CHAT_MSG_GROUP_REMOVED']:format(v), 1, 1, 1)
 			end,
-			usage = "[name]",
+			usage = L['USAGE_GROUP_REMOVE'],
 		}
 	},
 }
 
 local help_options = {
-	name = "BankStack Help", type="group",
+	name = L['HELP_TITLE'], type="group",
 	args = {
-		header = { name = "BankStack: Things in your bags, they move", type = "header", order = 10, },
+		header = { name = L['HELP_HEADER'], type = "header", order = 10, },
 		commands = {
 			type = "description", order = 20,
-			name = "/bankstack -- this menu.\n"..
-				"/sort -- rearrange your bags\n"..
-				"/sort bank -- rearrange your bank\n"..
-				"/stack -- fills stacks in your bank from your bags\n"..
-				"/stack bank bags -- fills stacks in your bags from your bank\n"..
-				"/compress -- merges stacks in your bags\n"..
-				"/compress bank -- merges stacks in your bank\n"..
-				"/fill -- fills empty slots in your bank from your bags",
+			name = L['HELP_COMMANDS'],
 		},
 	},
 }
 
 local keybindings = {
-	['BUTTON1'] = "Left Click",
-	['ALT-BUTTON1'] = "Alt Left Click",
-	['CTRL-BUTTON1'] = "Ctrl Left Click",
-	['ALT-CTRL-BUTTON1'] = "Ctrl Alt Left Click",
-	['SHIFT-BUTTON1'] = "Shift Left Click",
-	['ALT-SHIFT-BUTTON1'] = "Alt Shift Left Click",
-	['CTRL-SHIFT-BUTTON1'] = "Ctrl Shift Left Click",
-	['ALT-CTRL-SHIFT-BUTTON1'] = "Ctrl Alt Shift Left Click",
+	['BUTTON1'] = GetBindingText("BUTTON1", "KEY_"),
+	['ALT-BUTTON1'] = GetBindingText("ALT-BUTTON1", "KEY_"),
+	['CTRL-BUTTON1'] = GetBindingText("CTRL-BUTTON1", "KEY_"),
+	['ALT-CTRL-BUTTON1'] = GetBindingText("ALT-CTRL-BUTTON1", "KEY_"),
+	['SHIFT-BUTTON1'] = GetBindingText("SHIFT-BUTTON1", "KEY_"),
+	['ALT-SHIFT-BUTTON1'] = GetBindingText("ALT-SHIFT-BUTTON1", "KEY_"),
+	['CTRL-SHIFT-BUTTON1'] = GetBindingText("CTRL-SHIFT-BUTTON1", "KEY_"),
+	['ALT-CTRL-SHIFT-BUTTON1'] = GetBindingText("ALT-CTRL-SHIFT-BUTTON1", "KEY_"),
 }
 
 local launcher_options = {
-	name = "Click assignments", desc = "Modified left-clicks only",
+	name = L['OPTIONS_CLICK_ASSIGNMENTS'], desc = L['OPTIONS_CLICK_ASSIGNMENTS_DESCRIPTION'],
 	type = "group",
 	get = function(info)
 		local k = info[#info]
@@ -271,63 +264,61 @@ local launcher_options = {
 	args = {
 		help = {
 			type = "description", order = 1,
-			name = "BankStack contains a LibDataBroker-1.1 launcher, which can be shown by display addons such as "..
-				"StatBlockCore, Fortress, ButtonBin, Broker2FuBar, and others, which can be used as a quick way to "..
-				"sort your bags.",
+			name = L['HELP_LAUNCHER'],
 		},
 
-		sortbags = {name = "Sort Bags", desc = "Modified left-clicks only", type = "select", values = keybindings, order = 10,},
-		sortbank = {name = "Sort Bank", desc = "Modified left-clicks only", type = "select", values = keybindings, order = 20,},
-		stackbank = {name = "Stack to Bank", desc = "Modified left-clicks only", type = "select", values = keybindings, order = 30,},
-		stackbags = {name = "Stack to Bags", desc = "Modified left-clicks only", type = "select", values = keybindings, order = 40,},
-		compressbags = {name = "Compress Bags", desc = "Modified left-clicks only", type = "select", values = keybindings, order = 50,},
-		compressbank = {name = "Compress Bank", desc = "Modified left-clicks only", type = "select", values = keybindings, order = 60,},
+		sortbags = {name = L['ACTION_SORTBAGS'], desc = L['OPTIONS_CLICK_ASSIGNMENTS_DESCRIPTION'], type = "select", values = keybindings, order = 10,},
+		sortbank = {name = L['ACTION_SORTBANK'], desc = L['OPTIONS_CLICK_ASSIGNMENTS_DESCRIPTION'], type = "select", values = keybindings, order = 20,},
+		stackbank = {name = L['ACTION_STACKBANK'], desc = L['OPTIONS_CLICK_ASSIGNMENTS_DESCRIPTION'], type = "select", values = keybindings, order = 30,},
+		stackbags = {name = L['ACTION_STACKBAGS'], desc = L['OPTIONS_CLICK_ASSIGNMENTS_DESCRIPTION'], type = "select", values = keybindings, order = 40,},
+		compressbags = {name = L['ACTION_COMPRESSBAGS'], desc = L['OPTIONS_CLICK_ASSIGNMENTS_DESCRIPTION'], type = "select", values = keybindings, order = 50,},
+		compressbank = {name = L['ACTION_COMPRESSBANK'], desc = L['OPTIONS_CLICK_ASSIGNMENTS_DESCRIPTION'], type = "select", values = keybindings, order = 60,},
 	},
 }
 
 local advanced_options = {
-	name = "Advanced", desc = "Advanced settings", type = "group", order = 100,
+	name = ADVANCED_OPTIONS, desc = L['OPTIONS_ADVANCED_DESCRIPTION'], type = "group", order = 100,
 	get = function(info) return core.db[info[#info]] end,
 	set = function(info, value) core.db[info[#info]] = value end,
 	args = {
 		verbosity = {
-			name = "Verbosity", desc = "Talkativitinessism", type = "range", min = 0, max = 2, step = 1,
+			name = L['OPTIONS_VERBOSITY'], desc = L['OPTIONS_VERBOSITY_DESCRIPTION'], type = "range", min = 0, max = 2, step = 1,
 			descStyle = "inline",
 		},
 		conservative_guild = {
-			name = "Cautious guild",
-			desc = "If this option is enabled, only one move at a time will be made. This is slower, but is nearly certain to work. If you turn this off, I make no promises.",
+			name = L['OPTIONS_CAUTIOUS_GUILD'],
+			desc = L['OPTIONS_CAUTIOUS_GUILD_DESCRIPTION'],
 			descStyle = "inline",
 			type = "toggle",
 		},
 		timing = {
-			name = "Timing", inline = true, type = "group",
+			name = L['OPTIONS_TIMING'], inline = true, type = "group",
 			args = {
 				desc = {
 					type = "description", order = 0,
-					name = "How long to wait during sorting. If you run into problems with Blizzard throttling moves, especially in the guild bank, you can adjust these settings.",
+					name = L['OPTIONS_TIMING_DESCRIPTION'],
 				},
 				stutter_duration = {
-					name = "Stutter Interval", type = "range",
-					desc = "How long to spend moving items before pausing to avoid the game noticably stuttering",
+					name = L['OPTIONS_STUTTER_INTERVAL'], type = "range",
+					desc = L['OPTIONS_STUTTER_INTERVAL_DESCRIPTION'],
 					min = 0, max = 1, step = 0.05,
 					order = 10,
 				},
 				stutter_delay = {
-					name = "Stutter Delay", type = "range",
-					desc = "How long to wait after the stutter interval before starting to move items again",
+					name = L['OPTIONS_STUTTER_DELAY'], type = "range",
+					desc = L['OPTIONS_STUTTER_DELAY_DESCRIPTION'],
 					min = 0, max = 1, step = 0.05,
 					order = 20,
 				},
 				processing_delay = {
-					name = "Processing Delay", type = "range",
-					desc = "How long to wait while a move operation is pending. Lower values might make sorting faster, but will use more CPU time.",
+					name = L['OPTIONS_PROCESSING_DELAY'], type = "range",
+					desc = L['OPTIONS_PROCESSING_DELAY_DESCRIPTION'],
 					min = 0, max = 1, step = 0.05,
 					order = 30,
 				},
 				processing_delay_guild = {
-					name = "Processing Delay (Guild)", type = "range",
-					desc = "How long to wait while a move operation is pending if it involves the guild bank.",
+					name = L['OPTIONS_PROCESSING_DELAY_GUILD'], type = "range",
+					desc = L['OPTIONS_PROCESSING_DELAY_GUILD_DESCRIPTION'],
 					min = 0, max = 1, step = 0.05,
 					order = 40,
 				},
@@ -349,12 +340,12 @@ core.setup_config = function()
 
 	local acdia = LibStub("AceConfigDialog-3.0")
 	categoryID = select(2, acdia:AddToBlizOptions(myname, myname))
-	acdia:AddToBlizOptions(myname .. "Ignore", "Ignore", myname)
-	acdia:AddToBlizOptions(myname .. "Groups", "Groups", myname)
-	acdia:AddToBlizOptions(myname .. "Launcher", "Launcher", myname)
-	acdia:AddToBlizOptions(myname .. "Advanced", "Advanced", myname)
-	acdia:AddToBlizOptions(myname .. "Profiles", "Profiles", myname)
-	acdia:AddToBlizOptions(myname .. "Help", "Help", myname)
+	acdia:AddToBlizOptions(myname .. "Ignore", IGNORE, myname)
+	acdia:AddToBlizOptions(myname .. "Groups", GROUPS, myname)
+	acdia:AddToBlizOptions(myname .. "Launcher", L['OPTIONS_LAUNCHER'], myname)
+	acdia:AddToBlizOptions(myname .. "Advanced", ADVANCED_OPTIONS, myname)
+	acdia:AddToBlizOptions(myname .. "Profiles", L['OPTIONS_PROFILES'], myname)
+	acdia:AddToBlizOptions(myname .. "Help", HELP_LABEL, myname)
 end
 
 core.open_config = function()
