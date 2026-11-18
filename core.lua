@@ -507,13 +507,17 @@ function core.SplitItem(bag, slot, amount)
 	end
 end
 
+-- Forever lets profession bags go in the reagent slot
+local function is_reagent_slot_profession_bag()
+	if not IsInventoryItemProfessionBag then return false end
+	local invslot = C_Container.ContainerIDToInventoryID(Enum.BagIndex.ReagentBag)
+	return invslot and IsInventoryItemProfessionBag("player", invslot) or false
+end
+
 do
 	local known = {
 		[BACKPACK_CONTAINER] = false,
 	}
-	if core.has_reagent_bag then
-		known[Enum.BagIndex.ReagentBag] = true
-	end
 	if core.has_reagent_bank then
 		known[REAGENTBANK_CONTAINER] = true
 	end
@@ -522,6 +526,9 @@ do
 	end
 	function core.IsSpecialtyBag(bagid)
 		if known[bagid] ~= nil then return known[bagid] end
+		if core.has_reagent_bag and bagid == Enum.BagIndex.ReagentBag and not is_reagent_slot_profession_bag() then
+			return true
+		end
 		if is_guild_bank_bag(bagid) then return false end
 		if core.has_new_bank and is_bank_bag(bagid) then
 			if BTSI and core.db.ignore_blizzard then
@@ -587,7 +594,7 @@ function core.CanItemGoInBag(bag, slot, target_bag)
 		-- 7.1.5 finally added an "is crafting reagent" return
 		return select(17, C_Item.GetItemInfo(item))
 	end
-	if core.has_reagent_bag and target_bag == Enum.BagIndex.ReagentBag then
+	if core.has_reagent_bag and target_bag == Enum.BagIndex.ReagentBag and not is_reagent_slot_profession_bag() then
 		return select(17, C_Item.GetItemInfo(item))
 	end
 
