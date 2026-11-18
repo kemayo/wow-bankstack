@@ -92,8 +92,12 @@ function core:OnInitialize()
 		self.setup_config()
 	end
 
+	-- Forever only opens the bank as a CharacterBanker
+	local function is_banker(id)
+		return id == Enum.PlayerInteractionType.Banker or id == Enum.PlayerInteractionType.CharacterBanker
+	end
 	function core.PLAYER_INTERACTION_MANAGER_FRAME_SHOW(_, event, id)
-		if id == Enum.PlayerInteractionType.Banker then
+		if is_banker(id) then
 			self.bank_open = true
 			self.account_bank_open = false
 			self.events:Fire("Bank_Open")
@@ -106,7 +110,7 @@ function core:OnInitialize()
 		end
 	end
 	function core.PLAYER_INTERACTION_MANAGER_FRAME_HIDE(_, event, id)
-		if id == Enum.PlayerInteractionType.Banker then
+		if is_banker(id) then
 			self.bank_open = false
 			self.events:Fire("Bank_Close")
 		elseif id == Enum.PlayerInteractionType.AccountBanker then
