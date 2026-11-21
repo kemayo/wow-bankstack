@@ -1,5 +1,6 @@
 local core = BankStack
 local L = core.L
+
 local encode_bagslot = core.encode_bagslot
 local decode_bagslot = core.decode_bagslot
 

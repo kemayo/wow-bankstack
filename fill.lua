@@ -1,14 +1,9 @@
 local core = BankStack
-local L = core.L
 
 local encode_bagslot = core.encode_bagslot
 local decode_bagslot = core.decode_bagslot
-local encode_move = core.encode_move
-local moves = core.moves
 
 local bag_ids = core.bag_ids
-local bag_stacks = core.bag_stacks
-local bag_maxstacks = core.bag_maxstacks
 
 local specialty_bags = {}
 function core.FillBags(from, to)
@@ -90,8 +85,11 @@ end
 
 function core.Squash(bags, reverse, can_move)
 	-- bags: table, e.g. {1,2,3,4}
+	if reverse == nil then
+		reverse = core.db.backfill
+	end
 	return core.Fill(bags, bags, reverse, can_move, function(itemid, bag, slot)
-		if is_squashed(bags) then
+		if is_squashed(bags, reverse) then
 			return true
 		end
 		return default_should_halt(itemid, bag, slot)

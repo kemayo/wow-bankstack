@@ -95,8 +95,12 @@ function core:OnInitialize()
 		self.setup_config()
 	end
 
+	-- Forever only opens the bank as a CharacterBanker
+	local function is_banker(id)
+		return id == Enum.PlayerInteractionType.Banker or id == Enum.PlayerInteractionType.CharacterBanker
+	end
 	function core.PLAYER_INTERACTION_MANAGER_FRAME_SHOW(_, event, id)
-		if id == Enum.PlayerInteractionType.Banker then
+		if is_banker(id) then
 			self.bank_open = true
 			self.account_bank_open = false
 			self.events:Fire("Bank_Open")
@@ -109,7 +113,7 @@ function core:OnInitialize()
 		end
 	end
 	function core.PLAYER_INTERACTION_MANAGER_FRAME_HIDE(_, event, id)
-		if id == Enum.PlayerInteractionType.Banker then
+		if is_banker(id) then
 			self.bank_open = false
 			self.events:Fire("Bank_Close")
 		elseif id == Enum.PlayerInteractionType.AccountBanker then
@@ -506,20 +510,26 @@ function core.SplitItem(bag, slot, amount)
 	end
 end
 
+-- Forever lets profession bags go in the reagent slot
+local function is_reagent_slot_profession_bag()
+	if not IsInventoryItemProfessionBag then return false end
+	local invslot = C_Container.ContainerIDToInventoryID(Enum.BagIndex.ReagentBag)
+	return invslot and IsInventoryItemProfessionBag("player", invslot) or false
+end
+
 do
 	local specialty = {[BACKPACK_CONTAINER] = false}
-	if core.has_reagent_bag then
-		specialty[Enum.BagIndex.ReagentBag] = true
-	end
 	if core.has_reagent_bank then
 		specialty[REAGENTBANK_CONTAINER] = true
 	end
 	if not core.has_new_bank then
 		specialty[BANK_CONTAINER] = false
 	end
-
 	function core.IsSpecialtyBag(bag)
 		if specialty[bag] ~= nil then return specialty[bag] end
+		if core.has_reagent_bag and bag == Enum.BagIndex.ReagentBag and not is_reagent_slot_profession_bag() then
+			return true
+		end
 		if is_guild_bank_bag(bag) then return false end
 		if core.has_new_bank and is_bank_bag(bag) then
 			if BTSI and core.db.ignore_blizzard then
@@ -588,7 +598,7 @@ do
 		if core.has_reagent_bank and target_bag == REAGENTBANK_CONTAINER then
 			return IsReagentBankUnlocked() and select(17, C_Item.GetItemInfo(item))
 		end
-		if core.has_reagent_bag and target_bag == Enum.BagIndex.ReagentBag then
+		if core.has_reagent_bag and target_bag == Enum.BagIndex.ReagentBag and not is_reagent_slot_profession_bag() then
 			return select(17, C_Item.GetItemInfo(item))
 		end
 		local bag_family = select(2, C_Container.GetContainerNumFreeSlots(target_bag))
@@ -597,11 +607,11 @@ do
 
 	local function blizzard_ignores_bag(bag)
 		if not core.db.ignore_blizzard then return false end
-		if bag == -1 then
+		if bag == BANK_CONTAINER then
 			return C_Container.GetBankAutosortDisabled and C_Container.GetBankAutosortDisabled()
-		elseif bag == 0 then
+		elseif bag == BACKPACK_CONTAINER then
 			return C_Container.GetBackpackAutosortDisabled and C_Container.GetBackpackAutosortDisabled()
-		elseif bag == -3 or is_guild_bank_bag(bag) then
+		elseif bag == REAGENTBANK_CONTAINER or is_guild_bank_bag(bag) then
 			return false
 		elseif core.has_new_bank and BTSI and is_bank_bag(bag) then
 			local data = BTSI:GetTabData(bag)
@@ -739,14 +749,17 @@ local function update_location(from, to)
 		bag_links[from], bag_links[to] = bag_links[to], bag_links[from]
 	end
 end
-local function clear_bag_scan()
+local function wipe_bag_caches()
 	wipe(bag_maxstacks)
 	wipe(bag_stacks)
 	wipe(bag_ids)
 	wipe(bag_links)
+	wipe(core.bag_soulbound)
+	wipe(core.bag_conjured)
 end
 function core.ScanBags()
-	clear_bag_scan()
+	-- Start clean, or slots emptied since an aborted run would keep their old items.
+	wipe_bag_caches()
 	local missing_data
 	for _, bag, slot in core.IterateBags(core.has_guild_bank() and all_bags_with_guild or all_bags) do
 		local bagslot = encode_bagslot(bag, slot)
@@ -768,7 +781,7 @@ function core.AddMove(source, destination)
 	table.insert(moves, 1, encode_move(source, destination))
 end
 
-local moves_underway, last_itemid, last_destination, lock_stop, last_move, move_retries
+local last_itemid, last_destination, lock_stop, last_move, move_retries
 local move_tracker = {}
 
 local function debugtime(start, ...) Debug("took", GetTime() - start, ...) end
@@ -941,9 +954,7 @@ function core.DoMove(move)
 end
 
 function core.StartStacking()
-	clear_bag_scan()
-	wipe(core.bag_soulbound)
-	wipe(core.bag_conjured)
+	wipe_bag_caches()
 	wipe(move_tracker)
 
 	if #moves > 0 then

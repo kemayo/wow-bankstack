@@ -92,6 +92,7 @@ read_globals = {
     "InCombatLockdown",
     "IsAltKeyDown",
     "IsControlKeyDown",
+    "IsInventoryItemProfessionBag",
     "IsShiftKeyDown",
     "IsReagentBankUnlocked",
     "ItemLocation",
