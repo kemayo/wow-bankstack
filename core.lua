@@ -56,6 +56,9 @@ function core:OnInitialize()
 			reverse = false,
 			backfill = false,
 			bank_target = "both",
+			stack_to_bank_existing = false,
+			stack_to_bags_existing = false,
+			stack_bank_quality = false,
 			ignore = {},
 			ignore_bags = {},
 			ignore_blizzard = true,
@@ -515,116 +518,122 @@ local function is_reagent_slot_profession_bag()
 end
 
 do
-	local known = {
-		[BACKPACK_CONTAINER] = false,
-	}
+	local specialty = {[BACKPACK_CONTAINER] = false}
 	if core.has_reagent_bank then
-		known[REAGENTBANK_CONTAINER] = true
+		specialty[REAGENTBANK_CONTAINER] = true
 	end
 	if not core.has_new_bank then
-		known[BANK_CONTAINER] = false
+		specialty[BANK_CONTAINER] = false
 	end
-	function core.IsSpecialtyBag(bagid)
-		if known[bagid] ~= nil then return known[bagid] end
-		if core.has_reagent_bag and bagid == Enum.BagIndex.ReagentBag and not is_reagent_slot_profession_bag() then
+	function core.IsSpecialtyBag(bag)
+		if specialty[bag] ~= nil then return specialty[bag] end
+		if core.has_reagent_bag and bag == Enum.BagIndex.ReagentBag and not is_reagent_slot_profession_bag() then
 			return true
 		end
-		if is_guild_bank_bag(bagid) then return false end
-		if core.has_new_bank and is_bank_bag(bagid) then
+		if is_guild_bank_bag(bag) then return false end
+		if core.has_new_bank and is_bank_bag(bag) then
 			if BTSI and core.db.ignore_blizzard then
-				local key, numFlags = BTSI:BuildKeyForTab(bagid)
-				if numFlags == 0 then
-					return "Normal"
-				end
-				return key
+				local key, num_flags = BTSI:BuildKeyForTab(bag)
+				return num_flags == 0 and "Normal" or key
 			end
 			return false
 		end
-		local invslot = C_Container.ContainerIDToInventoryID(bagid)
+		local invslot = C_Container.ContainerIDToInventoryID(bag)
 		if not invslot then return false end
-		local bag = GetInventoryItemLink("player", invslot)
-		if not bag then return false end
-		local family = C_Item.GetItemFamily(bag)
-		if family == 0 then return false end
-		return family
+		local link = GetInventoryItemLink("player", invslot)
+		if not link then return false end
+		local family = C_Item.GetItemFamily(link)
+		return family ~= 0 and family
 	end
-end
 
-function core.CanItemGoInBag(bag, slot, target_bag)
-	local bagslot = encode_bagslot(bag, slot)
-	local item = core.bag_ids[bagslot]
-
-	if is_guild_bank_bag(target_bag) then
-		-- TODO: respect restrictions on the account tabs set in the blizzard UI
-		-- Almost anything can go in a guild bank or the account bank... apart from:
-		if
-			core.bag_soulbound[bagslot]
-			or core.bag_conjured[bagslot]
-			or select(14, C_Item.GetItemInfo(item)) == Enum.ItemBind.Quest
-		then
+	local function is_item_suitable_for_bank_tab(item, location, tab)
+		local bank_type = BTSI:GetBankTypeForTab(tab)
+		if not bank_type or not C_Bank.CanViewBank(bank_type) or not C_Bank.IsItemAllowedInBankType(bank_type, location) then
 			return false
 		end
-		return true
-	end
-	if core.has_new_bank and BTSI and is_bank_bag(target_bag) then
-		if core.db.ignore_blizzard then
-			return BTSI:IsItemLocationSuitableForTab(core.bag_itemlocation[bagslot], target_bag)
+		local data = BTSI:GetTabData(tab, bank_type)
+		if not (data and data.depositFlags) then return end
+		local reagent_flag = Enum.BagSlotFlags.ClassReagents
+		if not reagent_flag or not FlagsUtil.IsSet(data.depositFlags, reagent_flag) then
+			return BTSI:IsItemSuitableForTab(item, tab, bank_type)
 		end
-		-- This is filtering out the actually-impossible, not just preference-based:
-		local bankType = BTSI:GetBankTypeForTab(target_bag)
-		return bankType and C_Bank.CanViewBank(bankType) and C_Bank.IsItemAllowedInBankType(bankType, core.bag_itemlocation[bagslot])
-	end
-	-- This is either a pre-11.2.0 bank-bag or a player-bag
-	-- since we now know this isn't a guild bank we can just use the bag id provided
-	local item_family = C_Item.GetItemFamily(item)
-	if not item_family then
-		Debug("Item without family", item, bag, slot)
-		return false
-	end
-	if item_family > 0 then
-		-- if the item is a profession bag, this will actually be the bag_family, and it should be zero
-		if select(4, C_Item.GetItemInfoInstant(item)) == "INVTYPE_BAG" then
-			item_family = 0
+
+		-- Handle the reagent rule without the legacy global GetItemInfo, then delegate the other rules.
+		local class = select(6, C_Item.GetItemInfoInstant(item))
+		if class == Enum.ItemClass.Reagent or select(17, C_Item.GetItemInfo(item)) then
+			return true
 		end
-	end
-	if core.has_reagent_bank and target_bag == REAGENTBANK_CONTAINER then
-		if not IsReagentBankUnlocked() then
-			return false
-		end
-		-- 7.1.5 finally added an "is crafting reagent" return
-		return select(17, C_Item.GetItemInfo(item))
-	end
-	if core.has_reagent_bag and target_bag == Enum.BagIndex.ReagentBag and not is_reagent_slot_profession_bag() then
-		return select(17, C_Item.GetItemInfo(item))
+		local other_flags = { depositFlags = bit.band(data.depositFlags, bit.bnot(reagent_flag)) }
+		local other_filters = setmetatable({
+			GetTabData = function() return other_flags end,
+		}, { __index = BTSI })
+		return other_filters:BuildKeyForTab(tab, bank_type) ~= 0
+			and other_filters:IsItemSuitableForTab(item, tab, bank_type)
 	end
 
-	local bag_family = select(2, C_Container.GetContainerNumFreeSlots(target_bag))
-	return bag_family == 0 or bit.band(item_family, bag_family) > 0
-end
+	function core.CanItemGoInBag(bag, slot, target_bag)
+		local bagslot = encode_bagslot(bag, slot)
+		local item = core.bag_ids[bagslot]
 
-function core.IsIgnored(bag, slot)
-	if core.db.ignore_bags[bag] then
-		return true
-	end
-	if core.db.ignore[encode_bagslot(bag, slot)] then
-		return true
-	end
-	if core.db.ignore_blizzard then
-		-- (these two only exist on retail, hence the guards)
-		if bag == BANK_CONTAINER then
-			return C_Container.GetBankAutosortDisabled and C_Container.GetBankAutosortDisabled() or false
-		elseif bag == BACKPACK_CONTAINER then
-			return C_Container.GetBackpackAutosortDisabled and C_Container.GetBackpackAutosortDisabled() or false
-		elseif bag == REAGENTBANK_CONTAINER then
-			return false
-		elseif is_bank_bag(bag) then
-			if core.has_new_bank and BTSI then
-				local data = BTSI:GetTabData(bag)
-				return data and data.depositFlags and FlagsUtil.IsSet(data.depositFlags, Enum.BagSlotFlags.DisableAutoSort)
+		if is_guild_bank_bag(target_bag) then
+			return not (core.bag_soulbound[bagslot] or core.bag_conjured[bagslot]
+				or select(14, C_Item.GetItemInfo(item)) == Enum.ItemBind.Quest)
+		end
+		if core.has_new_bank and BTSI and is_bank_bag(target_bag) then
+			local location = core.bag_itemlocation[bagslot]
+			if core.db.ignore_blizzard then
+				return is_item_suitable_for_bank_tab(item, location, target_bag)
 			end
-			return C_Container.GetBagSlotFlag(bag, Enum.BagSlotFlags.DisableAutoSort)
-		elseif not is_guild_bank_bag(bag) then
-			return C_Container.GetBagSlotFlag(bag, Enum.BagSlotFlags.DisableAutoSort)
+			local bank_type = BTSI:GetBankTypeForTab(target_bag)
+			return bank_type and C_Bank.CanViewBank(bank_type) and C_Bank.IsItemAllowedInBankType(bank_type, location)
+		end
+		local item_family = C_Item.GetItemFamily(item)
+		if not item_family then
+			core.Debug("Item without family", item, bag, slot)
+			return false
+		end
+		if item_family > 0 and select(4, C_Item.GetItemInfoInstant(item)) == "INVTYPE_BAG" then
+			item_family = 0 -- Profession bags expose the bag's family, not the item's.
+		end
+		if core.has_reagent_bank and target_bag == REAGENTBANK_CONTAINER then
+			return IsReagentBankUnlocked() and select(17, C_Item.GetItemInfo(item))
+		end
+		if core.has_reagent_bag and target_bag == Enum.BagIndex.ReagentBag and not is_reagent_slot_profession_bag() then
+			return select(17, C_Item.GetItemInfo(item))
+		end
+		local bag_family = select(2, C_Container.GetContainerNumFreeSlots(target_bag))
+		return bag_family == 0 or bit.band(item_family, bag_family) > 0
+	end
+
+	local function blizzard_ignores_bag(bag)
+		if not core.db.ignore_blizzard then return false end
+		if bag == BANK_CONTAINER then
+			return C_Container.GetBankAutosortDisabled and C_Container.GetBankAutosortDisabled()
+		elseif bag == BACKPACK_CONTAINER then
+			return C_Container.GetBackpackAutosortDisabled and C_Container.GetBackpackAutosortDisabled()
+		elseif bag == REAGENTBANK_CONTAINER or is_guild_bank_bag(bag) then
+			return false
+		elseif core.has_new_bank and BTSI and is_bank_bag(bag) then
+			local data = BTSI:GetTabData(bag)
+			return data and data.depositFlags and FlagsUtil.IsSet(data.depositFlags, Enum.BagSlotFlags.DisableAutoSort)
+		end
+		return C_Container.GetBagSlotFlag(bag, Enum.BagSlotFlags.DisableAutoSort)
+	end
+
+	local function is_manually_ignored(bag, slot)
+		return core.db.ignore_bags[bag] or core.db.ignore[encode_bagslot(bag, slot)]
+	end
+
+	function core.IsIgnored(bag, slot)
+		return is_manually_ignored(bag, slot) or blizzard_ignores_bag(bag)
+	end
+
+	function core.NewIgnoreChecker()
+		local ignored_bags = {}
+		return function(bag, slot)
+			if is_manually_ignored(bag, slot) then return true end
+			if ignored_bags[bag] == nil then ignored_bags[bag] = not not blizzard_ignores_bag(bag) end
+			return ignored_bags[bag]
 		end
 	end
 end
@@ -633,12 +642,13 @@ end
 -- groups_defaults: groups to use when the command is given none
 -- required_count: how many groups must resolve before func is called (default 1)
 -- ignore_selected_tab: resolve "bank" without regard to the selected bank tab
-function core.CommandDecorator(func, groups_defaults, required_count, ignore_selected_tab)
+-- ready: optional post-scan check; false requests a retry before any moves are planned.
+function core.CommandDecorator(func, groups_defaults, required_count, ignore_selected_tab, ready)
 	local bag_groups = {}
-	local decorated
-	local retrying
-	decorated = function(groups, retry)
-		if retrying and not retry then return end
+	local retry_pending
+	local function decorated(groups, retries)
+		if retry_pending and not retries then return end
+		retry_pending = false
 		local modgroups, target = SecureCmdOptionParse(groups or "")
 		Debug("command wrapper", groups, modgroups, groups_defaults, required_count)
 		if core.running then
@@ -676,25 +686,24 @@ function core.CommandDecorator(func, groups_defaults, required_count, ignore_sel
 			return core.announce(0, L.confused, 1, 0, 0)
 		end
 
-		if not core.ScanBags() then
-			retrying = (retrying or 0) + 1
-			if retrying > 3 then
+		if not core.ScanBags() or (ready and not ready(unpack(bag_groups))) then
+			retries = (retries or 0) + 1
+			if retries > 3 then
 				Debug("abort", "retries exceeded")
-				retrying = false
 				return core.announce(0, L.confused, 1, 0, 0)
 			end
 			Debug("retry", "ScanBags failed")
-			C_Timer.After(2, function() decorated(groups, true) end)
+			retry_pending = true
+			C_Timer.After(2, function() decorated(groups, retries) end)
 			return core.announce(0, L.retry, 1, 1, 0)
 		end
-		retrying = false
 		if func(unpack(bag_groups)) == false then
 			return
 		end
 		wipe(bag_groups)
 		core.StartStacking()
 	end
-	return decorated
+	return function(groups) return decorated(groups) end
 end
 
 --Respond to events:
