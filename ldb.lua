@@ -32,11 +32,7 @@ local function build_current_keybind()
 		'BUTTON1'
 end
 local function pretty_keybind(keybind)
-	-- Again, assumes left mouse button
-	return keybind and ((string.match(keybind, "ALT-") and core.L["KEYBIND_PREFIX_ALT"] or '') ..
-		(string.match(keybind, "CTRL-") and core.L["KEYBIND_PREFIX_CTRL"] or '') ..
-		(string.match(keybind, "SHIFT-") and core.L["KEYBIND_PREFIX_SHIFT"] or '') ..
-		core.L["KEYBIND_CLICK"]) or core.L['KEYBIND_NONE']
+	return keybind and GetBindingText(keybind, "KEY_") or NONE
 end
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
