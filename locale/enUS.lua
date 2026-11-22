@@ -43,6 +43,12 @@ L["OPTIONS_SHOW_MINIMAP_ICON_DESCRIPTION"] = "Toggle showing or hiding the minim
 L["OPTIONS_BANK_TARGET"] = "Stack bank location"
 L["OPTIONS_BANK_TARGET_DESCRIPTION"] = "Choose where to stack when targeting bank"
 L["OPTIONS_BANK_TARGET_BOTH"] = "Both"
+L["OPTIONS_STACK_TO_BANK_EXISTING"] = "Create new stacks in the bank"
+L["OPTIONS_STACK_TO_BANK_EXISTING_DESCRIPTION"] = "When stacking to the bank, use empty bank slots for items already stored there once existing stacks are full."
+L["OPTIONS_STACK_TO_BAGS_EXISTING"] = "Create new stacks in your bags"
+L["OPTIONS_STACK_TO_BAGS_EXISTING_DESCRIPTION"] = "When stacking from the bank, use empty bag slots for items already in your bags once existing stacks are full."
+L["OPTIONS_STACK_BANK_QUALITY"] = "Include other crafting ranks"
+L["OPTIONS_STACK_BANK_QUALITY_DESCRIPTION"] = "If the destination already contains the same item at another crafting rank, use empty slots to create new stacks as needed. Different ranks stay in separate stacks."
 
 L["OPTIONS_CONFIG_DESCRIPTION"] = "Basic settings"
 L["OPTIONS_SORTING"] = "Sorting"

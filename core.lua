@@ -56,6 +56,9 @@ function core:OnInitialize()
 			reverse = false,
 			backfill = false,
 			bank_target = "both",
+			stack_to_bank_existing = false,
+			stack_to_bags_existing = false,
+			stack_bank_quality = false,
 			ignore = {},
 			ignore_bags = {},
 			ignore_blizzard = true,
@@ -633,12 +636,11 @@ end
 -- groups_defaults: groups to use when the command is given none
 -- required_count: how many groups must resolve before func is called (default 1)
 -- ignore_selected_tab: resolve "bank" without regard to the selected bank tab
-function core.CommandDecorator(func, groups_defaults, required_count, ignore_selected_tab)
+-- ready: optional post-scan check; false requests a retry before any moves are planned.
+function core.CommandDecorator(func, groups_defaults, required_count, ignore_selected_tab, ready)
 	local bag_groups = {}
-	local decorated
-	local retrying
-	decorated = function(groups, retry)
-		if retrying and not retry then return end
+	local retry_pending
+	local function decorated(groups, retries)
 		local modgroups, target = SecureCmdOptionParse(groups or "")
 		Debug("command wrapper", groups, modgroups, groups_defaults, required_count)
 		if core.running then
@@ -676,25 +678,28 @@ function core.CommandDecorator(func, groups_defaults, required_count, ignore_sel
 			return core.announce(0, L.confused, 1, 0, 0)
 		end
 
-		if not core.ScanBags() then
-			retrying = (retrying or 0) + 1
-			if retrying > 3 then
+		if not core.ScanBags() or (ready and not ready(unpack(bag_groups))) then
+			if retries >= 3 then
 				Debug("abort", "retries exceeded")
-				retrying = false
 				return core.announce(0, L.confused, 1, 0, 0)
 			end
-			Debug("retry", "ScanBags failed")
-			C_Timer.After(2, function() decorated(groups, true) end)
+			Debug("retry", "item data not ready")
+			retry_pending = true
+			C_Timer.After(2, function()
+				retry_pending = false
+				decorated(groups, retries + 1)
+			end)
 			return core.announce(0, L.retry, 1, 1, 0)
 		end
-		retrying = false
 		if func(unpack(bag_groups)) == false then
 			return
 		end
 		wipe(bag_groups)
 		core.StartStacking()
 	end
-	return decorated
+	return function(groups)
+		if not retry_pending then return decorated(groups, 0) end
+	end
 end
 
 --Respond to events:
